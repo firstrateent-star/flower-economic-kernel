@@ -33,6 +33,31 @@ function parseJsonLoose(text) {
   }
 }
 
+function structuredFormatFor(operation) {
+  if (operation !== 'EXECUTE_EXPERIMENT') return null;
+  return {
+    type: 'json_schema',
+    name: 'flower_experiment_result',
+    strict: true,
+    schema: {
+      type: 'object',
+      properties: {
+        verdict: {
+          type: 'string',
+          enum: ['supports', 'weakens', 'inconclusive'],
+        },
+        finding: { type: 'string' },
+        observations: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+      },
+      required: ['verdict', 'finding', 'observations'],
+      additionalProperties: false,
+    },
+  };
+}
+
 export class OpenAIReasoner {
   constructor({
     apiKey = process.env.OPENAI_API_KEY,
@@ -55,12 +80,14 @@ export class OpenAIReasoner {
     // Global web search remains off by default. A caller may explicitly enable it only
     // after the deterministic autonomy membrane has authorized a web-search experiment.
     const useWebSearch = this.enableWebSearch || allowWebSearch === true;
+    const structuredFormat = structuredFormatFor(operation);
     const body = {
       model: this.model,
       instructions,
       reasoning: { effort: this.reasoningEffort },
       max_output_tokens: this.maxOutputTokens,
       input: `OPERATION: ${operation}\nTARGET: ${JSON.stringify(target ?? null)}\nSOIL: ${JSON.stringify(garden.soil)}\nFRUIT: ${JSON.stringify(garden.fruits)}\n\n${prompt}`,
+      ...(structuredFormat ? { text: { format: structuredFormat } } : {}),
       ...(useWebSearch ? {
         tools: [{ type: 'web_search_preview', search_context_size: 'low' }],
         include: ['web_search_call.action.sources'],
@@ -76,7 +103,18 @@ export class OpenAIReasoner {
       body: JSON.stringify(body),
     });
     if (!response.ok) throw new Error(`OpenAI Responses API ${response.status}: ${await response.text()}`);
+
     const raw = await response.json();
-    return { data: parseJsonLoose(extractText(raw)), sources: extractSources(raw), rawId: raw.id ?? null };
+    if (raw.status !== 'completed') {
+      throw new Error(`OpenAI response did not complete: status=${raw.status}; details=${JSON.stringify(raw.incomplete_details ?? raw.error ?? null)}`);
+    }
+
+    const text = extractText(raw);
+    return {
+      data: parseJsonLoose(text),
+      sources: extractSources(raw),
+      rawId: raw.id ?? null,
+      usage: raw.usage ?? null,
+    };
   }
 }
