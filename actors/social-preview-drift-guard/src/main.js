@@ -23,9 +23,7 @@ async function mapConcurrent(items, concurrency, worker) {
   return output;
 }
 
-await Actor.init();
-
-try {
+async function runActor() {
   const input = (await Actor.getInput()) ?? {};
   const urls = uniqueUrls(input);
   if (!urls.length) throw new Error('Provide at least one URL in `url` or `urls`.');
@@ -104,12 +102,17 @@ try {
     checkImages,
     chargeLimitReached,
     pricingModel: pricingInfo.isPayPerEvent ? 'pay_per_event' : 'platform_or_unmonetized',
-    rulesetVersion: '0.1.0',
+    rulesetVersion: '0.1.1',
     note: 'Each dataset item is one URL audit. PASS/RISK/FAIL describes public crawler-facing metadata consistency, not a guarantee of any platform’s cached or final rendered card.',
   };
 
   await Actor.setValue('OUTPUT', summary);
   log.info('Social Preview Drift Guard complete', summary);
+}
+
+await Actor.init();
+try {
+  await runActor();
 } finally {
   await Actor.exit();
 }
