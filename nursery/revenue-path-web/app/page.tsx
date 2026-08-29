@@ -21,6 +21,9 @@ export default function Home() {
   const [findings, setFindings] = useState<Finding[] | null>(null)
   const [notice, setNotice] = useState('')
   const [status, setStatus] = useState<ScanState>(null)
+  const [observed, setObserved] = useState(0)
+  const [checked, setChecked] = useState(0)
+  const [blockedChecks, setBlockedChecks] = useState(0)
 
   async function scan(e: React.FormEvent) {
     e.preventDefault()
@@ -29,6 +32,9 @@ export default function Home() {
     setFindings(null)
     setNotice('')
     setStatus(null)
+    setObserved(0)
+    setChecked(0)
+    setBlockedChecks(0)
     try {
       const res = await fetch('/api/scan', {
         method: 'POST',
@@ -40,6 +46,9 @@ export default function Home() {
       setFindings(data.findings)
       setNotice(data.notice || '')
       setStatus(data.status || 'scanned')
+      setObserved(data.observed || 0)
+      setChecked(data.checked || 0)
+      setBlockedChecks(data.blockedChecks || 0)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -69,10 +78,12 @@ export default function Home() {
                 ? 'Scan completed with limited visibility'
                 : findings.length
                   ? `${findings.length} possible issue${findings.length === 1 ? '' : 's'} found`
-                  : 'No obvious revenue-path faults found'}
+                  : 'No obvious faults found in the paths we could inspect'}
           </h2>
           {notice && <p className="muted">{notice}</p>}
-          {status === 'scanned' && <p className="muted">These are deterministic warnings, not proof of lost revenue.</p>}
+          {status === 'scanned' && (
+            <p className="muted">Observed {observed} high-intent CTA{observed === 1 ? '' : 's'} and attempted live verification of {checked} destination{checked === 1 ? '' : 's'}{blockedChecks ? `; ${blockedChecks} blocked automated verification` : ''}. A clean result only applies to what was visible and reachable.</p>
+          )}
           <div className="grid">
             {findings.map((f, i) => (
               <article key={i} className="card">
@@ -90,8 +101,8 @@ export default function Home() {
 
       <section className="method">
         <h2>What it looks for</h2>
-        <p>Dead or placeholder CTAs, clearly non-production destinations, and insecure HTTP money links visible in server-rendered HTML.</p>
-        <p className="muted">On-demand scan only. Some sites block automated requests or render key actions with JavaScript; those cases are reported as limited rather than treated as clean scans.</p>
+        <p>Dead or placeholder CTAs, clearly non-production destinations, insecure HTTP money links, broken high-intent destinations, and suspicious redirect paths visible from a public server request.</p>
+        <p className="muted">On-demand scan only. Sites that block bots or hide conversion actions behind client-side JavaScript are marked limited or blocked instead of being called clean.</p>
       </section>
     </main>
   )
