@@ -4,11 +4,17 @@ import { classifyPressure } from '../core/pressure.js';
 import { OpenAIReasoner } from '../reasoners/openai.js';
 import seed from '../../garden/seed.json' with { type: 'json' };
 
+const STORE_NAME = 'flower-economic-kernel-v0-state';
 const STORE_KEY = 'FLOWER_GARDEN';
+
 await Actor.init();
 try {
   await Actor.getInput(); // Input currently carries only the one-breath UI guard.
-  const existing = await Actor.getValue(STORE_KEY);
+
+  // Each Actor run gets its own default key-value store. Use a named store so
+  // the Garden survives across separate runs under LIMITED_PERMISSIONS.
+  const stateStore = await Actor.openKeyValueStore(STORE_NAME);
+  const existing = await stateStore.getValue(STORE_KEY);
   const garden = existing ?? structuredClone(seed);
 
   // Epistemic repair: older v0 builds could promote model-generated reasoning to
@@ -30,15 +36,19 @@ try {
   // v0 safety rule: one manual run = one paid reasoning breath.
   const maxBreaths = 1;
   const result = await pulse({ garden, reasoner: new OpenAIReasoner(), maxBreaths });
-  await Actor.setValue(STORE_KEY, garden);
+  await stateStore.setValue(STORE_KEY, garden);
 
   const output = {
     breaths: result.breaths.map((x) => ({ pressure: x.pressure, summary: x.result.summary })),
     nextPressure: classifyPressure(garden),
     pendingApprovals: garden.approvals.filter((x) => x.status === 'pending'),
     generation: garden.status.generation,
+    pulseCount: garden.status.pulseCount,
+    persistentStore: STORE_NAME,
     epistemicRepairs: repaired,
   };
+
+  // Per-run output remains easy to inspect; durable Garden state lives above.
   await Actor.setValue('OUTPUT', output);
   await Actor.pushData(output);
   log.info('Flower pulse complete', output);
