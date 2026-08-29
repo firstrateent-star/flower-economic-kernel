@@ -4,5 +4,8 @@
   "title": "Social Preview Drift Guard API",
   "version": "0.1",
   "buildTag": "latest",
-  "input": "./input_schema.json"
+  "input": "./input_schema.json",
+  "defaultMemoryMbytes": 256,
+  "minMemoryMbytes": 128,
+  "maxMemoryMbytes": 1024
 }
