@@ -4,6 +4,7 @@ import { runSelection, selectionRequiresReasoner } from './selection.js';
 import { addTrace } from './transitions.js';
 import { nowIso } from './utils.js';
 import { refreshGeometry } from './geometry.js';
+import { syncFruitManifests, verifyPrivateFruit } from './fruit-forge.js';
 
 function applyPostIntegrationSelectionPolicy(garden, pressure) {
   if (pressure.type !== 'INTEGRATE') return null;
@@ -26,7 +27,7 @@ export function pressureCostClass(garden, pressure) {
   if (!pressure) return 'free';
   if (['EXPAND', 'FALSIFY', 'BUILD_PLAN'].includes(pressure.type)) return 'reasoner';
   if (pressure.type === 'SELECT') return selectionRequiresReasoner(garden) ? 'reasoner' : 'free';
-  if (pressure.type === 'EXPERIMENT') return 'free';
+  if (pressure.type === 'EXPERIMENT' || pressure.type === 'VERIFY_FRUIT') return 'free';
 
   if (pressure.type === 'EXECUTE_EXPERIMENT') {
     const exp = (garden.experiments ?? []).find((x) => x.id === pressure.targetId);
@@ -40,11 +41,41 @@ export function pressureCostClass(garden, pressure) {
   return 'free';
 }
 
+async function verifyFruitBreath(garden, pressure) {
+  const fruit = (garden.fruits ?? []).find((x) => x.id === pressure.targetId);
+  if (!fruit) return { changed: false, summary: 'Fruit verification target not found.', action: 'VERIFY_FRUIT' };
+
+  const verification = await verifyPrivateFruit(fruit);
+  fruit.lastVerification = { ...verification, at: nowIso() };
+  if (verification.pass) {
+    fruit.status = 'private_verified';
+    fruit.verifiedAt = nowIso();
+    const opp = (garden.opportunities ?? []).find((x) => x.id === fruit.opportunityId);
+    if (opp) opp.productizationState = 'private_verified';
+  } else {
+    fruit.status = 'private_source_ready';
+  }
+
+  return {
+    changed: true,
+    summary: verification.pass
+      ? `${fruit.name} private source verified across ${verification.checks.length} deterministic checks; next boundary is one real private Apify deployment/run.`
+      : `${fruit.name} private verification failed: ${verification.reason}`,
+    action: 'VERIFY_FRUIT',
+  };
+}
+
 export async function breathe({ garden, reasoner, pressure = classifyPressure(garden) }) {
   const before = JSON.stringify(garden);
-  const result = pressure.type === 'SELECT'
-    ? await runSelection({ garden, reasoner })
-    : await runEnzyme({ garden, pressure, reasoner });
+  let result;
+
+  if (pressure.type === 'VERIFY_FRUIT') {
+    result = await verifyFruitBreath(garden, pressure);
+  } else if (pressure.type === 'SELECT') {
+    result = await runSelection({ garden, reasoner });
+  } else {
+    result = await runEnzyme({ garden, pressure, reasoner });
+  }
 
   const cooled = applyPostIntegrationSelectionPolicy(garden, pressure);
   if (cooled) {
@@ -67,13 +98,14 @@ export async function breathe({ garden, reasoner, pressure = classifyPressure(ga
 }
 
 // A pulse crosses at most one costly frontier, then automatically carries the
-// Garden through every safe deterministic transition that follows. Sacred-geometry
-// language informs the reuse graph, but does not increase permissions or evidence.
+// Garden through every safe deterministic transition that follows. Once real private
+// Fruit source exists, Fruit Lock keeps attention on shipping rather than new seeds.
 export async function pulse({ garden, reasoner, maxBreaths = 12, maxCostlyBreaths = 1 }) {
   const breaths = [];
   let costlyBreaths = 0;
   let stoppedByCostFrontier = false;
 
+  await syncFruitManifests(garden);
   refreshGeometry(garden);
 
   for (let i = 0; i < maxBreaths; i += 1) {
