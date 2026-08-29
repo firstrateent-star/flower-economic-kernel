@@ -63,10 +63,14 @@
   "passiveDistribution": {
     "channels": [
       "Apify Store search",
+      "published Apify example tasks",
+      "Google/search-engine indexing",
+      "Apify MCP search-actors",
+      "agentic payment discovery",
       "Apify API",
-      "MCP/agentic discovery",
       "CI workflows",
-      "CMS/SEO automation"
+      "CMS/SEO automation",
+      "select external backlinks"
     ],
     "agenticCompatibilityTarget": true,
     "requirements": [
@@ -75,6 +79,41 @@
       "no Standby",
       "developer KYC",
       "do not pass platform usage through"
+    ]
+  },
+  "distributionPlan": {
+    "orientation": "passive_first",
+    "priority": [
+      {
+        "step": 1,
+        "channel": "Apify quality score and Store/MCP search",
+        "why": "Store and MCP discovery rank using signals correlated with Actor quality score; improve reliability, ease of use, congruency, pricing transparency, trustworthiness, and early user satisfaction."
+      },
+      {
+        "step": 2,
+        "channel": "Published example tasks",
+        "why": "Each public task creates a search- and AI-indexable landing page for a specific use case and appears in the Actor Example tasks tab."
+      },
+      {
+        "step": 3,
+        "channel": "SEO name, description, README, and categories",
+        "why": "Use phrases people actually search for such as Open Graph checker, social preview checker, Twitter Card checker, broken preview image, and canonical conflict while preserving the differentiated crawler-drift wedge."
+      },
+      {
+        "step": 4,
+        "channel": "Agentic discovery",
+        "why": "Once KYC and eligibility are satisfied, limited-permission PPE Actors without Standby or passed-through usage can be discoverable to autonomous agents."
+      },
+      {
+        "step": 5,
+        "channel": "Selective external backlinks",
+        "why": "One useful launch post, tutorial, or public examples repository can seed search authority without requiring ongoing manual marketing."
+      }
+    ],
+    "avoidUntilEvidence": [
+      "paid advertising before customer lifetime value and repeat usage are known",
+      "high-maintenance daily social posting",
+      "large promotion launches before onboarding and quality-score issues are resolved"
     ]
   },
   "inheritance": [
@@ -88,15 +127,19 @@
   ],
   "growthLoop": {
     "publicSignals": [
+      "Actor quality score",
       "Store users7Days",
       "Store users30Days",
       "public run success rate",
       "revenue and paid events",
       "bookmarks",
-      "ratings/issues when available"
+      "ratings/issues when available",
+      "search/MCP discoverability"
     ],
     "firstOptimizationOrder": [
+      "quality-score blockers",
       "listing/search fit",
+      "published example tasks",
       "run reliability",
       "pricing margin",
       "rule coverage",
