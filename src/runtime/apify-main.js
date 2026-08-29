@@ -20,7 +20,7 @@ try {
     });
   }
 
-  const maxBreaths = Math.max(1, Math.min(5, Number(input.maxBreaths ?? 3)));
+  const maxBreaths = Math.max(1, Math.min(1, Number(input.maxBreaths ?? process.env.FLOWER_MAX_BREATHS_PER_PULSE ?? 1)));
   const result = await pulse({ garden, reasoner: new OpenAIReasoner(), maxBreaths });
   await Actor.setValue(STORE_KEY, garden);
 
