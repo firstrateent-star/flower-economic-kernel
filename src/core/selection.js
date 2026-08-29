@@ -16,10 +16,24 @@ function hasFreshNonSupportingResult(garden, opportunity) {
   return Number.isFinite(integratedAt) && integratedAt >= selectedAt;
 }
 
-export async function runSelection({ garden, reasoner }) {
+function selectionState(garden) {
   const candidates = (garden.opportunities ?? []).filter((x) =>
     ['needs_test', 'supported'].includes(x.status) && !x.experimentId
   );
+  const freshCandidates = candidates.filter((x) => !hasFreshNonSupportingResult(garden, x));
+  const eligible = freshCandidates.length > 0 ? freshCandidates : candidates;
+  return { candidates, eligible };
+}
+
+// The kernel uses this only to decide whether SELECT crosses a paid cognition frontier.
+// A one-eligible-candidate breadth-first selection is deterministic and therefore free.
+export function selectionRequiresReasoner(garden) {
+  const { candidates, eligible } = selectionState(garden);
+  return candidates.length >= 2 && eligible.length > 1;
+}
+
+export async function runSelection({ garden, reasoner }) {
+  const { candidates, eligible } = selectionState(garden);
 
   if (candidates.length < 2) {
     return {
@@ -28,9 +42,6 @@ export async function runSelection({ garden, reasoner }) {
       action: 'SELECT',
     };
   }
-
-  const freshCandidates = candidates.filter((x) => !hasFreshNonSupportingResult(garden, x));
-  const eligible = freshCandidates.length > 0 ? freshCandidates : candidates;
 
   if (eligible.length === 1) {
     const chosen = eligible[0];
@@ -94,7 +105,7 @@ export async function runSelection({ garden, reasoner }) {
     operation: 'SELECT',
     garden,
     target,
-    prompt: `Allocate the next external experiment breath among these surviving siblings. Compare only the supplied candidates and their recorded evidence. The reserve candidate remains alive and may be tested later. Choose the candidate whose next materially different reality test has the best expected information value per dollar while preserving Flower's passivity, autonomy, and reproductive-inheritance goals.\nCURRENT V0 EXECUTORS: generic experiments can autonomously execute only public web_search. A deterministic direct Maps→website sampler exists only for the Google Maps Website Identity Guard. DNS queries, GitHub/API enumeration, package-registry sampling, arbitrary HTTP sampling, and local-code probes are NOT currently executable experiment methods. Candidate prose claiming those methods are cheap or direct does not make them executable. Discount any benefit that depends on an unavailable executor, and prefer a sibling whose next discriminating evidence can actually be obtained with current v0 capability. Penalize repeating a method or validation dimension that already returned weak or inconclusive evidence unless a genuinely different executable measurement method exists. Return the exact chosen opportunity id.`,
+    prompt: `Allocate the next external experiment breath among these surviving siblings. Compare only the supplied candidates and their recorded evidence. The reserve candidate remains alive and may be tested later. Choose the candidate whose next materially different reality test has the best expected information value per dollar while preserving Flower's passivity, autonomy, and reproductive-inheritance goals.\nCURRENT V0 EXECUTORS: generic experiments can autonomously execute only public web_search. A deterministic direct Maps→website sampler exists only for the Google Maps Website Identity Guard, and a deterministic SPF/DMARC DNS sampler exists only for the current Transactional Email Authentication Preflight branch. Candidate prose claiming unavailable DNS/GitHub/API/package sampling is cheap does not make it executable. Discount any benefit that depends on an unavailable executor, and prefer a sibling whose next discriminating evidence can actually be obtained with current capability. Penalize repeating a method or validation dimension that already returned weak or inconclusive evidence unless a genuinely different executable measurement method exists. Return the exact chosen opportunity id.`,
   });
 
   const chosenId = result.data?.chosenOpportunityId;
