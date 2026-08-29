@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "garden_economic_root_v0",
   "createdAt": "2026-08-28T00:00:00.000Z",
-  "updatedAt": "2026-08-28T00:00:00.000Z",
+  "updatedAt": "2026-08-29T02:17:14.771Z",
   "center": {
     "rootGoal": "Increase the human Center-holder's sovereign capacity by cultivating low-maintenance economic Fruit whose accumulated money, knowledge, infrastructure, and distribution lower the cost of producing subsequent Fruit.",
     "direction": "Discover, cheaply falsify, and cultivate machine-mediated internet assets that can acquire, fulfill, and monetize with minimal continuing human labor.",
@@ -40,7 +40,7 @@
     {"id":"fruit_exact_match_guard","name":"Google Maps Exact Match Guard","status":"live","platform":"Apify","repository":"firstrateent-star/google-maps-exact-match-guard","monthlyRevenueUsd":null,"maintenanceBurden":"unknown","inheritance":["Fail-closed trust-adapter pattern","Apify Actor deployment familiarity","Google Maps identity-drift market evidence","Machine-to-machine metered-delivery pattern"],"notes":"Generation 0/1 reference Fruit. Leave untouched until external usage evidence warrants change."}
   ],
   "opportunities": [
-    {"id":"opp_maps_website_pointer_guard","name":"Google Maps Business → Website Identity Guard","status":"seed","thesis":"A correct Google Maps business entity can contain a stale, wrong, parent, or unrelated website pointer; downstream contact enrichment can then work perfectly on the wrong entity.","moneyFlow":"Google Maps scraping and contact enrichment workflows","buyer":"lead-data, enrichment, and automation users","nutrientChannel":"Apify / API workflows using Google Maps data","passivity":"Potentially high if metered machine-to-machine verification","autonomyCompatibility":"Potentially high","reproductivePotential":"Could branch into website/contact attribution trust adapters","evidence":[],"counterEvidence":[],"sources":[],"ancestry":["Trusted Pointer Drift","Exact Match Guard"]}
+    {"id":"opp_maps_website_pointer_guard","name":"Google Maps Business → Website Identity Guard","status":"needs_test","thesis":"A correct Google Maps business entity can contain a stale, wrong, parent, or unrelated website pointer; downstream contact enrichment can then work perfectly on the wrong entity.","moneyFlow":"Google Maps scraping and contact enrichment workflows","buyer":"lead-data, enrichment, and automation users","nutrientChannel":"Apify / API workflows using Google Maps data","passivity":"Potentially high if metered machine-to-machine verification","autonomyCompatibility":"Potentially high","reproductivePotential":"Could branch into website/contact attribution trust adapters","evidence":[],"counterEvidence":[],"sources":[],"ancestry":["Trusted Pointer Drift","Exact Match Guard"],"lastRationale":"First live falsification concluded the thesis is plausible but not yet economically demonstrated; external evidence is still required.","epistemicNote":"Model reasoning only. Preserved as needs_test, not supported."}
   ],
   "experiments": [],
   "events": [],
