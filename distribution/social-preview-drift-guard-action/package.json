@@ -1,0 +1,12 @@
+{
+  "name": "social-preview-drift-guard-action",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Staged public GitHub Action wrapper for Social Preview Drift Guard API",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
