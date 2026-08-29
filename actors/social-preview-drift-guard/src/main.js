@@ -8,6 +8,26 @@ function uniqueUrls(input) {
   return [...new Set(values)].slice(0, 100);
 }
 
+function summarizeIssues(results) {
+  const counts = new Map();
+  for (const result of results) {
+    for (const issue of result?.issues ?? []) {
+      const key = `${issue.severity ?? 'unknown'}:${issue.code ?? 'UNKNOWN'}`;
+      counts.set(key, Number(counts.get(key) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .map(([key, count]) => {
+      const [severity, ...codeParts] = key.split(':');
+      return { severity, code: codeParts.join(':'), count };
+    })
+    .sort((a, b) => {
+      const rank = { fail: 3, risk: 2, info: 1, unknown: 0 };
+      return (rank[b.severity] ?? 0) - (rank[a.severity] ?? 0) || b.count - a.count || a.code.localeCompare(b.code);
+    })
+    .slice(0, 12);
+}
+
 async function mapConcurrent(items, concurrency, worker) {
   const output = new Array(items.length);
   let cursor = 0;
@@ -90,6 +110,8 @@ async function runActor() {
     }
   }
 
+  const firstResult = delivered[0] ?? null;
+  const issueSummary = summarizeIssues(delivered);
   const summary = {
     ok: true,
     requestedUrls: urls.length,
@@ -98,6 +120,16 @@ async function runActor() {
     pass: delivered.filter((x) => x.verdict === 'PASS').length,
     risk: delivered.filter((x) => x.verdict === 'RISK').length,
     fail: delivered.filter((x) => x.verdict === 'FAIL').length,
+    firstResult: firstResult ? {
+      inputUrl: firstResult.inputUrl ?? null,
+      verdict: firstResult.verdict ?? null,
+      riskScore: firstResult.riskScore ?? null,
+      issueCodes: (firstResult.issues ?? []).slice(0, 12).map((issue) => ({
+        code: issue.code ?? null,
+        severity: issue.severity ?? null,
+      })),
+    } : null,
+    issueSummary,
     profiles,
     checkImages,
     chargeLimitReached,
