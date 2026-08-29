@@ -1,0 +1,45 @@
+name: 'Social Preview Drift Guard'
+description: 'Fail or warn CI when Open Graph, Twitter Card, canonical, redirect, image, or crawler-conditioned social preview state drifts.'
+author: 'firstrateent-star'
+
+branding:
+  icon: 'shield'
+  color: 'green'
+
+inputs:
+  apify-token:
+    description: 'Apify API token. Store it as a GitHub Actions secret, e.g. secrets.APIFY_TOKEN.'
+    required: true
+  urls:
+    description: 'URLs to audit. Accepts a JSON array, comma-separated list, or one URL per line. Maximum 100.'
+    required: true
+  profiles:
+    description: 'Crawler profiles to compare, comma-separated or JSON array.'
+    required: false
+    default: 'default,facebook,x,linkedin'
+  check-images:
+    description: 'Probe preview images for reachability/content type.'
+    required: false
+    default: 'true'
+  fail-on:
+    description: 'CI failure threshold: fail, risk, or never.'
+    required: false
+    default: 'fail'
+
+outputs:
+  pass:
+    description: 'Number of PASS results.'
+  risk:
+    description: 'Number of RISK results.'
+  fail:
+    description: 'Number of FAIL results.'
+  inconclusive:
+    description: 'Number of INCONCLUSIVE measurements.'
+  worst-verdict:
+    description: 'Worst verdict observed: PASS, RISK, FAIL, INCONCLUSIVE, or NONE.'
+  results-json:
+    description: 'Compact JSON array of Actor results.'
+
+runs:
+  using: 'node24'
+  main: 'index.js'
