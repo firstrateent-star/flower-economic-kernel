@@ -1,3 +1,19 @@
+function latestIntegratedExperiment(garden, opportunityId) {
+  return (garden.experiments ?? [])
+    .filter((x) => x.opportunityId === opportunityId && x.status === 'integrated')
+    .sort((a, b) => String(b.integratedAt ?? b.executedAt ?? b.createdAt ?? '').localeCompare(String(a.integratedAt ?? a.executedAt ?? a.createdAt ?? '')))[0] ?? null;
+}
+
+function selectionIsStale(garden, opportunity) {
+  if (!opportunity?.selectedForExperiment) return false;
+  const latest = latestIntegratedExperiment(garden, opportunity.id);
+  if (!latest || latest.result?.verdict === 'supports') return false;
+
+  const selectedAt = Date.parse(opportunity.lastSelectionAt ?? 0);
+  const integratedAt = Date.parse(latest.integratedAt ?? latest.executedAt ?? latest.createdAt ?? 0);
+  return Number.isFinite(integratedAt) && integratedAt >= selectedAt;
+}
+
 export function classifyPressure(garden) {
   const pendingApproval = garden.approvals.find((x) => x.status === 'pending');
   if (pendingApproval) return { type: 'HUMAN', targetId: pendingApproval.id, why: 'A consequential action awaits the Center-holder.' };
@@ -20,6 +36,15 @@ export function classifyPressure(garden) {
 
   const testable = garden.opportunities.filter((x) => ['needs_test', 'supported'].includes(x.status) && !x.experimentId);
   const selected = testable.find((x) => x.selectedForExperiment === true);
+
+  if (selected && selectionIsStale(garden, selected) && testable.length > 1) {
+    return {
+      type: 'SELECT',
+      targetId: null,
+      why: 'The selected sibling just received non-supporting external evidence; reselect before allocating another experiment breath.',
+    };
+  }
+
   if (selected) {
     return {
       type: 'EXPERIMENT',
