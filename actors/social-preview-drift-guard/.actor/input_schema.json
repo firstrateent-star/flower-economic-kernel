@@ -1,0 +1,60 @@
+{
+  "title": "Social Preview Drift Guard",
+  "description": "Check one or more public URLs for social-preview metadata drift, crawler-dependent responses, canonical/OG conflicts, and broken preview images.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "url": {
+      "title": "Single URL",
+      "type": "string",
+      "description": "Optional single public HTTP(S) URL to inspect.",
+      "editor": "textfield"
+    },
+    "urls": {
+      "title": "URLs",
+      "type": "array",
+      "description": "Additional public HTTP(S) URLs to inspect. Maximum 100 per run.",
+      "editor": "stringList",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "profiles": {
+      "title": "Crawler profiles",
+      "type": "array",
+      "description": "Fetch each URL using these crawler user-agent profiles and compare the metadata each profile receives.",
+      "items": {
+        "type": "string",
+        "enum": ["default", "facebook", "x", "linkedin", "slack", "discord"]
+      },
+      "default": ["default", "facebook", "x", "linkedin"]
+    },
+    "checkImages": {
+      "title": "Probe preview images",
+      "type": "boolean",
+      "description": "Verify that discovered preview-image URLs respond successfully with an image content type.",
+      "default": true
+    },
+    "maxConcurrency": {
+      "title": "Concurrency",
+      "type": "integer",
+      "description": "Number of URLs processed in parallel.",
+      "minimum": 1,
+      "maximum": 10,
+      "default": 4
+    },
+    "requestTimeoutSecs": {
+      "title": "Request timeout (seconds)",
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 30,
+      "default": 10
+    },
+    "maxHtmlMb": {
+      "title": "Maximum HTML response size (MB)",
+      "type": "number",
+      "minimum": 0.25,
+      "maximum": 5,
+      "default": 2
+    }
+  }
+}
