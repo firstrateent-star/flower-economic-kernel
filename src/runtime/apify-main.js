@@ -8,6 +8,22 @@ import seed from '../../garden/seed.json' with { type: 'json' };
 const STORE_NAME = 'flower-economic-kernel-v0-state';
 const STORE_KEY = 'FLOWER_GARDEN';
 
+function activeOpportunitySnapshot(garden) {
+  return (garden.opportunities ?? [])
+    .filter((opp) => !['dormant', 'compost', 'fruit'].includes(opp.status))
+    .slice(0, 5)
+    .map((opp) => ({
+      id: opp.id,
+      name: opp.name,
+      status: opp.status,
+      thesis: opp.thesis ?? null,
+      nutrientChannel: opp.nutrientChannel ?? null,
+      realityAccess: opp.realityAccess ?? null,
+      cheapestRealityTest: opp.cheapestRealityTest ?? null,
+      experimentId: opp.experimentId ?? null,
+    }));
+}
+
 await Actor.main(async () => {
   await Actor.getInput(); // Input currently carries only the one-breath UI guard.
 
@@ -89,6 +105,11 @@ await Actor.main(async () => {
   // v0 safety rule: one manual run = one paid reasoning breath.
   const maxBreaths = 1;
   const startingPressure = classifyPressure(garden);
+  const activeBefore = activeOpportunitySnapshot(garden);
+  log.info('Flower garden snapshot', {
+    phase: 'before',
+    activeOpportunities: activeBefore,
+  });
   log.info('Flower pressure selected', {
     pressure: startingPressure,
     pulseCountBefore: Number(garden.status?.pulseCount ?? 0),
@@ -111,6 +132,7 @@ await Actor.main(async () => {
       error: message,
       pulseCount: Number(garden.status?.pulseCount ?? 0),
       persistentStore: STORE_NAME,
+      activeOpportunities: activeBefore,
       stateMigrations,
     });
     throw error;
@@ -120,10 +142,12 @@ await Actor.main(async () => {
   // previously durable Garden untouched so the authorized experiment can be retried safely.
   await stateStore.setValue(STORE_KEY, garden);
 
+  const activeAfter = activeOpportunitySnapshot(garden);
   const output = {
     ok: true,
     breaths: result.breaths.map((x) => ({ pressure: x.pressure, summary: x.result.summary })),
     nextPressure: classifyPressure(garden),
+    activeOpportunities: activeAfter,
     pendingApprovals: garden.approvals.filter((x) => x.status === 'pending'),
     generation: garden.status.generation,
     pulseCount: garden.status.pulseCount,
@@ -135,5 +159,9 @@ await Actor.main(async () => {
   // Per-run output remains easy to inspect; durable Garden state lives above.
   await Actor.setValue('OUTPUT', output);
   await Actor.pushData(output);
+  log.info('Flower garden snapshot', {
+    phase: 'after',
+    activeOpportunities: activeAfter,
+  });
   log.info('Flower pulse complete', output);
 });
