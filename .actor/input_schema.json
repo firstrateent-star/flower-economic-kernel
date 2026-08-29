@@ -3,7 +3,21 @@
   "type": "object",
   "schemaVersion": 1,
   "properties": {
-    "maxBreaths": {"title":"Maximum breaths this pulse","type":"integer","description":"Hard cap to prevent runaway recursive cognition.","default":1,"minimum":1,"maximum":1},
-    "event": {"title":"Optional reality event","type":"object","description":"External usage/revenue/experiment evidence that should wake the Garden."}
-  }
+    "maxBreaths": {
+      "title": "Maximum breaths this pulse",
+      "type": "integer",
+      "description": "Hard cap for this run. v0 intentionally allows exactly one paid reasoning breath per manual run.",
+      "default": 1,
+      "minimum": 1,
+      "maximum": 1,
+      "editor": "number"
+    },
+    "event": {
+      "title": "Optional reality event",
+      "type": "object",
+      "description": "Optional external usage, revenue, or experiment evidence to add to the Garden before the pulse.",
+      "editor": "json"
+    }
+  },
+  "additionalProperties": false
 }
