@@ -135,6 +135,18 @@ function addPairEdges(edges, key, ids, relation) {
   }
 }
 
+function coverageMetrics(centers) {
+  let earnedEvidenceCenters = 0;
+  let resolvedCenters = 0;
+  for (const center of centers) {
+    for (const state of Object.values(center.coverage ?? {})) {
+      if (state === 'earned') earnedEvidenceCenters += 1;
+      if (!['unknown', 'claimed'].includes(state)) resolvedCenters += 1;
+    }
+  }
+  return { earnedEvidenceCenters, resolvedCenters };
+}
+
 export function refreshGeometry(garden) {
   const centers = [];
 
@@ -207,6 +219,7 @@ export function refreshGeometry(garden) {
   }));
   const reusableArchetypes = archetypes.filter((x) => x.reuseCount > 1).length;
   const reusableCapabilities = capabilities.filter((x) => x.reuseCount > 1).length;
+  const coverage = coverageMetrics(centers);
 
   let stage = 'seed_of_life';
   if ((garden.opportunities ?? []).length > 0) stage = 'flower_of_life';
@@ -214,7 +227,7 @@ export function refreshGeometry(garden) {
   if (edges.length > 0) stage = 'metatrons_cube';
 
   garden.geometry = {
-    version: 2,
+    version: 3,
     stage,
     metaphorNote: 'Sacred-geometry language is used as a functional design metaphor: centers preserve evidence and agency; edges represent reusable relationships. It is not treated as empirical proof by itself.',
     fruitOfLifeCenters: FRUIT_OF_LIFE_CENTERS,
@@ -227,6 +240,10 @@ export function refreshGeometry(garden) {
       edgeCount: edges.length,
       reusableArchetypeCount: reusableArchetypes,
       reusableCapabilityCount: reusableCapabilities,
+      earnedEvidenceCenterCount: coverage.earnedEvidenceCenters,
+      resolvedCenterCount: coverage.resolvedCenters,
+      validatedOpportunityCount: (garden.opportunities ?? []).filter((x) => x.status === 'validated').length,
+      buildReadyOpportunityCount: (garden.opportunities ?? []).filter((x) => x.status === 'build_ready').length,
       preservedBlockedKnowledge: (garden.opportunities ?? []).filter((x) => x.status === 'measurement_blocked').length,
       liveFruitCount: (garden.fruits ?? []).filter((x) => ['live', 'fruit', 'build_ready'].includes(x.status)).length,
     },
