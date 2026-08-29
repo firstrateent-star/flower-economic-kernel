@@ -20,7 +20,8 @@ try {
     });
   }
 
-  const maxBreaths = Math.max(1, Math.min(1, Number(input.maxBreaths ?? process.env.FLOWER_MAX_BREATHS_PER_PULSE ?? 1)));
+  // v0 safety rule: one manual run = one paid reasoning breath.
+  const maxBreaths = 1;
   const result = await pulse({ garden, reasoner: new OpenAIReasoner(), maxBreaths });
   await Actor.setValue(STORE_KEY, garden);
 
