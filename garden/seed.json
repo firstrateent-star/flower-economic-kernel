@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "id": "garden_economic_root_v0",
+  "createdAt": "2026-08-28T00:00:00.000Z",
+  "updatedAt": "2026-08-28T00:00:00.000Z",
+  "center": {
+    "rootGoal": "Increase the human Center-holder's sovereign capacity by cultivating low-maintenance economic Fruit whose accumulated money, knowledge, infrastructure, and distribution lower the cost of producing subsequent Fruit.",
+    "direction": "Discover, cheaply falsify, and cultivate machine-mediated internet assets that can acquire, fulfill, and monetize with minimal continuing human labor.",
+    "invariants": [
+      "Reality contact over persuasive narrative.",
+      "No epistemic promotion without accountable evidence.",
+      "The organism exists to nourish the human Center-holder; the human does not exist to nourish the organism.",
+      "Prefer passive discoverability and automatic fulfillment.",
+      "Kill weak branches cheaply before building.",
+      "No debt, hidden obligations, human impersonation, or unauthorized public exposure."
+    ],
+    "autonomy": {
+      "observe": true,
+      "createPrivate": true,
+      "sandbox": true,
+      "maxExperimentUsd": 5,
+      "maxDailyUsd": 5,
+      "maxRecurringUsd": 0,
+      "publicDeploy": false,
+      "humanContact": false,
+      "useHumanIdentity": false,
+      "contracts": false,
+      "debt": false,
+      "harvestAccess": false
+    }
+  },
+  "status": {"generation": 1, "pulseCount": 0, "lastPulseAt": null, "lastBreathAt": null, "lastPressure": null},
+  "soil": [
+    {"id":"soil_structural_complementarity","principle":"Prefer problems a dominant upstream product is structurally unlikely to solve because the resolution sits outside its core job.","scope":"economic opportunity selection","status":"supported","derivedFrom":["historical_flower_av_watch"]},
+    {"id":"soil_resolution_complexity_floor","principle":"Reject candidates whose resolution collapses to a trivial filter unless another moat such as distribution makes trivial implementation irrelevant.","scope":"economic opportunity selection","status":"supported","derivedFrom":["historical_flower_av_watch"]},
+    {"id":"soil_passive_discoverability","principle":"A Fruit for this Garden should attach to an existing nutrient channel where buyers or machines already search; repeated human outreach is a passivity failure.","scope":"distribution","status":"supported","derivedFrom":["historical_flower_economic_root"]},
+    {"id":"soil_reproduction","principle":"Economic reproduction occurs only when later Fruit inherit money, knowledge, infrastructure, code, distribution, or market evidence that lowers the human/capital/uncertainty cost of the next generation.","scope":"portfolio reproduction","status":"supported","derivedFrom":["historical_flower_economic_root"]}
+  ],
+  "fruits": [
+    {"id":"fruit_exact_match_guard","name":"Google Maps Exact Match Guard","status":"live","platform":"Apify","repository":"firstrateent-star/google-maps-exact-match-guard","monthlyRevenueUsd":null,"maintenanceBurden":"unknown","inheritance":["Fail-closed trust-adapter pattern","Apify Actor deployment familiarity","Google Maps identity-drift market evidence","Machine-to-machine metered-delivery pattern"],"notes":"Generation 0/1 reference Fruit. Leave untouched until external usage evidence warrants change."}
+  ],
+  "opportunities": [
+    {"id":"opp_maps_website_pointer_guard","name":"Google Maps Business → Website Identity Guard","status":"seed","thesis":"A correct Google Maps business entity can contain a stale, wrong, parent, or unrelated website pointer; downstream contact enrichment can then work perfectly on the wrong entity.","moneyFlow":"Google Maps scraping and contact enrichment workflows","buyer":"lead-data, enrichment, and automation users","nutrientChannel":"Apify / API workflows using Google Maps data","passivity":"Potentially high if metered machine-to-machine verification","autonomyCompatibility":"Potentially high","reproductivePotential":"Could branch into website/contact attribution trust adapters","evidence":[],"counterEvidence":[],"sources":[],"ancestry":["Trusted Pointer Drift","Exact Match Guard"]}
+  ],
+  "experiments": [],
+  "events": [],
+  "approvals": [],
+  "traces": []
+}
