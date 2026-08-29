@@ -112,6 +112,33 @@ function hasSupportingDimension(garden, opportunityId, dimension) {
   );
 }
 
+function restoreOpportunityAfterLegacyProvenanceDemotion(garden, exp, reason) {
+  const opp = (garden.opportunities ?? []).find((x) => x.id === exp.opportunityId);
+  if (!opp || ['fruit', 'dormant', 'compost'].includes(opp.status)) return false;
+
+  const buyerSupported = hasSupportingDimension(garden, opp.id, 'buyer_demand');
+  opp.status = buyerSupported ? 'supported' : 'needs_test';
+  opp.validatedAt = null;
+  opp.buildPlan = null;
+  opp.experimentId = null;
+  opp.validationGate = {
+    pass: false,
+    migrationNote: 'Legacy failure-reality scout is historical context only after source-provenance hardening.',
+  };
+  opp.selectedForExperiment = true;
+  opp.selectionState = 'selected';
+  opp.selectionCooldown = false;
+  opp.measurementBlockedAt = null;
+  opp.measurementBlockedDimension = null;
+  opp.measurementBlockedExperimentId = null;
+  opp.measurementBlockedReason = null;
+  opp.epistemicNote = buyerSupported
+    ? 'Buyer demand remains externally supported. Failure reality is unknown—not weakened—and must be re-earned with source-mapped provenance before a private build plan is justified.'
+    : 'Legacy failure-reality support is historical context only. Failure reality remains unknown and testable under the source-mapped method.';
+  opp.provenanceRepairReason = reason;
+  return true;
+}
+
 await Actor.main(async () => {
   await Actor.getInput();
 
@@ -198,37 +225,42 @@ await Actor.main(async () => {
     }
   }
 
+  // Legacy evidence-bearing scouts predate exact dimension→source provenance. Preserve
+  // them as historical context, but remove them from both positive validation and the
+  // non-supporting-search detector. Unknown provenance is not negative evidence.
   for (const exp of garden.experiments ?? []) {
-    if (
-      exp.method === 'evidence_bearing_expand_v1'
-      && exp.status === 'integrated'
+    const legacyUnmappedScout = exp.method === 'evidence_bearing_expand_v1'
       && exp.validationDimension === 'failure_reality'
-      && exp.result?.verdict === 'supports'
       && exp.result?.provenanceStatus !== 'source_mapped'
-    ) {
-      exp.result.legacyVerdict = 'supports';
-      exp.result.verdict = 'inconclusive';
-      exp.result.provenanceStatus = 'legacy_unmapped';
-      exp.migrationNote = 'Repaired after source-provenance hardening: the legacy scout source pool was not mapped specifically to failure_reality, so its support is historical context rather than validation credit.';
+      && (exp.status === 'integrated' || exp.status === 'legacy_context');
+    if (!legacyUnmappedScout) continue;
 
-      const opp = (garden.opportunities ?? []).find((x) => x.id === exp.opportunityId);
-      if (opp && !['fruit', 'dormant', 'compost'].includes(opp.status)) {
-        const buyerSupported = hasSupportingDimension(garden, opp.id, 'buyer_demand');
-        opp.status = buyerSupported ? 'supported' : 'needs_test';
-        opp.validatedAt = null;
-        opp.buildPlan = null;
-        opp.validationGate = {
-          pass: false,
-          migrationNote: 'Legacy failure-reality scout lost validation credit after source-provenance hardening.',
-        };
-        opp.selectedForExperiment = true;
-        opp.selectionState = 'selected';
-        opp.selectionCooldown = false;
-        opp.epistemicNote = buyerSupported
-          ? 'Buyer demand remains externally supported. Failure reality must be re-earned with source-mapped provenance before a private build plan is justified.'
-          : 'Legacy failure-reality support was provenance-unmapped and has been demoted; the branch remains testable, not disproven.';
-      }
-      stateMigrations.push(`${exp.id}:legacy_failure_provenance_demoted`);
+    if (exp.status !== 'legacy_context') {
+      exp.result.legacyVerdict = exp.result?.legacyVerdict ?? exp.result?.verdict ?? 'supports';
+      exp.result.provenanceStatus = 'legacy_unmapped';
+      exp.status = 'legacy_context';
+      exp.migrationNote = 'Historical context after source-provenance hardening: source pool was not mapped specifically to failure_reality. This experiment is neither validating nor falsifying evidence.';
+      stateMigrations.push(`${exp.id}:legacy_failure_context_only`);
+    }
+
+    const opp = (garden.opportunities ?? []).find((x) => x.id === exp.opportunityId);
+    const falselyBlockedByThisScout = opp?.status === 'measurement_blocked'
+      && opp.measurementBlockedDimension === 'failure_reality'
+      && (opp.measurementBlockedExperimentId === exp.id
+        || /bounded public web search returned inconclusive evidence for failure_reality/i.test(opp.measurementBlockedReason ?? ''));
+
+    const needsLegacyRepair = falselyBlockedByThisScout
+      || (opp && ['validated', 'build_ready'].includes(opp.status))
+      || (opp && exp.result?.provenanceStatus === 'legacy_unmapped' && !hasSupportingDimension(garden, opp.id, 'failure_reality'));
+
+    if (needsLegacyRepair && restoreOpportunityAfterLegacyProvenanceDemotion(
+      garden,
+      exp,
+      falselyBlockedByThisScout
+        ? 'Recovered from false measurement block caused by provenance demotion.'
+        : 'Removed legacy unmapped failure credit.',
+    )) {
+      stateMigrations.push(`${opp.id}:legacy_failure_reopened`);
     }
   }
 
