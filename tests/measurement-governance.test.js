@@ -84,3 +84,30 @@ test('Maps pointer guard preserves its branch-specific direct-sample escape hatc
   assert.equal(direct.opportunityId, 'opp_maps_website_pointer_guard');
   assert.equal(direct.oneTimeCostUsd, 0.5);
 });
+
+test('email authentication branch uses zero-spend DNS reality before semantic failure search', async () => {
+  const garden = structuredClone(seed);
+  const opp = {
+    ...structuredClone(garden.opportunities[0]),
+    id: 'opp_a179f5e22952',
+    name: 'Transactional Email Authentication Preflight API',
+    status: 'supported',
+    selectedForExperiment: true,
+    selectionState: 'selected',
+    experimentId: null,
+  };
+  garden.opportunities = [opp];
+  garden.experiments = [supportingBuyerDemandExperiment(opp.id)];
+
+  assert.equal(classifyPressure(garden).type, 'EXPERIMENT');
+  await pulse({ garden, reasoner: new MockReasoner(), maxBreaths: 1 });
+
+  const direct = garden.experiments.find((exp) => exp.method === 'email_auth_dns_sample');
+  assert.ok(direct);
+  assert.equal(direct.opportunityId, opp.id);
+  assert.equal(direct.validationDimension, 'failure_reality');
+  assert.equal(direct.actionType, 'observe');
+  assert.equal(direct.oneTimeCostUsd, 0);
+  assert.equal(direct.recurringUsd, 0);
+  assert.equal(direct.status, 'authorized');
+});
