@@ -1,6 +1,7 @@
 import { Actor, log } from 'apify';
 import { pulse } from '../core/kernel.js';
 import { classifyPressure } from '../core/pressure.js';
+import { authorizeAction } from '../core/autonomy.js';
 import { OpenAIReasoner } from '../reasoners/openai.js';
 import seed from '../../garden/seed.json' with { type: 'json' };
 
@@ -29,10 +30,12 @@ await Actor.main(async () => {
   }
   if (repaired.length) log.warning('Epistemic state repaired', { opportunities: repaired });
 
-  // One-time migration for the first successfully integrated reality experiment.
-  // It searched public demand plus failure signals; conservatively credit only
-  // buyer_demand so a separate experiment must still establish failure_reality.
+  // Migrations preserve earned Garden history across code improvements.
   const stateMigrations = [];
+
+  // The first successfully integrated reality experiment searched public demand plus
+  // failure signals; conservatively credit only buyer_demand so failure_reality still
+  // requires an independent experiment.
   for (const exp of garden.experiments ?? []) {
     if (
       exp.id === 'exp_94251fcac534'
@@ -45,6 +48,39 @@ await Actor.main(async () => {
       stateMigrations.push(`${exp.id}:buyer_demand`);
     }
   }
+
+  // Apify rejects maxTotalChargeUsd below $0.50 for the inherited Google Maps Actor.
+  // Earlier code authorized the direct sample at $0.25, which the platform refused
+  // before execution. Raise only the run ceiling to the platform minimum and pass it
+  // back through the existing autonomy membrane. This is still far below the Garden's
+  // $5 per-experiment ceiling and creates no recurring obligation.
+  for (const exp of garden.experiments ?? []) {
+    if (
+      exp.method === 'maps_website_sample'
+      && exp.status === 'authorized'
+      && Number(exp.oneTimeCostUsd) < 0.50
+    ) {
+      const previousCap = Number(exp.oneTimeCostUsd);
+      exp.oneTimeCostUsd = 0.50;
+      const auth = authorizeAction(garden, { type: 'spend', amountUsd: 0.50, recurringUsd: Number(exp.recurringUsd ?? 0) });
+      exp.authorization = auth;
+      exp.migrationNote = `Platform-minimum migration: run ceiling raised from $${previousCap.toFixed(2)} to $0.50 after Apify rejected the lower cap. This is a ceiling, not a claim of actual spend.`;
+      if (!auth.allowed) {
+        exp.status = 'awaiting_approval';
+        if (auth.requiresApproval && !garden.approvals.some((x) => x.status === 'pending' && x.action?.id === exp.id)) {
+          garden.approvals.push({
+            id: `approval_${exp.id}`,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            action: exp,
+            reason: auth.reason,
+          });
+        }
+      }
+      stateMigrations.push(`${exp.id}:charge_cap_${previousCap.toFixed(2)}_to_0.50`);
+    }
+  }
+
   if (stateMigrations.length) log.info('Garden state migrated', { migrations: stateMigrations });
 
   // First-live v0 deliberately disables external event ingestion.
