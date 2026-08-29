@@ -3,7 +3,7 @@
   "id": "fruit_social_preview_drift_guard",
   "opportunityId": "opp_b7681c126171",
   "name": "Social Preview Drift Guard API",
-  "stage": "monetization_ready",
+  "stage": "launch_approved_build_pending",
   "platform": "Apify",
   "sourcePath": "actors/social-preview-drift-guard",
   "failureArchetype": "Cross-consumer representation drift",
@@ -12,6 +12,14 @@
   "capabilityFamily": "representation_comparison",
   "permissions": "limited",
   "standby": false,
+  "publicReleaseApproval": {
+    "approved": true,
+    "approvedAt": "2026-08-29",
+    "approvedPricingModel": "pay_per_event",
+    "approvedPrimaryEvent": "url-checked",
+    "approvedInitialPriceUsdPerEvent": 0.005,
+    "sourceCodeMayBePublic": false
+  },
   "privateVerification": {
     "status": "passed",
     "calibration": {
@@ -30,8 +38,9 @@
   "monetization": {
     "preferredModel": "pay_per_event",
     "primaryEvent": "url-checked",
-    "suggestedInitialPriceUsdPerEvent": 0.005,
+    "approvedInitialPriceUsdPerEvent": 0.005,
     "chargeOnlyObservedResults": true,
+    "passPlatformUsageToUser": false,
     "pricingReason": "Private Apify calibration showed the intended PASS/RISK/FAIL behavior at 256 MB with a three-URL run cost displayed as $0.000; $0.005 per observed URL leaves substantial platform-cost headroom while remaining suitable for bulk automation."
   },
   "passiveDistribution": {
