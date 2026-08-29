@@ -11,6 +11,19 @@ try {
   const existing = await Actor.getValue(STORE_KEY);
   const garden = existing ?? structuredClone(seed);
 
+  // Epistemic repair: older v0 builds could promote model-generated reasoning to
+  // "supported" without an external source. Repair that state deterministically.
+  const repaired = [];
+  for (const opp of garden.opportunities ?? []) {
+    const externalSources = (opp.sources ?? []).filter((s) => s?.url);
+    if (opp.status === 'supported' && externalSources.length === 0) {
+      opp.status = 'needs_test';
+      opp.epistemicNote = 'Repaired: prior support had no external source. Model reasoning is provisional only.';
+      repaired.push(opp.id);
+    }
+  }
+  if (repaired.length) log.warning('Epistemic state repaired', { opportunities: repaired });
+
   // First-live v0 deliberately disables external event ingestion.
   // We re-enable event-driven waking only after the basic falsification loop is proven.
 
@@ -24,6 +37,7 @@ try {
     nextPressure: classifyPressure(garden),
     pendingApprovals: garden.approvals.filter((x) => x.status === 'pending'),
     generation: garden.status.generation,
+    epistemicRepairs: repaired,
   };
   await Actor.setValue('OUTPUT', output);
   await Actor.pushData(output);
