@@ -102,7 +102,7 @@ async function runActor() {
     checkImages,
     chargeLimitReached,
     pricingModel: pricingInfo.isPayPerEvent ? 'pay_per_event' : 'platform_or_unmonetized',
-    rulesetVersion: '0.1.1',
+    rulesetVersion: '0.1.0',
     note: 'Each dataset item is one URL audit. PASS/RISK/FAIL describes public crawler-facing metadata consistency, not a guarantee of any platform’s cached or final rendered card.',
   };
 
