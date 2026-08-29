@@ -34,7 +34,13 @@ function parseJsonLoose(text) {
 }
 
 export class OpenAIReasoner {
-  constructor({ apiKey = process.env.OPENAI_API_KEY, model = process.env.FLOWER_MODEL || 'gpt-5.6-luna', enableWebSearch = process.env.FLOWER_ENABLE_WEB_SEARCH === 'true', reasoningEffort = process.env.FLOWER_REASONING_EFFORT || 'low', maxOutputTokens = Number(process.env.FLOWER_MAX_OUTPUT_TOKENS || 1200) } = {}) {
+  constructor({
+    apiKey = process.env.OPENAI_API_KEY,
+    model = process.env.FLOWER_MODEL || 'gpt-5.6-luna',
+    enableWebSearch = process.env.FLOWER_ENABLE_WEB_SEARCH === 'true',
+    reasoningEffort = process.env.FLOWER_REASONING_EFFORT || 'low',
+    maxOutputTokens = Number(process.env.FLOWER_MAX_OUTPUT_TOKENS || 1200),
+  } = {}) {
     if (!apiKey) throw new Error('OPENAI_API_KEY is required for OpenAIReasoner.');
     this.apiKey = apiKey;
     this.model = model;
