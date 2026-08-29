@@ -1,6 +1,10 @@
 import { authorizeAction } from './autonomy.js';
 import { id, nowIso } from './utils.js';
 import { executeMapsWebsiteSample } from '../experiments/maps-website-sample.js';
+import { executeEmailAuthDnsSample } from '../experiments/email-auth-dns-sample.js';
+
+const MAPS_WEBSITE_OPPORTUNITY_ID = 'opp_maps_website_pointer_guard';
+const EMAIL_AUTH_PREFLIGHT_OPPORTUNITY_ID = 'opp_a179f5e22952';
 
 function byId(items, targetId) {
   return items.find((x) => x.id === targetId);
@@ -50,10 +54,19 @@ function requiredValidationDimension(garden, opportunityId) {
 
 function authorizeExperiment(garden, opp, e) {
   const auth = authorizeAction(garden, { type: e.actionType, amountUsd: e.oneTimeCostUsd, recurringUsd: e.recurringUsd });
-  const exp = { id: id('exp'), opportunityId: opp.id, status: auth.allowed ? 'authorized' : 'awaiting_approval', createdAt: nowIso(), authorization: auth, ...e };
+  const exp = {
+    id: id('exp'),
+    opportunityId: opp.id,
+    status: auth.allowed ? 'authorized' : 'awaiting_approval',
+    createdAt: nowIso(),
+    authorization: auth,
+    ...e,
+  };
   garden.experiments.push(exp);
   opp.experimentId = exp.id;
-  if (auth.requiresApproval) garden.approvals.push({ id: id('approval'), status: 'pending', createdAt: nowIso(), action: exp, reason: auth.reason });
+  if (auth.requiresApproval) {
+    garden.approvals.push({ id: id('approval'), status: 'pending', createdAt: nowIso(), action: exp, reason: auth.reason });
+  }
   return { exp, auth };
 }
 
@@ -70,10 +83,6 @@ function predeclaredKillConditionMet(exp) {
   return false;
 }
 
-function hasBranchSpecificAlternateMeasurement(opp, validationDimension) {
-  return opp?.id === 'opp_maps_website_pointer_guard' && validationDimension === 'failure_reality';
-}
-
 function nonSupportingIntegratedWebSearch(experiments, validationDimension) {
   return experiments.find((exp) =>
     exp.status === 'integrated'
@@ -81,6 +90,17 @@ function nonSupportingIntegratedWebSearch(experiments, validationDimension) {
     && exp.validationDimension === validationDimension
     && ['weakens', 'inconclusive'].includes(exp.result?.verdict)
   ) ?? null;
+}
+
+function hasMethod(experiments, method) {
+  return experiments.some((exp) => exp.method === method);
+}
+
+function hasUnusedBranchSpecificAlternateMeasurement(opp, validationDimension, experiments) {
+  if (validationDimension !== 'failure_reality') return false;
+  if (opp?.id === MAPS_WEBSITE_OPPORTUNITY_ID) return !hasMethod(experiments, 'maps_website_sample');
+  if (opp?.id === EMAIL_AUTH_PREFLIGHT_OPPORTUNITY_ID) return !hasMethod(experiments, 'email_auth_dns_sample');
+  return false;
 }
 
 function markMeasurementBlocked(garden, opp, exp, validationDimension) {
@@ -91,8 +111,8 @@ function markMeasurementBlocked(garden, opp, exp, validationDimension) {
   opp.measurementBlockedDimension = validationDimension ?? null;
   opp.measurementBlockedExperimentId = exp?.id ?? null;
   opp.validationGate = validationGateSnapshot(garden, opp.id);
-  opp.measurementBlockedReason = `A bounded public web search returned ${exp?.result?.verdict ?? 'non-supporting'} evidence for ${validationDimension ?? 'the required dimension'}, and v0 has no materially different bounded executor for this opportunity.`;
-  opp.epistemicNote = 'Preserved, not disproven: required reality contact is currently inaccessible with Flower v0 execution methods. Do not repeat the same search; revisit only when a materially different measurement method exists.';
+  opp.measurementBlockedReason = `A bounded public web search returned ${exp?.result?.verdict ?? 'non-supporting'} evidence for ${validationDimension ?? 'the required dimension'}, and v0 has no unused materially different bounded executor for this opportunity.`;
+  opp.epistemicNote = 'Preserved, not disproven: required reality contact is currently inaccessible with unused Flower v0 execution methods. Do not repeat the same measurement; revisit only when a materially different method exists.';
 
   const principle = 'Measurement methods are opportunity-specific: when a required validation dimension cannot be tested by a materially different bounded executor, preserve the branch as measurement-blocked and redirect capital instead of repeating the same search.';
   if (!(garden.soil ?? []).some((x) => x.principle === principle)) {
@@ -105,6 +125,50 @@ function markMeasurementBlocked(garden, opp, exp, validationDimension) {
       createdAt: nowIso(),
     });
   }
+}
+
+function authorizeEmailDnsFailureReality(garden, opp) {
+  const e = {
+    name: 'Direct ESP-Signaled SPF/DMARC DNS Sample',
+    tests: 'Resolve a bounded deterministic set of public domains, retain domains whose SPF names a recognized transactional ESP, and inspect those domains for hard SPF/DMARC DNS failures. Missing DMARC or p=none is recorded only as softer risk; unknown DKIM selectors and inbox placement are explicitly out of scope.',
+    actionType: 'observe',
+    method: 'email_auth_dns_sample',
+    oneTimeCostUsd: 0,
+    recurringUsd: 0,
+    successCondition: 'At least eight domains expose a recognized transactional-ESP marker in SPF and at least two of those domains expose a hard SPF/DMARC DNS failure such as multiple SPF records, multiple DMARC records, or a malformed DMARC record.',
+    killCondition: 'If at least eight ESP-signaled domains are evaluable and none exposes a hard SPF/DMARC DNS failure, the direct failure-rate thesis is weakened and this branch should yield before another method is considered.',
+    validationDimension: 'failure_reality',
+  };
+  const { exp, auth } = authorizeExperiment(garden, opp, e);
+  return {
+    changed: true,
+    summary: auth.allowed
+      ? `Experiment authorized: ${exp.name} [failure_reality; direct_dns; $0]`
+      : `Experiment requires approval: ${exp.name}`,
+    action: 'EXPERIMENT',
+  };
+}
+
+function authorizeMapsFailureReality(garden, opp) {
+  const e = {
+    name: 'Direct Stratified Maps→Website Identity Sample',
+    tests: 'Observe a small stratified sample of live Google Maps business records, fetch each linked website, and compare business-name/phone/location identity signals instead of searching for discussions about the failure.',
+    actionType: 'spend',
+    method: 'maps_website_sample',
+    oneTimeCostUsd: 0.50,
+    recurringUsd: 0,
+    successCondition: 'At least one mismatch candidate appears among at least four evaluable live Maps→website pairs.',
+    killCondition: 'At least five evaluable pairs show no mismatch candidate, weakening the failure-rate thesis enough to avoid a private build for now.',
+    validationDimension: 'failure_reality',
+  };
+  const { exp, auth } = authorizeExperiment(garden, opp, e);
+  return {
+    changed: true,
+    summary: auth.allowed
+      ? `Experiment authorized: ${exp.name} [failure_reality; direct_sample; max $0.50]`
+      : `Experiment requires approval: ${exp.name}`,
+    action: 'EXPERIMENT',
+  };
 }
 
 export async function runEnzyme({ garden, pressure, reasoner }) {
@@ -124,7 +188,12 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
         reasoningEvidence: [], externalEvidence: [], counterEvidence: [], sources: result.sources ?? [], ancestry: ['EXPAND'],
       });
     }
-    return { changed: (result.data.candidates ?? []).length > 0, summary: `Expanded with ${(result.data.candidates ?? []).length} candidate(s).`, action: 'EXPAND', sources: result.sources };
+    return {
+      changed: (result.data.candidates ?? []).length > 0,
+      summary: `Expanded with ${(result.data.candidates ?? []).length} candidate(s).`,
+      action: 'EXPAND',
+      sources: result.sources,
+    };
   }
 
   if (pressure.type === 'FALSIFY') {
@@ -158,7 +227,12 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     for (const principle of result.data.principles ?? []) {
       garden.soil.push({ id: id('soil'), principle, scope: 'economic', status: 'candidate', derivedFrom: [opp.id], createdAt: nowIso() });
     }
-    return { changed: true, summary: `${opp.name}: ${opp.status}. ${opp.lastRationale ?? ''}`.trim(), action: 'FALSIFY', sources: externalSources };
+    return {
+      changed: true,
+      summary: `${opp.name}: ${opp.status}. ${opp.lastRationale ?? ''}`.trim(),
+      action: 'FALSIFY',
+      sources: externalSources,
+    };
   }
 
   if (pressure.type === 'EXPERIMENT') {
@@ -171,10 +245,31 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
       ? nonSupportingIntegratedWebSearch(previous, requiredDimension)
       : null;
 
-    // Measurement methods belong to the opportunity they actually measure. The direct
-    // Maps→website sampler is a branch-specific escape hatch, not a generic fallback for
-    // unrelated opportunities that happen to have an inconclusive web-search result.
-    if (priorNonSupportingRequiredWebSearch && !hasBranchSpecificAlternateMeasurement(opp, requiredDimension)) {
+    // The email-authentication branch has a zero-spend, read-only DNS organ. Use direct
+    // machine-readable reality before paying for a semantic failure-reality search.
+    if (
+      opp.id === EMAIL_AUTH_PREFLIGHT_OPPORTUNITY_ID
+      && requiredDimension === 'failure_reality'
+      && !hasMethod(previous, 'email_auth_dns_sample')
+    ) {
+      return authorizeEmailDnsFailureReality(garden, opp);
+    }
+
+    // The Maps branch keeps its historical direct sampler only as an escalation after
+    // a non-supporting semantic search. No other opportunity may inherit this method.
+    if (
+      opp.id === MAPS_WEBSITE_OPPORTUNITY_ID
+      && requiredDimension === 'failure_reality'
+      && priorNonSupportingRequiredWebSearch
+      && !hasMethod(previous, 'maps_website_sample')
+    ) {
+      return authorizeMapsFailureReality(garden, opp);
+    }
+
+    if (
+      priorNonSupportingRequiredWebSearch
+      && !hasUnusedBranchSpecificAlternateMeasurement(opp, requiredDimension, previous)
+    ) {
       markMeasurementBlocked(garden, opp, priorNonSupportingRequiredWebSearch, requiredDimension);
       return {
         changed: true,
@@ -183,31 +278,9 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
       };
     }
 
-    if (priorNonSupportingRequiredWebSearch && hasBranchSpecificAlternateMeasurement(opp, requiredDimension)) {
-      const e = {
-        name: 'Direct Stratified Maps→Website Identity Sample',
-        tests: 'Observe a small stratified sample of live Google Maps business records, fetch each linked website, and compare business-name/phone/location identity signals instead of searching for discussions about the failure.',
-        actionType: 'spend',
-        method: 'maps_website_sample',
-        oneTimeCostUsd: 0.50,
-        recurringUsd: 0,
-        successCondition: 'At least one mismatch candidate appears among at least four evaluable live Maps→website pairs.',
-        killCondition: 'At least five evaluable pairs show no mismatch candidate, weakening the failure-rate thesis enough to avoid a private build for now.',
-        validationDimension: 'failure_reality',
-      };
-      const { exp, auth } = authorizeExperiment(garden, opp, e);
-      return {
-        changed: true,
-        summary: auth.allowed
-          ? `Experiment authorized: ${exp.name} [failure_reality; direct_sample; max $0.50]`
-          : `Experiment requires approval: ${exp.name}`,
-        action: 'EXPERIMENT',
-      };
-    }
-
     const result = await reasoner.reason({
       operation: 'EXPERIMENT', garden, target: opp,
-      prompt: `Design the cheapest discriminating experiment that can materially change whether we pursue this. It must avoid recurring obligations, contracts, Sean's identity, cold outreach, and public deployment unless separately approved. The experiment must produce external evidence; internal reasoning alone is not a successful test. Avoid merely repeating prior experiments.\nPRIVATE-BUILD VALIDATION GATE: ${JSON.stringify(gate)}\nREQUIRED VALIDATION DIMENSION: ${requiredDimension ?? 'Choose an uncovered dimension that most cheaply reduces remaining uncertainty.'}\nVALIDATION DIMENSIONS: failure_reality = direct evidence the claimed failure actually occurs; buyer_demand = evidence buyers/workflows care enough to seek or pay for resolution; distribution_access = evidence passive discoverability/channel access; resolution_complexity = evidence resolution is not a trivial filter; willingness_to_pay = direct pricing/purchase evidence.\nV0 EXECUTION CAPABILITY: autonomous execution currently supports public web_search, plus a deterministic direct Maps→website sample only for the Google Maps Business → Website Identity Guard after a non-supporting failure-reality search. Prefer web_search only while it is a fresh discriminating method; do not repeat a non-supporting search without a materially different executor.\nPREVIOUS EXPERIMENTS: ${JSON.stringify(previous.map((x) => ({name:x.name,status:x.status,actionType:x.actionType,method:x.method ?? null,validationDimension:x.validationDimension ?? null,result:x.result ?? null})))}\nReturn one experiment with exactly one validationDimension.`,
+      prompt: `Design the cheapest discriminating experiment that can materially change whether we pursue this. It must avoid recurring obligations, contracts, Sean's identity, cold outreach, and public deployment unless separately approved. The experiment must produce external evidence; internal reasoning alone is not a successful test. Avoid merely repeating prior experiments.\nPRIVATE-BUILD VALIDATION GATE: ${JSON.stringify(gate)}\nREQUIRED VALIDATION DIMENSION: ${requiredDimension ?? 'Choose an uncovered dimension that most cheaply reduces remaining uncertainty.'}\nVALIDATION DIMENSIONS: failure_reality = direct evidence the claimed failure actually occurs; buyer_demand = evidence buyers/workflows care enough to seek or pay for resolution; distribution_access = evidence passive discoverability/channel access; resolution_complexity = evidence resolution is not a trivial filter; willingness_to_pay = direct pricing/purchase evidence.\nV0 EXECUTION CAPABILITY: autonomous execution supports public web_search; a deterministic direct Maps→website sample only for the Google Maps Business → Website Identity Guard; and a deterministic read-only SPF/DMARC DNS sampler only for the current Transactional Email Authentication Preflight API branch. Direct DNS does not discover unknown DKIM selectors or prove inbox placement. Prefer a fresh executable method and do not invent generic DNS, GitHub, registry, or API enumeration capabilities.\nPREVIOUS EXPERIMENTS: ${JSON.stringify(previous.map((x) => ({name:x.name,status:x.status,actionType:x.actionType,method:x.method ?? null,validationDimension:x.validationDimension ?? null,result:x.result ?? null})))}\nReturn one experiment with exactly one validationDimension.`,
     });
     const e = result.data.experiment;
     if (!e) return { changed: false, summary: 'No experiment proposed.', action: 'EXPERIMENT' };
@@ -215,7 +288,13 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
       throw new Error(`Experiment targeted ${e.validationDimension}; policy requires ${requiredDimension} before additional dimensions.`);
     }
     const { exp, auth } = authorizeExperiment(garden, opp, e);
-    return { changed: true, summary: auth.allowed ? `Experiment authorized: ${exp.name} [${exp.validationDimension}]` : `Experiment requires approval: ${exp.name}`, action: 'EXPERIMENT' };
+    return {
+      changed: true,
+      summary: auth.allowed
+        ? `Experiment authorized: ${exp.name} [${exp.validationDimension}]`
+        : `Experiment requires approval: ${exp.name}`,
+      action: 'EXPERIMENT',
+    };
   }
 
   if (pressure.type === 'EXECUTE_EXPERIMENT') {
@@ -229,7 +308,7 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     if (!opp) throw new Error('Experiment opportunity not found.');
 
     if (exp.method === 'maps_website_sample') {
-      if (opp.id !== 'opp_maps_website_pointer_guard') {
+      if (opp.id !== MAPS_WEBSITE_OPPORTUNITY_ID) {
         throw new Error('Maps→website direct sampler cannot execute for an unrelated opportunity.');
       }
       if (exp.actionType !== 'spend' || Number(exp.oneTimeCostUsd ?? Infinity) > 0.50 || Number(exp.recurringUsd ?? 0) !== 0) {
@@ -257,13 +336,45 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
       };
     }
 
+    if (exp.method === 'email_auth_dns_sample') {
+      if (opp.id !== EMAIL_AUTH_PREFLIGHT_OPPORTUNITY_ID) {
+        throw new Error('Email-auth DNS sampler cannot execute for an unrelated opportunity.');
+      }
+      if (exp.actionType !== 'observe' || Number(exp.oneTimeCostUsd ?? 0) !== 0 || Number(exp.recurringUsd ?? 0) !== 0) {
+        throw new Error('Email-auth DNS sampler crossed its zero-spend observation membrane.');
+      }
+      const direct = await executeEmailAuthDnsSample();
+      exp.status = 'result_ready';
+      exp.executedAt = nowIso();
+      exp.result = {
+        verdict: direct.verdict,
+        finding: direct.finding,
+        observations: direct.observations,
+        sources: direct.sources,
+        sourceCount: direct.sources.length,
+        sample: direct.sample,
+        limitations: direct.limitations,
+        responseId: null,
+        usage: null,
+      };
+      return {
+        changed: true,
+        summary: `${exp.name}: ${direct.verdict}; ${direct.finding}`,
+        action: 'EXECUTE_EXPERIMENT',
+        sources: direct.sources,
+      };
+    }
+
     // Public-web execution remains read-only and separately authorized. No publishing,
-    // human contact, purchases other than the branch-specific direct sample cap above,
-    // or external writes.
+    // human contact, unauthorized purchases, or external writes.
     if (exp.actionType !== 'web_search') {
       exp.status = 'blocked_capability';
       exp.blockedReason = `v0 has no autonomous executor for actionType=${exp.actionType}, method=${exp.method ?? 'none'}.`;
-      return { changed: true, summary: `Experiment stopped at capability membrane: ${exp.name}`, action: 'EXECUTE_EXPERIMENT' };
+      return {
+        changed: true,
+        summary: `Experiment stopped at capability membrane: ${exp.name}`,
+        action: 'EXECUTE_EXPERIMENT',
+      };
     }
 
     const result = await reasoner.reason({
@@ -312,7 +423,9 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     }
 
     const exp = byId(garden.experiments, pressure.targetId);
-    if (!exp || exp.status !== 'result_ready') return { changed: false, summary: 'No result ready for integration.', action: 'INTEGRATE' };
+    if (!exp || exp.status !== 'result_ready') {
+      return { changed: false, summary: 'No result ready for integration.', action: 'INTEGRATE' };
+    }
     const opp = byId(garden.opportunities, exp.opportunityId);
     if (!opp) throw new Error('Integrated experiment opportunity not found.');
 
@@ -350,7 +463,9 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
       if (gate.pass) {
         opp.status = 'validated';
         opp.validatedAt = nowIso();
-        opp.epistemicNote = 'Validated only for a PRIVATE build plan: independent external evidence covers buyer demand and failure reality. Public deployment and economic claims remain unearned.';
+        opp.epistemicNote = exp.method === 'email_auth_dns_sample'
+          ? 'Validated only for a PRIVATE build plan: buyer-demand evidence plus directly observed hard SPF/DMARC failure states on ESP-signaled domains satisfy the current gate. Unknown DKIM selectors, inbox placement, prevalence, and revenue impact remain unproven.'
+          : 'Validated only for a PRIVATE build plan: independent external evidence covers buyer demand and failure reality. Public deployment and economic claims remain unearned.';
       } else {
         opp.epistemicNote = `Externally supported by experiment ${exp.id}; private-build gate remains incomplete.`;
       }
@@ -358,16 +473,22 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
       sources.length > 0
       && exp.actionType === 'web_search'
       && ['weakens', 'inconclusive'].includes(exp.result?.verdict)
-      && !hasBranchSpecificAlternateMeasurement(opp, exp.validationDimension)
+      && !hasUnusedBranchSpecificAlternateMeasurement(
+        opp,
+        exp.validationDimension,
+        garden.experiments.filter((x) => x.opportunityId === opp.id),
+      )
     ) {
       markMeasurementBlocked(garden, opp, exp, exp.validationDimension);
     } else {
       // Weak/inconclusive evidence does not prove absence. Keep the idea testable when a
-      // materially different bounded measurement method still exists; otherwise it is
-      // preserved as measurement_blocked above rather than paying to repeat the same search.
+      // materially different bounded measurement method still exists; otherwise later
+      // routing can preserve it as measurement_blocked instead of repeating a method.
       opp.status = 'needs_test';
       opp.validationGate = validationGateSnapshot(garden, opp.id);
-      opp.epistemicNote = `Experiment ${exp.id} did not justify promotion; further reality contact is required through a materially different method.`;
+      opp.epistemicNote = exp.method === 'email_auth_dns_sample'
+        ? `Experiment ${exp.id} did not justify failure-reality promotion. DNS limitations are preserved; a materially different public-evidence method may still be tried once.`
+        : `Experiment ${exp.id} did not justify promotion; further reality contact is required through a materially different method.`;
     }
 
     return {
