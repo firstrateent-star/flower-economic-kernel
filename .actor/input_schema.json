@@ -4,12 +4,12 @@
   "schemaVersion": 1,
   "properties": {
     "maxBreaths": {
-      "title": "Maximum breaths this pulse",
+      "title": "Maximum micro-breaths this pulse",
       "type": "integer",
-      "description": "Hard cap for this run. v0 intentionally allows exactly one paid reasoning breath per manual run.",
-      "default": 1,
+      "description": "Maximum safe internal transitions in this manual pulse. The Kernel may traverse up to 12 deterministic/free micro-breaths, while the costly frontier remains capped at one per run.",
+      "default": 12,
       "minimum": 1,
-      "maximum": 1,
+      "maximum": 12,
       "editor": "number"
     }
   },
