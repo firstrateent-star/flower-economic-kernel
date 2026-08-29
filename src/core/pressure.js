@@ -14,6 +14,30 @@ function selectionIsStale(garden, opportunity) {
   return Number.isFinite(integratedAt) && integratedAt >= selectedAt;
 }
 
+function liveFruitAwaitingDistributionEvidence(garden) {
+  return (garden.fruits ?? [])
+    .filter((fruit) =>
+      ['live', 'public_live'].includes(fruit.status)
+      && (!fruit.publicMeasurement || fruit.publicMeasurement.status === 'awaiting_external_usage')
+    )
+    .sort((a, b) => {
+      // Explicitly launched Fruit outranks legacy/live records that do not yet carry
+      // a public-release contract. This prevents an older Fruit from monopolizing
+      // the Live Fruit Lock after a newly generated Fruit crosses the economic boundary.
+      const aExplicit = Number(Boolean(a.publicRelease?.economicBoundaryCrossed || a.publicRelease?.storeUrl));
+      const bExplicit = Number(Boolean(b.publicRelease?.economicBoundaryCrossed || b.publicRelease?.storeUrl));
+      if (aExplicit !== bExplicit) return bExplicit - aExplicit;
+
+      const aPublished = Date.parse(a.publicRelease?.publishedAt ?? a.liveAt ?? a.createdAt ?? 0);
+      const bPublished = Date.parse(b.publicRelease?.publishedAt ?? b.liveAt ?? b.createdAt ?? 0);
+      if (Number.isFinite(aPublished) && Number.isFinite(bPublished) && aPublished !== bPublished) {
+        return bPublished - aPublished;
+      }
+
+      return String(a.id ?? '').localeCompare(String(b.id ?? ''));
+    })[0] ?? null;
+}
+
 export function classifyPressure(garden) {
   const pendingApproval = garden.approvals.find((x) => x.status === 'pending');
   if (pendingApproval) return { type: 'HUMAN', targetId: pendingApproval.id, why: 'A consequential action awaits the Center-holder.' };
@@ -58,10 +82,9 @@ export function classifyPressure(garden) {
   // LIVE FRUIT LOCK: publication opens the distribution experiment; it does not end it.
   // Until the live Fruit receives outside usage/revenue/feedback evidence, learning from
   // the existing asset outranks spending cognition on a new speculative branch.
-  const liveFruitAwaitingEvidence = (garden.fruits ?? []).find((x) =>
-    ['live', 'public_live'].includes(x.status)
-    && (!x.publicMeasurement || x.publicMeasurement.status === 'awaiting_external_usage')
-  );
+  // When multiple Fruits are live, prioritize an explicitly launched/newly launched Fruit
+  // rather than whichever legacy record happens to appear first in the Garden array.
+  const liveFruitAwaitingEvidence = liveFruitAwaitingDistributionEvidence(garden);
   if (liveFruitAwaitingEvidence) return {
     type: 'HUMAN',
     targetId: liveFruitAwaitingEvidence.id,
