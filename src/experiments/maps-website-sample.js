@@ -143,7 +143,12 @@ async function fetchWebsite(url) {
   }
 }
 
-export async function executeMapsWebsiteSample({ maxChargeUsd = 0.25 } = {}) {
+export async function executeMapsWebsiteSample({ maxChargeUsd = 0.50 } = {}) {
+  const chargeCapUsd = Number(maxChargeUsd);
+  if (chargeCapUsd !== 0.50) {
+    throw new Error(`Direct Maps sample requires the upstream platform minimum charge ceiling of $0.50; received $${chargeCapUsd.toFixed(2)}.`);
+  }
+
   const client = Actor.newClient();
   const upstreamInput = {
     searchStringsArray: SAMPLE_QUERIES,
@@ -158,14 +163,14 @@ export async function executeMapsWebsiteSample({ maxChargeUsd = 0.25 } = {}) {
   log.info('Direct Maps→website sample starting', {
     upstreamActor: UPSTREAM_ACTOR,
     queries: SAMPLE_QUERIES.length,
-    maxTotalChargeUsd: maxChargeUsd,
+    maxTotalChargeUsd: chargeCapUsd,
   });
 
   const run = await client.actor(UPSTREAM_ACTOR).call(upstreamInput, {
     timeout: 90,
     waitSecs: 90,
     maxItems: SAMPLE_QUERIES.length,
-    maxTotalChargeUsd: maxChargeUsd,
+    maxTotalChargeUsd: chargeCapUsd,
     forcePermissionLevel: 'LIMITED_PERMISSIONS',
     log: null,
   });
@@ -211,7 +216,7 @@ export async function executeMapsWebsiteSample({ maxChargeUsd = 0.25 } = {}) {
   const observations = [
     finding,
     ...mismatches.slice(0, 2).map((x) => `Mismatch candidate: ${x.mapName} → ${x.website}; website identity signals: ${(x.websiteNames ?? []).slice(0, 2).join(' | ') || 'none'}.`),
-    `Method changed from web-discussion search to direct Maps-record and website observation; upstream spend hard-capped at $${maxChargeUsd.toFixed(2)}.`,
+    `Method changed from web-discussion search to direct Maps-record and website observation; upstream run ceiling fixed at Apify's $${chargeCapUsd.toFixed(2)} minimum with no recurring spend.`,
   ].slice(0, 4);
 
   return {
@@ -230,7 +235,7 @@ export async function executeMapsWebsiteSample({ maxChargeUsd = 0.25 } = {}) {
     upstream: {
       actor: UPSTREAM_ACTOR,
       runId: run.id ?? null,
-      maxTotalChargeUsd: maxChargeUsd,
+      maxTotalChargeUsd: chargeCapUsd,
     },
   };
 }
