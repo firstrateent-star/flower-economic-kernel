@@ -6,5 +6,6 @@ RUN npm --quiet set progress=false \
     && npm cache clean --force
 
 COPY --chown=myuser:myuser . ./
+RUN npm run check && npm test
 
 CMD ["npm", "start", "--silent"]
