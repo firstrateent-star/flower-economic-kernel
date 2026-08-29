@@ -12,17 +12,23 @@ type Finding = {
   fix: string
 }
 
+type ScanState = 'scanned' | 'blocked' | 'limited' | null
+
 export default function Home() {
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [findings, setFindings] = useState<Finding[] | null>(null)
+  const [notice, setNotice] = useState('')
+  const [status, setStatus] = useState<ScanState>(null)
 
   async function scan(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
     setFindings(null)
+    setNotice('')
+    setStatus(null)
     try {
       const res = await fetch('/api/scan', {
         method: 'POST',
@@ -32,6 +38,8 @@ export default function Home() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Scan failed')
       setFindings(data.findings)
+      setNotice(data.notice || '')
+      setStatus(data.status || 'scanned')
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -54,8 +62,17 @@ export default function Home() {
 
       {findings && (
         <section className="results">
-          <h2>{findings.length ? `${findings.length} possible issue${findings.length === 1 ? '' : 's'} found` : 'No obvious revenue-path faults found'}</h2>
-          <p className="muted">These are deterministic warnings, not proof of lost revenue.</p>
+          <h2>
+            {status === 'blocked'
+              ? 'Automated scan blocked by target site'
+              : status === 'limited'
+                ? 'Scan completed with limited visibility'
+                : findings.length
+                  ? `${findings.length} possible issue${findings.length === 1 ? '' : 's'} found`
+                  : 'No obvious revenue-path faults found'}
+          </h2>
+          {notice && <p className="muted">{notice}</p>}
+          {status === 'scanned' && <p className="muted">These are deterministic warnings, not proof of lost revenue.</p>}
           <div className="grid">
             {findings.map((f, i) => (
               <article key={i} className="card">
@@ -73,8 +90,8 @@ export default function Home() {
 
       <section className="method">
         <h2>What it looks for</h2>
-        <p>Dead or placeholder CTAs, localhost/example/staging/sandbox destinations, insecure HTTP money links, and suspicious internal monetization routes.</p>
-        <p className="muted">On-demand scan only. The app does not intentionally retain website content.</p>
+        <p>Dead or placeholder CTAs, clearly non-production destinations, and insecure HTTP money links visible in server-rendered HTML.</p>
+        <p className="muted">On-demand scan only. Some sites block automated requests or render key actions with JavaScript; those cases are reported as limited rather than treated as clean scans.</p>
       </section>
     </main>
   )
