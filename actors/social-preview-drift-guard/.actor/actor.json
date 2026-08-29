@@ -2,9 +2,16 @@
   "actorSpecification": 1,
   "name": "social-preview-drift-guard",
   "title": "Social Preview Drift Guard API",
+  "description": "Detect broken or inconsistent Open Graph, Twitter Card, canonical, redirect, and preview-image state across crawler-style consumers. Returns PASS, RISK, FAIL, or INCONCLUSIVE per URL.",
   "version": "0.1",
   "buildTag": "latest",
   "input": "./input_schema.json",
+  "output": "./output_schema.json",
+  "storages": {
+    "dataset": "./dataset_schema.json"
+  },
+  "readme": "../README.md",
+  "usesStandbyMode": false,
   "defaultMemoryMbytes": 256,
   "minMemoryMbytes": 128,
   "maxMemoryMbytes": 1024
