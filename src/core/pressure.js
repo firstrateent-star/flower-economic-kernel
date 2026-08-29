@@ -31,6 +31,16 @@ export function classifyPressure(garden) {
     why: 'A low-risk experiment already passed the autonomy membrane and is ready for bounded execution.',
   };
 
+  // Once evidence earns the private-build gate, convert that evidence into an artifact
+  // before spending another breath on speculative siblings. This is still private and
+  // does not cross the public-deployment or spending membrane.
+  const validated = garden.opportunities.find((x) => x.status === 'validated' && !x.fruitId);
+  if (validated) return {
+    type: 'BUILD_PLAN',
+    targetId: validated.id,
+    why: 'Evidence has earned a private build plan; convert validated knowledge into Fruit before allocating more speculative experiments.',
+  };
+
   const seed = garden.opportunities.find((x) => x.status === 'seed');
   if (seed) return { type: 'FALSIFY', targetId: seed.id, why: 'A living seed has not earned attention yet.' };
 
@@ -68,9 +78,6 @@ export function classifyPressure(garden) {
 
   const supported = testable.find((x) => x.status === 'supported');
   if (supported) return { type: 'EXPERIMENT', targetId: supported.id, why: 'External evidence supports the seed, but the remaining uncertainty should be pushed into reality.' };
-
-  const validated = garden.opportunities.find((x) => x.status === 'validated' && !x.fruitId);
-  if (validated) return { type: 'BUILD_PLAN', targetId: validated.id, why: 'Evidence has earned a private build plan.' };
 
   // measurement_blocked branches remain preserved in the Garden for future capabilities,
   // but they should not prevent Flower from exploring new actionable soil today.
