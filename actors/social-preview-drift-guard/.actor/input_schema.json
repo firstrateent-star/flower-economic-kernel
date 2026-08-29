@@ -16,12 +16,14 @@
       "description": "Additional public HTTP(S) URLs to inspect. Maximum 100 per run.",
       "editor": "stringList",
       "items": { "type": "string" },
+      "maxItems": 100,
       "default": []
     },
     "profiles": {
       "title": "Crawler profiles",
       "type": "array",
       "description": "Fetch each URL using these crawler user-agent profiles and compare the metadata each profile receives.",
+      "editor": "select",
       "items": {
         "type": "string",
         "enum": ["default", "facebook", "x", "linkedin", "slack", "discord"]
@@ -32,12 +34,14 @@
       "title": "Probe preview images",
       "type": "boolean",
       "description": "Verify that discovered preview-image URLs respond successfully with an image content type.",
+      "editor": "checkbox",
       "default": true
     },
     "maxConcurrency": {
       "title": "Concurrency",
       "type": "integer",
       "description": "Number of URLs processed in parallel.",
+      "editor": "number",
       "minimum": 1,
       "maximum": 10,
       "default": 4
@@ -45,6 +49,9 @@
     "requestTimeoutSecs": {
       "title": "Request timeout (seconds)",
       "type": "integer",
+      "description": "Maximum time allowed for each request before it is treated as a timeout.",
+      "editor": "number",
+      "unit": "seconds",
       "minimum": 3,
       "maximum": 30,
       "default": 10
@@ -52,9 +59,13 @@
     "maxHtmlMb": {
       "title": "Maximum HTML response size (MB)",
       "type": "number",
+      "description": "Maximum HTML response size read per crawler profile.",
+      "editor": "number",
+      "unit": "MB",
       "minimum": 0.25,
       "maximum": 5,
       "default": 2
     }
-  }
+  },
+  "additionalProperties": false
 }
