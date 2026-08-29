@@ -34,28 +34,70 @@ function parseJsonLoose(text) {
 }
 
 function structuredFormatFor(operation) {
-  if (operation !== 'EXECUTE_EXPERIMENT') return null;
-  return {
-    type: 'json_schema',
-    name: 'flower_experiment_result',
-    strict: true,
-    schema: {
-      type: 'object',
-      properties: {
-        verdict: {
-          type: 'string',
-          enum: ['supports', 'weakens', 'inconclusive'],
+  if (operation === 'EXPERIMENT') {
+    return {
+      type: 'json_schema',
+      name: 'flower_experiment_design',
+      strict: true,
+      schema: {
+        type: 'object',
+        properties: {
+          experiment: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              tests: { type: 'string' },
+              actionType: {
+                type: 'string',
+                enum: ['observe', 'web_search', 'create_private', 'sandbox', 'spend', 'public_deploy', 'human_contact'],
+              },
+              oneTimeCostUsd: { type: 'number' },
+              recurringUsd: { type: 'number' },
+              successCondition: { type: 'string' },
+              killCondition: { type: 'string' },
+              validationDimension: {
+                type: 'string',
+                enum: ['failure_reality', 'buyer_demand', 'distribution_access', 'resolution_complexity', 'willingness_to_pay'],
+              },
+            },
+            required: [
+              'name', 'tests', 'actionType', 'oneTimeCostUsd', 'recurringUsd',
+              'successCondition', 'killCondition', 'validationDimension',
+            ],
+            additionalProperties: false,
+          },
         },
-        finding: { type: 'string' },
-        observations: {
-          type: 'array',
-          items: { type: 'string' },
-        },
+        required: ['experiment'],
+        additionalProperties: false,
       },
-      required: ['verdict', 'finding', 'observations'],
-      additionalProperties: false,
-    },
-  };
+    };
+  }
+
+  if (operation === 'EXECUTE_EXPERIMENT') {
+    return {
+      type: 'json_schema',
+      name: 'flower_experiment_result',
+      strict: true,
+      schema: {
+        type: 'object',
+        properties: {
+          verdict: {
+            type: 'string',
+            enum: ['supports', 'weakens', 'inconclusive'],
+          },
+          finding: { type: 'string' },
+          observations: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+        required: ['verdict', 'finding', 'observations'],
+        additionalProperties: false,
+      },
+    };
+  }
+
+  return null;
 }
 
 export class OpenAIReasoner {
