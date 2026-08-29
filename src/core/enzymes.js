@@ -1,5 +1,6 @@
 import { authorizeAction } from './autonomy.js';
 import { id, nowIso } from './utils.js';
+import { executeMapsWebsiteSample } from '../experiments/maps-website-sample.js';
 
 function byId(items, targetId) {
   return items.find((x) => x.id === targetId);
@@ -45,6 +46,15 @@ function requiredValidationDimension(garden, opportunityId) {
   if (!dimensions.includes('buyer_demand')) return 'buyer_demand';
   if (!dimensions.includes('failure_reality')) return 'failure_reality';
   return null;
+}
+
+function authorizeExperiment(garden, opp, e) {
+  const auth = authorizeAction(garden, { type: e.actionType, amountUsd: e.oneTimeCostUsd, recurringUsd: e.recurringUsd });
+  const exp = { id: id('exp'), opportunityId: opp.id, status: auth.allowed ? 'authorized' : 'awaiting_approval', createdAt: nowIso(), authorization: auth, ...e };
+  garden.experiments.push(exp);
+  opp.experimentId = exp.id;
+  if (auth.requiresApproval) garden.approvals.push({ id: id('approval'), status: 'pending', createdAt: nowIso(), action: exp, reason: auth.reason });
+  return { exp, auth };
 }
 
 export async function runEnzyme({ garden, pressure, reasoner }) {
@@ -107,20 +117,50 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     const previous = garden.experiments.filter((x) => x.opportunityId === opp.id);
     const gate = validationGateSnapshot(garden, opp.id);
     const requiredDimension = requiredValidationDimension(garden, opp.id);
+
+    // Method-escalation rule: if a failure-reality web search already returned inconclusive,
+    // do not pay for another semantic search. Change measurement method to a direct sample of
+    // actual Maps records and their linked websites. This inherits the proven upstream Actor
+    // pattern from the Exact Match Guard and is hard-capped at $0.25 with no recurring spend.
+    const inconclusiveFailureWebSearch = previous.some((x) =>
+      x.validationDimension === 'failure_reality'
+      && x.actionType === 'web_search'
+      && x.status === 'integrated'
+      && x.result?.verdict === 'inconclusive'
+    );
+
+    if (requiredDimension === 'failure_reality' && inconclusiveFailureWebSearch) {
+      const e = {
+        name: 'Direct Stratified Maps→Website Identity Sample',
+        tests: 'Observe a small stratified sample of live Google Maps business records, fetch each linked website, and compare business-name/phone/location identity signals instead of searching for discussions about the failure.',
+        actionType: 'spend',
+        method: 'maps_website_sample',
+        oneTimeCostUsd: 0.25,
+        recurringUsd: 0,
+        successCondition: 'At least one mismatch candidate appears among at least four evaluable live Maps→website pairs.',
+        killCondition: 'At least five evaluable pairs show no mismatch candidate, weakening the failure-rate thesis enough to avoid a private build for now.',
+        validationDimension: 'failure_reality',
+      };
+      const { exp, auth } = authorizeExperiment(garden, opp, e);
+      return {
+        changed: true,
+        summary: auth.allowed
+          ? `Experiment authorized: ${exp.name} [failure_reality; direct_sample; max $0.25]`
+          : `Experiment requires approval: ${exp.name}`,
+        action: 'EXPERIMENT',
+      };
+    }
+
     const result = await reasoner.reason({
       operation: 'EXPERIMENT', garden, target: opp,
-      prompt: `Design the cheapest discriminating experiment that can materially change whether we pursue this. It must avoid recurring obligations, contracts, Sean's identity, cold outreach, and public deployment unless separately approved. The experiment must produce external evidence; internal reasoning alone is not a successful test. Avoid merely repeating prior experiments.\nPRIVATE-BUILD VALIDATION GATE: ${JSON.stringify(gate)}\nREQUIRED VALIDATION DIMENSION: ${requiredDimension ?? 'Choose an uncovered dimension that most cheaply reduces remaining uncertainty.'}\nVALIDATION DIMENSIONS: failure_reality = direct evidence the claimed failure actually occurs; buyer_demand = evidence buyers/workflows care enough to seek or pay for resolution; distribution_access = evidence passive discoverability/channel access; resolution_complexity = evidence resolution is not a trivial filter; willingness_to_pay = direct pricing/purchase evidence.\nV0 EXECUTION CAPABILITY: autonomous execution currently supports only public web_search. Prefer web_search when it can discriminate; choose another action type only if web search cannot answer the question, knowing it will stop at the capability membrane.\nPREVIOUS EXPERIMENTS: ${JSON.stringify(previous.map((x) => ({name:x.name,status:x.status,actionType:x.actionType,validationDimension:x.validationDimension ?? null,result:x.result ?? null})))}\nReturn one experiment with exactly one validationDimension.`,
+      prompt: `Design the cheapest discriminating experiment that can materially change whether we pursue this. It must avoid recurring obligations, contracts, Sean's identity, cold outreach, and public deployment unless separately approved. The experiment must produce external evidence; internal reasoning alone is not a successful test. Avoid merely repeating prior experiments.\nPRIVATE-BUILD VALIDATION GATE: ${JSON.stringify(gate)}\nREQUIRED VALIDATION DIMENSION: ${requiredDimension ?? 'Choose an uncovered dimension that most cheaply reduces remaining uncertainty.'}\nVALIDATION DIMENSIONS: failure_reality = direct evidence the claimed failure actually occurs; buyer_demand = evidence buyers/workflows care enough to seek or pay for resolution; distribution_access = evidence passive discoverability/channel access; resolution_complexity = evidence resolution is not a trivial filter; willingness_to_pay = direct pricing/purchase evidence.\nV0 EXECUTION CAPABILITY: autonomous execution currently supports public web_search, plus a deterministic direct Maps→website sample only after an inconclusive failure-reality search. Prefer web_search when it can discriminate; do not repeat an inconclusive method.\nPREVIOUS EXPERIMENTS: ${JSON.stringify(previous.map((x) => ({name:x.name,status:x.status,actionType:x.actionType,method:x.method ?? null,validationDimension:x.validationDimension ?? null,result:x.result ?? null})))}\nReturn one experiment with exactly one validationDimension.`,
     });
     const e = result.data.experiment;
     if (!e) return { changed: false, summary: 'No experiment proposed.', action: 'EXPERIMENT' };
     if (requiredDimension && e.validationDimension !== requiredDimension) {
       throw new Error(`Experiment targeted ${e.validationDimension}; policy requires ${requiredDimension} before additional dimensions.`);
     }
-    const auth = authorizeAction(garden, { type: e.actionType, amountUsd: e.oneTimeCostUsd, recurringUsd: e.recurringUsd });
-    const exp = { id: id('exp'), opportunityId: opp.id, status: auth.allowed ? 'authorized' : 'awaiting_approval', createdAt: nowIso(), authorization: auth, ...e };
-    garden.experiments.push(exp);
-    opp.experimentId = exp.id;
-    if (auth.requiresApproval) garden.approvals.push({ id: id('approval'), status: 'pending', createdAt: nowIso(), action: exp, reason: auth.reason });
+    const { exp, auth } = authorizeExperiment(garden, opp, e);
     return { changed: true, summary: auth.allowed ? `Experiment authorized: ${exp.name} [${exp.validationDimension}]` : `Experiment requires approval: ${exp.name}`, action: 'EXPERIMENT' };
   }
 
@@ -131,17 +171,43 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
       throw new Error('Experiment execution requested without valid authorization.');
     }
 
-    // First-live execution capability is intentionally tiny: only an already-authorized
-    // public web evidence search may execute autonomously. No publishing, contact, purchases,
-    // account changes, code deployment, or external writes are implemented here.
+    const opp = byId(garden.opportunities, exp.opportunityId);
+    if (!opp) throw new Error('Experiment opportunity not found.');
+
+    if (exp.method === 'maps_website_sample') {
+      if (exp.actionType !== 'spend' || Number(exp.oneTimeCostUsd ?? Infinity) > 0.25 || Number(exp.recurringUsd ?? 0) !== 0) {
+        throw new Error('Direct Maps sample crossed its deterministic cost membrane.');
+      }
+      const direct = await executeMapsWebsiteSample({ maxChargeUsd: Number(exp.oneTimeCostUsd) });
+      exp.status = 'result_ready';
+      exp.executedAt = nowIso();
+      exp.result = {
+        verdict: direct.verdict,
+        finding: direct.finding,
+        observations: direct.observations,
+        sources: direct.sources,
+        sourceCount: direct.sources.length,
+        sample: direct.sample,
+        upstream: direct.upstream,
+        responseId: null,
+        usage: null,
+      };
+      return {
+        changed: true,
+        summary: `${exp.name}: ${direct.verdict}; ${direct.finding}`,
+        action: 'EXECUTE_EXPERIMENT',
+        sources: direct.sources,
+      };
+    }
+
+    // Public-web execution remains read-only and separately authorized. No publishing,
+    // human contact, purchases other than the direct sample cap above, or external writes.
     if (exp.actionType !== 'web_search') {
       exp.status = 'blocked_capability';
-      exp.blockedReason = `v0 has no autonomous executor for actionType=${exp.actionType}.`;
+      exp.blockedReason = `v0 has no autonomous executor for actionType=${exp.actionType}, method=${exp.method ?? 'none'}.`;
       return { changed: true, summary: `Experiment stopped at capability membrane: ${exp.name}`, action: 'EXECUTE_EXPERIMENT' };
     }
 
-    const opp = byId(garden.opportunities, exp.opportunityId);
-    if (!opp) throw new Error('Experiment opportunity not found.');
     const result = await reasoner.reason({
       operation: 'EXECUTE_EXPERIMENT',
       garden,
@@ -213,8 +279,8 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
         opp.epistemicNote = `Externally supported by experiment ${exp.id}; private-build gate remains incomplete.`;
       }
     } else {
-      // A weak/inconclusive web search does not prove absence. Keep the idea testable rather than
-      // pretending search silence is a decisive falsification.
+      // Weak/inconclusive evidence does not prove absence. Keep the idea testable rather than
+      // pretending silence is decisive falsification.
       opp.status = 'needs_test';
       opp.validationGate = validationGateSnapshot(garden, opp.id);
       opp.epistemicNote = `Experiment ${exp.id} did not justify promotion; further reality contact is required.`;
