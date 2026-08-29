@@ -49,17 +49,20 @@ export class OpenAIReasoner {
     this.maxOutputTokens = maxOutputTokens;
   }
 
-  async reason({ operation, garden, target, prompt }) {
+  async reason({ operation, garden, target, prompt, allowWebSearch = false }) {
     const instructions = `You are the cognition substrate inside Flower Economic Kernel v0.\n\nROOT: ${garden.center.rootGoal}\nDIRECTION: ${garden.center.direction}\n\nYou do not decide values or permissions. You create candidate reasoning only. Preserve uncertainty. Prefer falsification over enthusiasm. The economic target is low-maintenance, machine-mediated income with passive discoverability and reproductive inheritance. Never claim economic validation without external market evidence. Return ONLY valid JSON.`;
 
+    // Global web search remains off by default. A caller may explicitly enable it only
+    // after the deterministic autonomy membrane has authorized a web-search experiment.
+    const useWebSearch = this.enableWebSearch || allowWebSearch === true;
     const body = {
       model: this.model,
       instructions,
       reasoning: { effort: this.reasoningEffort },
       max_output_tokens: this.maxOutputTokens,
       input: `OPERATION: ${operation}\nTARGET: ${JSON.stringify(target ?? null)}\nSOIL: ${JSON.stringify(garden.soil)}\nFRUIT: ${JSON.stringify(garden.fruits)}\n\n${prompt}`,
-      ...(this.enableWebSearch ? {
-        tools: [{ type: 'web_search_preview', search_context_size: 'medium' }],
+      ...(useWebSearch ? {
+        tools: [{ type: 'web_search_preview', search_context_size: 'low' }],
         include: ['web_search_call.action.sources'],
       } : {}),
     };
