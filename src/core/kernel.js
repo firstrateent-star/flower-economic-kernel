@@ -11,6 +11,7 @@ function applyPostIntegrationSelectionPolicy(garden, pressure) {
 
   const opp = (garden.opportunities ?? []).find((x) => x.id === exp.opportunityId);
   if (!opp || opp.selectedForExperiment !== true) return null;
+  if (!['needs_test', 'supported'].includes(opp.status)) return null;
 
   opp.selectedForExperiment = false;
   opp.selectionState = 'cooldown';
