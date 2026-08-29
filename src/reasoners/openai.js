@@ -1,0 +1,73 @@
+function extractText(response) {
+  const chunks = [];
+  for (const item of response?.output ?? []) {
+    if (item?.type !== 'message') continue;
+    for (const content of item.content ?? []) {
+      if (content?.type === 'output_text' && content.text) chunks.push(content.text);
+    }
+  }
+  return chunks.join('\n').trim();
+}
+
+function extractSources(response) {
+  const sources = [];
+  for (const item of response?.output ?? []) {
+    if (item?.type !== 'web_search_call') continue;
+    for (const source of item?.action?.sources ?? []) {
+      if (!source?.url) continue;
+      sources.push({ title: source.title ?? null, url: source.url });
+    }
+  }
+  return [...new Map(sources.map((s) => [s.url, s])).values()];
+}
+
+function parseJsonLoose(text) {
+  const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start >= 0 && end > start) return JSON.parse(cleaned.slice(start, end + 1));
+    throw new Error(`Reasoner returned non-JSON output: ${cleaned.slice(0, 240)}`);
+  }
+}
+
+export class OpenAIReasoner {
+  constructor({ apiKey = process.env.OPENAI_API_KEY, model = process.env.FLOWER_MODEL || 'gpt-5.6-terra', enableWebSearch = process.env.FLOWER_ENABLE_WEB_SEARCH !== 'false', reasoningEffort = process.env.FLOWER_REASONING_EFFORT || 'medium', maxOutputTokens = Number(process.env.FLOWER_MAX_OUTPUT_TOKENS || 3000) } = {}) {
+    if (!apiKey) throw new Error('OPENAI_API_KEY is required for OpenAIReasoner.');
+    this.apiKey = apiKey;
+    this.model = model;
+    this.enableWebSearch = enableWebSearch;
+    this.reasoningEffort = reasoningEffort;
+    this.maxOutputTokens = maxOutputTokens;
+  }
+
+  async reason({ operation, garden, target, prompt }) {
+    const instructions = `You are the cognition substrate inside Flower Economic Kernel v0.\n\nROOT: ${garden.center.rootGoal}\nDIRECTION: ${garden.center.direction}\n\nYou do not decide values or permissions. You create candidate reasoning only. Preserve uncertainty. Prefer falsification over enthusiasm. The economic target is low-maintenance, machine-mediated income with passive discoverability and reproductive inheritance. Never claim economic validation without external market evidence. Return ONLY valid JSON.`;
+
+    const body = {
+      model: this.model,
+      instructions,
+      reasoning: { effort: this.reasoningEffort },
+      max_output_tokens: this.maxOutputTokens,
+      input: `OPERATION: ${operation}\nTARGET: ${JSON.stringify(target ?? null)}\nSOIL: ${JSON.stringify(garden.soil)}\nFRUIT: ${JSON.stringify(garden.fruits)}\n\n${prompt}`,
+      ...(this.enableWebSearch ? {
+        tools: [{ type: 'web_search_preview', search_context_size: 'medium' }],
+        include: ['web_search_call.action.sources'],
+      } : {}),
+    };
+
+    const response = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) throw new Error(`OpenAI Responses API ${response.status}: ${await response.text()}`);
+    const raw = await response.json();
+    return { data: parseJsonLoose(extractText(raw)), sources: extractSources(raw), rawId: raw.id ?? null };
+  }
+}
