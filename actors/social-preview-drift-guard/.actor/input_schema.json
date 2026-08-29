@@ -1,14 +1,16 @@
 {
   "title": "Social Preview Drift Guard",
-  "description": "Check one or more public URLs for social-preview metadata drift, crawler-dependent responses, canonical/OG conflicts, and broken preview images.",
+  "description": "Check public URLs for broken or inconsistent social-preview metadata across crawler-style consumers. Start with a single URL, or audit up to 100 URLs in one run.",
   "type": "object",
   "schemaVersion": 1,
   "properties": {
     "url": {
       "title": "Single URL",
       "type": "string",
-      "description": "Optional single public HTTP(S) URL to inspect.",
-      "editor": "textfield"
+      "description": "Public HTTP(S) URL to inspect. Use this for the quickest one-URL check.",
+      "editor": "textfield",
+      "prefill": "https://www.apify.com",
+      "example": "https://www.apify.com"
     },
     "urls": {
       "title": "URLs",
@@ -28,7 +30,9 @@
         "type": "string",
         "enum": ["default", "facebook", "x", "linkedin", "slack", "discord"]
       },
-      "default": ["default", "facebook", "x", "linkedin"]
+      "default": ["default", "facebook", "x", "linkedin"],
+      "sectionCaption": "Advanced checks",
+      "sectionDescription": "The defaults are designed for normal link-preview QA. Change these only when you need different crawler coverage or execution limits."
     },
     "checkImages": {
       "title": "Probe preview images",
