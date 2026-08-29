@@ -1,0 +1,103 @@
+{
+  "actorSpecification": 1,
+  "title": "Social Preview Drift Guard URL audits",
+  "description": "One audit item per inspected URL.",
+  "fields": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "inputUrl": {
+        "type": "string",
+        "description": "URL supplied for inspection."
+      },
+      "normalizedUrl": {
+        "type": ["string", "null"],
+        "description": "Normalized public HTTP(S) URL when parsing succeeded."
+      },
+      "verdict": {
+        "type": "string",
+        "enum": ["PASS", "RISK", "FAIL", "INCONCLUSIVE"],
+        "description": "PASS means no material issue was detected; RISK means actionable preview weaknesses were observed; FAIL means a decisive broken/contradictory state was observed; INCONCLUSIVE means there was not enough transport evidence to judge."
+      },
+      "riskScore": {
+        "type": ["number", "null"],
+        "minimum": 0,
+        "maximum": 100,
+        "description": "Deterministic severity score. Null when the audit is inconclusive."
+      },
+      "measurementStatus": {
+        "type": ["string", "null"],
+        "description": "Whether the target was successfully observed or the measurement was inconclusive."
+      },
+      "measurementReason": {
+        "type": ["string", "null"],
+        "description": "Reason measurement could not produce a PASS/RISK/FAIL verdict, when applicable."
+      },
+      "issues": {
+        "type": "array",
+        "description": "Machine-readable detected issues with code, severity, message, and optional details.",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "profiles": {
+        "type": "array",
+        "description": "Crawler-profile HTTP and metadata observations.",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "imageChecks": {
+        "type": "array",
+        "description": "Preview-image reachability/content-type checks.",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "profileCount": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Number of crawler profiles attempted."
+      },
+      "rulesetVersion": {
+        "type": "string",
+        "description": "Version of the deterministic audit ruleset."
+      },
+      "scope": {
+        "type": "string",
+        "description": "Explicit capability/limitation envelope for interpreting the result."
+      },
+      "checkedAt": {
+        "type": "string",
+        "description": "ISO timestamp when the audit completed."
+      }
+    },
+    "required": ["inputUrl", "verdict", "riskScore", "issues", "profiles", "imageChecks", "rulesetVersion"],
+    "additionalProperties": true
+  },
+  "views": {
+    "overview": {
+      "title": "Preview health overview",
+      "description": "Compact decision view for CI, publishing QA, and automated workflows.",
+      "transformation": {
+        "fields": ["inputUrl", "verdict", "riskScore", "measurementStatus", "measurementReason", "issues", "profileCount", "checkedAt"]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "inputUrl": { "label": "URL", "format": "text" },
+          "verdict": { "label": "Verdict", "format": "text" },
+          "riskScore": { "label": "Risk score", "format": "number" },
+          "measurementStatus": { "label": "Measurement", "format": "text" },
+          "measurementReason": { "label": "Measurement reason", "format": "text" },
+          "issues": { "label": "Issues", "format": "array" },
+          "profileCount": { "label": "Profiles", "format": "number" },
+          "checkedAt": { "label": "Checked at", "format": "date" }
+        }
+      }
+    }
+  }
+}
