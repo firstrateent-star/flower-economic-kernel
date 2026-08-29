@@ -121,7 +121,8 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     // Method-escalation rule: if a failure-reality web search already returned inconclusive,
     // do not pay for another semantic search. Change measurement method to a direct sample of
     // actual Maps records and their linked websites. This inherits the proven upstream Actor
-    // pattern from the Exact Match Guard and is hard-capped at $0.25 with no recurring spend.
+    // pattern from the Exact Match Guard and uses Apify's minimum allowed $0.50 run ceiling
+    // with no recurring spend.
     const inconclusiveFailureWebSearch = previous.some((x) =>
       x.validationDimension === 'failure_reality'
       && x.actionType === 'web_search'
@@ -135,7 +136,7 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
         tests: 'Observe a small stratified sample of live Google Maps business records, fetch each linked website, and compare business-name/phone/location identity signals instead of searching for discussions about the failure.',
         actionType: 'spend',
         method: 'maps_website_sample',
-        oneTimeCostUsd: 0.25,
+        oneTimeCostUsd: 0.50,
         recurringUsd: 0,
         successCondition: 'At least one mismatch candidate appears among at least four evaluable live Maps→website pairs.',
         killCondition: 'At least five evaluable pairs show no mismatch candidate, weakening the failure-rate thesis enough to avoid a private build for now.',
@@ -145,7 +146,7 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
       return {
         changed: true,
         summary: auth.allowed
-          ? `Experiment authorized: ${exp.name} [failure_reality; direct_sample; max $0.25]`
+          ? `Experiment authorized: ${exp.name} [failure_reality; direct_sample; max $0.50]`
           : `Experiment requires approval: ${exp.name}`,
         action: 'EXPERIMENT',
       };
@@ -175,7 +176,7 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     if (!opp) throw new Error('Experiment opportunity not found.');
 
     if (exp.method === 'maps_website_sample') {
-      if (exp.actionType !== 'spend' || Number(exp.oneTimeCostUsd ?? Infinity) > 0.25 || Number(exp.recurringUsd ?? 0) !== 0) {
+      if (exp.actionType !== 'spend' || Number(exp.oneTimeCostUsd ?? Infinity) > 0.50 || Number(exp.recurringUsd ?? 0) !== 0) {
         throw new Error('Direct Maps sample crossed its deterministic cost membrane.');
       }
       const direct = await executeMapsWebsiteSample({ maxChargeUsd: Number(exp.oneTimeCostUsd) });
