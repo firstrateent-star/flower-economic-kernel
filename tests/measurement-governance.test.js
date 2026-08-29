@@ -111,3 +111,48 @@ test('email authentication branch uses zero-spend DNS reality before semantic fa
   assert.equal(direct.recurringUsd, 0);
   assert.equal(direct.status, 'authorized');
 });
+
+test('legacy unmapped scout context is unknown, not a non-supporting failure search', async () => {
+  const garden = structuredClone(seed);
+  const opp = {
+    ...structuredClone(garden.opportunities[0]),
+    id: 'opp_legacy_provenance_test',
+    name: 'Legacy Provenance Test',
+    status: 'supported',
+    selectedForExperiment: true,
+    selectionState: 'selected',
+    experimentId: null,
+  };
+  garden.opportunities = [opp];
+  garden.experiments = [
+    supportingBuyerDemandExperiment(opp.id),
+    {
+      id: 'exp_legacy_scout',
+      opportunityId: opp.id,
+      status: 'legacy_context',
+      actionType: 'web_search',
+      method: 'evidence_bearing_expand_v1',
+      validationDimension: 'failure_reality',
+      result: {
+        verdict: 'inconclusive',
+        legacyVerdict: 'supports',
+        provenanceStatus: 'legacy_unmapped',
+        finding: 'Historical source pool was not dimension-mapped.',
+        observations: [],
+        sources: [{ title: 'Historical source', url: 'https://history.example/source' }],
+      },
+    },
+  ];
+
+  assert.equal(classifyPressure(garden).type, 'EXPERIMENT');
+  await pulse({ garden, reasoner: new MockReasoner(), maxBreaths: 1 });
+
+  assert.notEqual(opp.status, 'measurement_blocked');
+  const freshFailure = garden.experiments.find((exp) =>
+    exp.opportunityId === opp.id
+    && exp.status === 'authorized'
+    && exp.validationDimension === 'failure_reality'
+  );
+  assert.ok(freshFailure);
+  assert.equal(freshFailure.method, 'bounded_public_web_search_v1');
+});
