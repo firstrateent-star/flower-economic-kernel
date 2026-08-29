@@ -1,0 +1,18 @@
+{
+  "name": "flower-economic-kernel-v0",
+  "version": "0.1.0-private",
+  "private": true,
+  "description": "Private v0 of an event-driven economic Flower kernel: Garden state, pressure routing, evidence-gated transitions, autonomy membrane, and endogenous pulse.",
+  "type": "module",
+  "main": "src/runtime/cli.js",
+  "scripts": {
+    "start": "node src/runtime/cli.js pulse",
+    "pulse": "node src/runtime/cli.js pulse",
+    "status": "node src/runtime/cli.js status",
+    "reset": "node src/runtime/cli.js reset",
+    "test": "node --test",
+    "check": "node --check src/runtime/cli.js && node --check src/core/kernel.js && node --check src/reasoners/openai.js"
+  },
+  "engines": {"node": ">=20"},
+  "dependencies": {"apify": "^3.7.2"}
+}
