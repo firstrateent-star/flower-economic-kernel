@@ -55,6 +55,19 @@ export function classifyPressure(garden) {
     why: 'Fruit is technically ready for Store publication. Pricing and public exposure require explicit Center-holder approval.',
   };
 
+  // LIVE FRUIT LOCK: publication opens the distribution experiment; it does not end it.
+  // Until the live Fruit receives outside usage/revenue/feedback evidence, learning from
+  // the existing asset outranks spending cognition on a new speculative branch.
+  const liveFruitAwaitingEvidence = (garden.fruits ?? []).find((x) =>
+    ['live', 'public_live'].includes(x.status)
+    && (!x.publicMeasurement || x.publicMeasurement.status === 'awaiting_external_usage')
+  );
+  if (liveFruitAwaitingEvidence) return {
+    type: 'HUMAN',
+    targetId: liveFruitAwaitingEvidence.id,
+    why: `Fruit is live at ${liveFruitAwaitingEvidence.publicRelease?.storeUrl ?? liveFruitAwaitingEvidence.platform ?? 'its public channel'}. The next reality frontier is stranger usage, paid events, repeat use, and public feedback; distribution evidence outranks speculative expansion until this Fruit has real outside contact.`,
+  };
+
   const authorizedExperiment = garden.experiments.find((x) => x.status === 'authorized');
   if (authorizedExperiment) return {
     type: 'EXECUTE_EXPERIMENT',
