@@ -1,12 +1,15 @@
 import { classifyPressure } from './pressure.js';
 import { runEnzyme } from './enzymes.js';
+import { runSelection } from './selection.js';
 import { addTrace } from './transitions.js';
 import { nowIso } from './utils.js';
 
 export async function breathe({ garden, reasoner }) {
   const before = JSON.stringify(garden);
   const pressure = classifyPressure(garden);
-  const result = await runEnzyme({ garden, pressure, reasoner });
+  const result = pressure.type === 'SELECT'
+    ? await runSelection({ garden, reasoner })
+    : await runEnzyme({ garden, pressure, reasoner });
   garden.status.lastPressure = pressure;
   garden.status.lastBreathAt = nowIso();
 
