@@ -11,12 +11,6 @@
       "minimum": 1,
       "maximum": 1,
       "editor": "number"
-    },
-    "event": {
-      "title": "Optional reality event",
-      "type": "object",
-      "description": "Optional external usage, revenue, or experiment evidence to add to the Garden before the pulse.",
-      "editor": "json"
     }
   },
   "additionalProperties": false
