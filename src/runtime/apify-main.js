@@ -16,7 +16,6 @@ function activeOpportunitySnapshot(garden) {
       id: opp.id,
       name: opp.name,
       status: opp.status,
-      thesis: opp.thesis ?? null,
       nutrientChannel: opp.nutrientChannel ?? null,
       realityAccess: opp.realityAccess ?? null,
       cheapestRealityTest: opp.cheapestRealityTest ?? null,
@@ -25,6 +24,7 @@ function activeOpportunitySnapshot(garden) {
 }
 
 function logOpportunitySnapshot(phase, opportunities) {
+  log.info('Flower garden snapshot', { phase, opportunityCount: opportunities.length });
   for (const opp of opportunities) {
     log.info('Flower opportunity', {
       phase,
@@ -40,16 +40,12 @@ function logOpportunitySnapshot(phase, opportunities) {
 }
 
 await Actor.main(async () => {
-  await Actor.getInput(); // Input currently carries only the one-breath UI guard.
+  await Actor.getInput();
 
-  // Each Actor run gets its own default key-value store. Use a named store so
-  // the Garden survives across separate runs under LIMITED_PERMISSIONS.
   const stateStore = await Actor.openKeyValueStore(STORE_NAME);
   const existing = await stateStore.getValue(STORE_KEY);
   const garden = existing ?? structuredClone(seed);
 
-  // Epistemic repair: older v0 builds could promote model-generated reasoning to
-  // "supported" without an external source. Repair that state deterministically.
   const repaired = [];
   for (const opp of garden.opportunities ?? []) {
     const externalSources = (opp.sources ?? []).filter((s) => s?.url);
@@ -61,12 +57,8 @@ await Actor.main(async () => {
   }
   if (repaired.length) log.warning('Epistemic state repaired', { opportunities: repaired });
 
-  // Migrations preserve earned Garden history across code improvements.
   const stateMigrations = [];
 
-  // The first successfully integrated reality experiment searched public demand plus
-  // failure signals; conservatively credit only buyer_demand so failure_reality still
-  // requires an independent experiment.
   for (const exp of garden.experiments ?? []) {
     if (
       exp.id === 'exp_94251fcac534'
@@ -80,11 +72,6 @@ await Actor.main(async () => {
     }
   }
 
-  // Apify rejects maxTotalChargeUsd below $0.50 for the inherited Google Maps Actor.
-  // Earlier code authorized the direct sample at $0.25, which the platform refused
-  // before execution. Raise only the run ceiling to the platform minimum and pass it
-  // back through the existing autonomy membrane. This is still far below the Garden's
-  // $5 per-experiment ceiling and creates no recurring obligation.
   for (const exp of garden.experiments ?? []) {
     if (
       exp.method === 'maps_website_sample'
@@ -93,7 +80,11 @@ await Actor.main(async () => {
     ) {
       const previousCap = Number(exp.oneTimeCostUsd);
       exp.oneTimeCostUsd = 0.50;
-      const auth = authorizeAction(garden, { type: 'spend', amountUsd: 0.50, recurringUsd: Number(exp.recurringUsd ?? 0) });
+      const auth = authorizeAction(garden, {
+        type: 'spend',
+        amountUsd: 0.50,
+        recurringUsd: Number(exp.recurringUsd ?? 0),
+      });
       exp.authorization = auth;
       exp.migrationNote = `Platform-minimum migration: run ceiling raised from $${previousCap.toFixed(2)} to $0.50 after Apify rejected the lower cap. This is a ceiling, not a claim of actual spend.`;
       if (!auth.allowed) {
@@ -112,29 +103,56 @@ await Actor.main(async () => {
     }
   }
 
+  // The first live email DNS experiment already met its predeclared weakening threshold
+  // before the dormant policy was generalized. Preserve the evidence and migrate the
+  // branch instead of paying for another semantic search after stronger direct evidence.
+  for (const exp of garden.experiments ?? []) {
+    if (
+      exp.method === 'email_auth_dns_sample'
+      && exp.status === 'integrated'
+      && exp.result?.verdict === 'weakens'
+      && Number(exp.result?.sample?.espSignaled ?? 0) >= 8
+      && Number(exp.result?.sample?.hardFailureDomains ?? Infinity) === 0
+    ) {
+      const opp = (garden.opportunities ?? []).find((x) => x.id === exp.opportunityId);
+      if (opp && ['needs_test', 'supported'].includes(opp.status) && !opp.experimentId) {
+        opp.status = 'dormant';
+        opp.selectedForExperiment = false;
+        opp.selectionState = 'dormant';
+        opp.selectionCooldown = false;
+        opp.dormantAt = new Date().toISOString();
+        opp.failedBecause = `Predeclared direct-DNS kill condition met by ${exp.id}: ${exp.killCondition ?? 'sufficient ESP-signaled sample with zero hard SPF/DMARC failures'}`;
+        opp.epistemicNote = 'Dormant, not disproven: direct DNS reality contact weakened the claimed hard-failure mechanism enough that another semantic search is not justified without materially new evidence or a different population.';
+        stateMigrations.push(`${opp.id}:dns_kill_to_dormant`);
+      }
+    }
+  }
+
   if (stateMigrations.length) log.info('Garden state migrated', { migrations: stateMigrations });
 
-  // First-live v0 deliberately disables external event ingestion.
-  // We re-enable event-driven waking only after the basic falsification loop is proven.
-
-  // v0 safety rule: one manual run = one paid reasoning breath.
-  const maxBreaths = 1;
+  // One manual Start may traverse many free state transitions, but it crosses at most
+  // one costly cognition/search/spend frontier. This keeps the old safety envelope while
+  // eliminating clicks whose only purpose was deterministic bookkeeping.
+  const maxBreaths = 12;
+  const maxCostlyBreaths = 1;
   const startingPressure = classifyPressure(garden);
   const activeBefore = activeOpportunitySnapshot(garden);
-  log.info('Flower garden snapshot', {
-    phase: 'before',
-    activeOpportunities: activeBefore,
-  });
   logOpportunitySnapshot('before', activeBefore);
   log.info('Flower pressure selected', {
     pressure: startingPressure,
     pulseCountBefore: Number(garden.status?.pulseCount ?? 0),
     persistentStore: STORE_NAME,
+    runPolicy: { maxBreaths, maxCostlyBreaths },
   });
 
   let result;
   try {
-    result = await pulse({ garden, reasoner: new OpenAIReasoner(), maxBreaths });
+    result = await pulse({
+      garden,
+      reasoner: new OpenAIReasoner(),
+      maxBreaths,
+      maxCostlyBreaths,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Flower pulse failed', {
@@ -154,14 +172,19 @@ await Actor.main(async () => {
     throw error;
   }
 
-  // Commit Garden only after a successful breath. A failed external call leaves the
-  // previously durable Garden untouched so the authorized experiment can be retried safely.
   await stateStore.setValue(STORE_KEY, garden);
 
   const activeAfter = activeOpportunitySnapshot(garden);
   const output = {
     ok: true,
-    breaths: result.breaths.map((x) => ({ pressure: x.pressure, summary: x.result.summary })),
+    breaths: result.breaths.map((x) => ({
+      pressure: x.pressure,
+      costClass: x.costClass,
+      summary: x.result.summary,
+    })),
+    microBreaths: result.breaths.length,
+    runBudget: result.runBudget,
+    stoppedByCostFrontier: result.stoppedByCostFrontier,
     nextPressure: classifyPressure(garden),
     activeOpportunities: activeAfter,
     pendingApprovals: garden.approvals.filter((x) => x.status === 'pending'),
@@ -172,13 +195,16 @@ await Actor.main(async () => {
     stateMigrations,
   };
 
-  // Per-run output remains easy to inspect; durable Garden state lives above.
   await Actor.setValue('OUTPUT', output);
   await Actor.pushData(output);
-  log.info('Flower garden snapshot', {
-    phase: 'after',
-    activeOpportunities: activeAfter,
-  });
   logOpportunitySnapshot('after', activeAfter);
-  log.info('Flower pulse complete', output);
+  log.info('Flower pulse complete', {
+    ok: output.ok,
+    microBreaths: output.microBreaths,
+    runBudget: output.runBudget,
+    stoppedByCostFrontier: output.stoppedByCostFrontier,
+    nextPressure: output.nextPressure,
+    pulseCount: output.pulseCount,
+    breaths: output.breaths,
+  });
 });
