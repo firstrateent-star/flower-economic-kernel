@@ -3,7 +3,7 @@
   "id": "fruit_social_preview_drift_guard",
   "opportunityId": "opp_b7681c126171",
   "name": "Social Preview Drift Guard API",
-  "stage": "launch_approved_build_pending",
+  "stage": "live",
   "platform": "Apify",
   "sourcePath": "actors/social-preview-drift-guard",
   "failureArchetype": "Cross-consumer representation drift",
@@ -19,6 +19,23 @@
     "approvedPrimaryEvent": "url-checked",
     "approvedInitialPriceUsdPerEvent": 0.005,
     "sourceCodeMayBePublic": false
+  },
+  "publicRelease": {
+    "status": "live",
+    "publishedAt": "2026-08-29",
+    "storeUrl": "https://apify.com/firstrate/social-preview-drift-guard-api",
+    "sourceCodePublic": false,
+    "economicBoundaryCrossed": true
+  },
+  "publicMeasurement": {
+    "status": "awaiting_external_usage",
+    "nextEvidence": [
+      "first external user run",
+      "first paid url-checked event",
+      "first repeat user",
+      "first public issue, rating, or review"
+    ],
+    "principle": "Publication is not validation of distribution. Treat stranger usage, paid events, repeat use, and feedback as the next reality evidence before speculative expansion outranks live-Fruit learning."
   },
   "privateVerification": {
     "status": "passed",
@@ -44,9 +61,21 @@
     "pricingReason": "Private Apify calibration showed the intended PASS/RISK/FAIL behavior at 256 MB with a three-URL run cost displayed as $0.000; $0.005 per observed URL leaves substantial platform-cost headroom while remaining suitable for bulk automation."
   },
   "passiveDistribution": {
-    "channels": ["Apify Store search", "Apify API", "MCP/agentic discovery", "CI workflows", "CMS/SEO automation"],
+    "channels": [
+      "Apify Store search",
+      "Apify API",
+      "MCP/agentic discovery",
+      "CI workflows",
+      "CMS/SEO automation"
+    ],
     "agenticCompatibilityTarget": true,
-    "requirements": ["pay-per-event only", "limited permissions", "no Standby", "developer KYC", "do not pass platform usage through"]
+    "requirements": [
+      "pay-per-event only",
+      "limited permissions",
+      "no Standby",
+      "developer KYC",
+      "do not pass platform usage through"
+    ]
   },
   "inheritance": [
     "bounded SSRF-aware public HTTP fetch",
@@ -58,8 +87,21 @@
     "honest capability and limitation envelope"
   ],
   "growthLoop": {
-    "publicSignals": ["Store users7Days", "Store users30Days", "public run success rate", "bookmarks", "ratings/issues when available"],
-    "firstOptimizationOrder": ["listing/search fit", "run reliability", "pricing margin", "rule coverage", "new crawler profiles"],
+    "publicSignals": [
+      "Store users7Days",
+      "Store users30Days",
+      "public run success rate",
+      "revenue and paid events",
+      "bookmarks",
+      "ratings/issues when available"
+    ],
+    "firstOptimizationOrder": [
+      "listing/search fit",
+      "run reliability",
+      "pricing margin",
+      "rule coverage",
+      "new crawler profiles"
+    ],
     "replicationRule": "Extract a capability into the Fruit Forge only after a live Fruit demonstrates repeated usefulness or after the same capability appears in at least two validated Fruit.",
     "publicMutationGate": "No autonomous public code or pricing change; generate private candidate changes and require Center-holder approval before release."
   }
