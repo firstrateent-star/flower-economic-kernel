@@ -58,6 +58,8 @@ export async function syncFruitManifests(garden, { rootDir = process.cwd() } = {
         opportunityId: manifest.opportunityId,
         failureArchetype: manifest.failureArchetype ?? null,
         reusableCapability: manifest.reusableCapability ?? null,
+        permissions: manifest.permissions ?? null,
+        standby: manifest.standby ?? null,
         inheritance: manifest.inheritance ?? [],
         monetization: manifest.monetization ?? null,
         passiveDistribution: manifest.passiveDistribution ?? null,
@@ -73,6 +75,8 @@ export async function syncFruitManifests(garden, { rootDir = process.cwd() } = {
       fruit.sourcePath = manifest.sourcePath ?? fruit.sourcePath;
       fruit.failureArchetype = manifest.failureArchetype ?? fruit.failureArchetype;
       fruit.reusableCapability = manifest.reusableCapability ?? fruit.reusableCapability;
+      fruit.permissions = manifest.permissions ?? fruit.permissions;
+      fruit.standby = manifest.standby ?? fruit.standby;
       fruit.inheritance = manifest.inheritance ?? fruit.inheritance;
       fruit.monetization = manifest.monetization ?? fruit.monetization;
       fruit.passiveDistribution = manifest.passiveDistribution ?? fruit.passiveDistribution;
@@ -125,7 +129,8 @@ export async function verifyPrivateFruit(fruit) {
 
   checks.push({ name: 'private_network_rejection', pass: !isPublicIp('127.0.0.1') && !isPublicIp('10.0.0.1') && isPublicIp('8.8.8.8') });
   checks.push({ name: 'fail_closed_scoring', pass: scoreIssues([{ severity: 'fail' }]).verdict === 'FAIL' });
-  checks.push({ name: 'limited_permissions_target', pass: fruit.permissions !== 'full' });
+  checks.push({ name: 'limited_permissions_target', pass: fruit.permissions === 'limited' });
+  checks.push({ name: 'no_standby_target', pass: fruit.standby === false });
   checks.push({ name: 'ppe_target', pass: fruit.monetization?.preferredModel === 'pay_per_event' });
 
   return {
