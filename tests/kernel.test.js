@@ -150,3 +150,41 @@ test('two independent supporting dimensions with source diversity earn only a pr
   assert.equal(garden.opportunities[0].validationGate.pass, true);
   assert.match(garden.opportunities[0].epistemicNote, /PRIVATE build plan/i);
 });
+
+test('a direct failure-reality sample that meets its predeclared kill condition makes the opportunity dormant', async () => {
+  const garden = structuredClone(seed);
+  const oppId = garden.opportunities[0].id;
+  garden.opportunities[0].status = 'needs_test';
+  garden.experiments.push({
+    id: 'exp_direct_weakens',
+    opportunityId: oppId,
+    status: 'result_ready',
+    name: 'Direct Stratified Maps→Website Identity Sample',
+    actionType: 'spend',
+    method: 'maps_website_sample',
+    oneTimeCostUsd: 0.50,
+    recurringUsd: 0,
+    validationDimension: 'failure_reality',
+    killCondition: 'At least five evaluable pairs show no mismatch candidate, weakening the failure-rate thesis enough to avoid a private build for now.',
+    result: {
+      verdict: 'weakens',
+      finding: 'Direct stratified sample: 6 Maps records, 5 evaluable pairs, 0 mismatch candidate(s), 5 match signal(s).',
+      sources: [{ title: 'business', url: 'https://business.example/' }],
+      sample: {
+        evaluable: 5,
+        mismatchCandidates: 0,
+        matchSignals: 5
+      }
+    }
+  });
+  garden.opportunities[0].experimentId = 'exp_direct_weakens';
+
+  const result = await pulse({ garden, reasoner: new MockReasoner(), maxBreaths: 1 });
+  assert.equal(result.breaths[0].pressure.type, 'INTEGRATE');
+  assert.equal(garden.experiments.at(-1).status, 'integrated');
+  assert.equal(garden.opportunities[0].status, 'dormant');
+  assert.equal(garden.opportunities[0].experimentId, null);
+  assert.match(garden.opportunities[0].failedBecause, /kill condition/i);
+  assert.match(garden.opportunities[0].epistemicNote, /Dormant, not disproven/i);
+  assert.ok(garden.soil.some((x) => /Predeclared kill conditions outrank curiosity/.test(x.principle)));
+});
