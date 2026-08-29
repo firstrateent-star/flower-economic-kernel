@@ -52,8 +52,20 @@ function requiredValidationDimension(garden, opportunityId) {
   return null;
 }
 
+function supplementalValidationDimension(garden, opportunityId) {
+  const dimensions = validationGateSnapshot(garden, opportunityId).dimensions;
+  for (const dimension of ['willingness_to_pay', 'distribution_access', 'resolution_complexity']) {
+    if (!dimensions.includes(dimension)) return dimension;
+  }
+  return 'willingness_to_pay';
+}
+
 function authorizeExperiment(garden, opp, e) {
-  const auth = authorizeAction(garden, { type: e.actionType, amountUsd: e.oneTimeCostUsd, recurringUsd: e.recurringUsd });
+  const auth = authorizeAction(garden, {
+    type: e.actionType,
+    amountUsd: e.oneTimeCostUsd,
+    recurringUsd: e.recurringUsd,
+  });
   const exp = {
     id: id('exp'),
     opportunityId: opp.id,
@@ -65,7 +77,13 @@ function authorizeExperiment(garden, opp, e) {
   garden.experiments.push(exp);
   opp.experimentId = exp.id;
   if (auth.requiresApproval) {
-    garden.approvals.push({ id: id('approval'), status: 'pending', createdAt: nowIso(), action: exp, reason: auth.reason });
+    garden.approvals.push({
+      id: id('approval'),
+      status: 'pending',
+      createdAt: nowIso(),
+      action: exp,
+      reason: auth.reason,
+    });
   }
   return { exp, auth };
 }
@@ -80,6 +98,17 @@ function predeclaredKillConditionMet(exp) {
     const mismatches = Number(exp.result?.sample?.mismatchCandidates ?? Infinity);
     return evaluable >= 5 && mismatches === 0;
   }
+
+  if (
+    exp?.method === 'email_auth_dns_sample'
+    && exp?.validationDimension === 'failure_reality'
+    && exp?.result?.verdict === 'weakens'
+  ) {
+    const espSignaled = Number(exp.result?.sample?.espSignaled ?? 0);
+    const hardFailures = Number(exp.result?.sample?.hardFailureDomains ?? Infinity);
+    return espSignaled >= 8 && hardFailures === 0;
+  }
+
   return false;
 }
 
@@ -107,6 +136,7 @@ function markMeasurementBlocked(garden, opp, exp, validationDimension) {
   opp.status = 'measurement_blocked';
   opp.selectedForExperiment = false;
   opp.selectionState = 'measurement_blocked';
+  opp.selectionCooldown = false;
   opp.measurementBlockedAt = nowIso();
   opp.measurementBlockedDimension = validationDimension ?? null;
   opp.measurementBlockedExperimentId = exp?.id ?? null;
@@ -136,7 +166,7 @@ function authorizeEmailDnsFailureReality(garden, opp) {
     oneTimeCostUsd: 0,
     recurringUsd: 0,
     successCondition: 'At least eight domains expose a recognized transactional-ESP marker in SPF and at least two of those domains expose a hard SPF/DMARC DNS failure such as multiple SPF records, multiple DMARC records, or a malformed DMARC record.',
-    killCondition: 'If at least eight ESP-signaled domains are evaluable and none exposes a hard SPF/DMARC DNS failure, the direct failure-rate thesis is weakened and this branch should yield before another method is considered.',
+    killCondition: 'If at least eight ESP-signaled domains are evaluable and none exposes a hard SPF/DMARC DNS failure, the direct failure-rate thesis is weakened enough to make this branch dormant until materially new evidence or a different population changes the context.',
     validationDimension: 'failure_reality',
   };
   const { exp, auth } = authorizeExperiment(garden, opp, e);
@@ -171,6 +201,114 @@ function authorizeMapsFailureReality(garden, opp) {
   };
 }
 
+function genericWebExperiment(opp, validationDimension) {
+  const context = `${opp.name}: ${opp.thesis ?? ''}`;
+
+  if (validationDimension === 'buyer_demand') {
+    return {
+      name: `Buyer-Demand Evidence Search — ${opp.name}`,
+      tests: `Search public marketplaces, product/pricing pages, developer or operator discussions, docs, and workflow evidence for concrete signals that buyers seek, install, compare, request, or pay for a solution to ${context}. Distinguish direct buyer/action signals from generic informational content.`,
+      actionType: 'web_search',
+      method: 'bounded_public_web_search_v1',
+      oneTimeCostUsd: 0,
+      recurringUsd: 0,
+      successCondition: 'Independent sources include concrete buyer/action signals such as paid products, pricing, installs/adoption, explicit requests for a solution, or workflow pain tied to spending or tool selection.',
+      killCondition: 'Results are dominated by generic education, free/native substitutes, or commentary without concrete buyer/action signals.',
+      validationDimension,
+    };
+  }
+
+  if (validationDimension === 'failure_reality') {
+    return {
+      name: `Failure-Reality Evidence Search — ${opp.name}`,
+      tests: `Search public issue trackers, incident reports, user problem reports, documentation, and concrete workflow examples for independent evidence that the specific failure claimed by ${context} actually occurs in practice. Prefer reproducible cases over generic risk descriptions.`,
+      actionType: 'web_search',
+      method: 'bounded_public_web_search_v1',
+      oneTimeCostUsd: 0,
+      recurringUsd: 0,
+      successCondition: 'Multiple independent concrete cases show the claimed failure occurring in real workflows and being material enough to require resolution.',
+      killCondition: 'Evidence remains hypothetical, generic, or is largely covered by native/free mechanisms with no concrete unresolved cases.',
+      validationDimension,
+    };
+  }
+
+  if (validationDimension === 'willingness_to_pay') {
+    return {
+      name: `Willingness-to-Pay Evidence Search — ${opp.name}`,
+      tests: `Search current product pages, marketplaces, pricing, paid tiers, purchase-oriented comparisons, and buyer discussions for evidence that money changes hands for the resolution represented by ${context}.`,
+      actionType: 'web_search',
+      method: 'bounded_public_web_search_v1',
+      oneTimeCostUsd: 0,
+      recurringUsd: 0,
+      successCondition: 'Independent sources show active paid offerings or explicit purchase/pricing behavior for materially comparable resolution.',
+      killCondition: 'Comparable resolution is overwhelmingly free, bundled, or lacks credible paid purchase behavior.',
+      validationDimension,
+    };
+  }
+
+  if (validationDimension === 'distribution_access') {
+    return {
+      name: `Passive-Distribution Evidence Search — ${opp.name}`,
+      tests: `Search the stated nutrient channels for comparable tools that are discoverable and self-serve without cold outreach, and verify whether ${context} could plausibly enter those channels without ongoing human selling.`,
+      actionType: 'web_search',
+      method: 'bounded_public_web_search_v1',
+      oneTimeCostUsd: 0,
+      recurringUsd: 0,
+      successCondition: 'At least one existing channel demonstrates passive discovery plus self-serve adoption for materially comparable tools.',
+      killCondition: 'Distribution appears to depend mainly on outbound sales, services, relationships, or ongoing manual acquisition.',
+      validationDimension,
+    };
+  }
+
+  return {
+    name: `Resolution-Complexity Evidence Search — ${opp.name}`,
+    tests: `Search documentation, issue threads, competing tools, and workflow examples to determine whether resolving ${context} requires enough non-trivial logic or evidence to justify a product rather than a simple rule or native setting.`,
+    actionType: 'web_search',
+    method: 'bounded_public_web_search_v1',
+    oneTimeCostUsd: 0,
+    recurringUsd: 0,
+    successCondition: 'Concrete workflows show recurring ambiguity, reconciliation, or multi-signal logic that is not adequately solved by a trivial filter or native feature.',
+    killCondition: 'The resolution reduces to a stable trivial rule, native setting, or already-free commodity check.',
+    validationDimension: 'resolution_complexity',
+  };
+}
+
+function authorizeGenericWebExperiment(garden, opp, validationDimension) {
+  const e = genericWebExperiment(opp, validationDimension);
+  const { exp, auth } = authorizeExperiment(garden, opp, e);
+  return {
+    changed: true,
+    summary: auth.allowed
+      ? `Experiment authorized deterministically: ${exp.name} [${exp.validationDimension}]`
+      : `Experiment requires approval: ${exp.name}`,
+    action: 'EXPERIMENT',
+  };
+}
+
+function rankExpansionCandidates(garden, candidates, result) {
+  if (candidates.length === 0) return;
+  const selectedAt = nowIso();
+  for (let i = 0; i < candidates.length; i += 1) {
+    const opp = candidates[i];
+    opp.selectedForExperiment = i === 0;
+    opp.selectionState = i === 0 ? 'selected' : 'reserve';
+    opp.lastSelectionAt = selectedAt;
+    opp.selectionCooldown = false;
+  }
+
+  garden.selections ??= [];
+  garden.selections.push({
+    id: id('select'),
+    createdAt: selectedAt,
+    chosenOpportunityId: candidates[0].id,
+    reserveOpportunityIds: candidates.slice(1).map((x) => x.id),
+    rationale: 'Initial allocation follows EXPAND rank. Candidate generation already returns descending expected usefulness, so a second model call is not justified before any external evidence exists.',
+    candidateIds: candidates.map((x) => x.id),
+    responseId: result.rawId ?? null,
+    usage: result.usage ?? null,
+  });
+}
+
 export async function runEnzyme({ garden, pressure, reasoner }) {
   if (pressure.type === 'HUMAN' || pressure.type === 'STILLNESS') {
     return { changed: false, summary: pressure.why, action: pressure.type };
@@ -179,29 +317,47 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
   if (pressure.type === 'EXPAND') {
     const result = await reasoner.reason({
       operation: 'EXPAND', garden, target: null,
-      prompt: `Find at most 3 genuinely distinct candidate economic Fruit. Start from existing high-intent nutrient channels where buyers or machines already spend money. Avoid consulting, cold outreach, physical fulfillment, and ideas requiring Sean's ongoing labor.\nReturn {"candidates":[{"name":"...","thesis":"...","moneyFlow":"...","buyer":"...","nutrientChannel":"...","passivity":"...","autonomyCompatibility":"...","reproductivePotential":"...","whyNow":"..."}]}`,
+      prompt: `Find at most 2 genuinely distinct candidate economic Fruit. Start from existing high-intent nutrient channels where buyers or machines already spend money. Avoid consulting, cold outreach, physical fulfillment, and ideas requiring Sean's ongoing labor. Return candidates in descending expected usefulness.`,
     });
+
+    const created = [];
     for (const c of result.data.candidates ?? []) {
-      garden.opportunities.push({
-        id: id('opp'), status: 'seed', createdAt: nowIso(),
+      const opp = {
+        id: id('opp'),
+        status: 'needs_test',
+        createdAt: nowIso(),
         ...c,
-        reasoningEvidence: [], externalEvidence: [], counterEvidence: [], sources: result.sources ?? [], ancestry: ['EXPAND'],
-      });
+        reasoningEvidence: [],
+        externalEvidence: [],
+        counterEvidence: [],
+        sources: result.sources ?? [],
+        ancestry: ['EXPAND'],
+        provisionalVerdict: 'needs_test',
+        epistemicNote: 'Generated hypothesis only. Internal falsification is not external evidence, so the seed proceeds directly to the cheapest bounded reality test.',
+      };
+      garden.opportunities.push(opp);
+      created.push(opp);
     }
+    rankExpansionCandidates(garden, created, result);
+
     return {
-      changed: (result.data.candidates ?? []).length > 0,
-      summary: `Expanded with ${(result.data.candidates ?? []).length} candidate(s).`,
+      changed: created.length > 0,
+      summary: created.length > 0
+        ? `Expanded with ${created.length} candidate(s); ranked ${created[0].name} first for direct reality testing without a separate FALSIFY or SELECT call.`
+        : 'Expansion produced no candidates.',
       action: 'EXPAND',
       sources: result.sources,
     };
   }
 
+  // Legacy path only. New EXPAND candidates skip this model-only stage because with web
+  // disabled it cannot earn evidence; it merely duplicated the generation critique.
   if (pressure.type === 'FALSIFY') {
     const opp = byId(garden.opportunities, pressure.targetId);
     if (!opp) throw new Error('FALSIFY target not found.');
     const result = await reasoner.reason({
       operation: 'FALSIFY', garden, target: opp,
-      prompt: `Attack this opportunity. Look for existing solutions, evidence that the pain is rare, weak passive distribution, trivial resolution complexity, poor autonomy compatibility, or lack of money flow. Prefer killing it cheaply. Distinguish model reasoning from externally observed evidence.\nReturn {"verdict":"compost|continue|needs_test","rationale":"...","evidence":["..."],"counterEvidence":["..."],"cheapestFalsifier":{"question":"...","action":"...","estimatedCostUsd":0},"principles":[]}`,
+      prompt: `Attack this legacy seed. Distinguish model reasoning from externally observed evidence and prefer killing it cheaply.`,
     });
 
     const externalSources = (result.sources ?? []).filter((s) => s?.url);
@@ -215,7 +371,7 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
 
     if (externalSources.length === 0) {
       opp.status = 'needs_test';
-      opp.epistemicNote = 'No external evidence was retrieved in this breath; model reasoning is provisional only.';
+      opp.epistemicNote = 'No external evidence was retrieved; model reasoning remains provisional.';
     } else if (result.data.verdict === 'compost') {
       opp.status = 'compost';
       opp.failedBecause = result.data.rationale ?? 'Failed falsification with external evidence.';
@@ -224,9 +380,6 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
       opp.epistemicNote = `Supported by ${externalSources.length} externally retrieved source(s); still not economically validated.`;
     }
 
-    for (const principle of result.data.principles ?? []) {
-      garden.soil.push({ id: id('soil'), principle, scope: 'economic', status: 'candidate', derivedFrom: [opp.id], createdAt: nowIso() });
-    }
     return {
       changed: true,
       summary: `${opp.name}: ${opp.status}. ${opp.lastRationale ?? ''}`.trim(),
@@ -239,27 +392,22 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     const opp = byId(garden.opportunities, pressure.targetId);
     if (!opp) throw new Error('EXPERIMENT target not found.');
     const previous = garden.experiments.filter((x) => x.opportunityId === opp.id);
-    const gate = validationGateSnapshot(garden, opp.id);
     const requiredDimension = requiredValidationDimension(garden, opp.id);
-    const priorNonSupportingRequiredWebSearch = requiredDimension
-      ? nonSupportingIntegratedWebSearch(previous, requiredDimension)
-      : null;
+    const targetDimension = requiredDimension ?? supplementalValidationDimension(garden, opp.id);
+    const priorNonSupportingRequiredWebSearch = nonSupportingIntegratedWebSearch(previous, targetDimension);
 
-    // The email-authentication branch has a zero-spend, read-only DNS organ. Use direct
-    // machine-readable reality before paying for a semantic failure-reality search.
+    // Prefer a real branch-specific sensor before semantic search when one exists.
     if (
       opp.id === EMAIL_AUTH_PREFLIGHT_OPPORTUNITY_ID
-      && requiredDimension === 'failure_reality'
+      && targetDimension === 'failure_reality'
       && !hasMethod(previous, 'email_auth_dns_sample')
     ) {
       return authorizeEmailDnsFailureReality(garden, opp);
     }
 
-    // The Maps branch keeps its historical direct sampler only as an escalation after
-    // a non-supporting semantic search. No other opportunity may inherit this method.
     if (
       opp.id === MAPS_WEBSITE_OPPORTUNITY_ID
-      && requiredDimension === 'failure_reality'
+      && targetDimension === 'failure_reality'
       && priorNonSupportingRequiredWebSearch
       && !hasMethod(previous, 'maps_website_sample')
     ) {
@@ -268,33 +416,19 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
 
     if (
       priorNonSupportingRequiredWebSearch
-      && !hasUnusedBranchSpecificAlternateMeasurement(opp, requiredDimension, previous)
+      && !hasUnusedBranchSpecificAlternateMeasurement(opp, targetDimension, previous)
     ) {
-      markMeasurementBlocked(garden, opp, priorNonSupportingRequiredWebSearch, requiredDimension);
+      markMeasurementBlocked(garden, opp, priorNonSupportingRequiredWebSearch, targetDimension);
       return {
         changed: true,
-        summary: `Measurement blocked: ${opp.name} cannot justify another ${requiredDimension} search until a materially different bounded measurement method exists.`,
+        summary: `Measurement blocked: ${opp.name} cannot justify another ${targetDimension} search until a materially different bounded measurement method exists.`,
         action: 'EXPERIMENT',
       };
     }
 
-    const result = await reasoner.reason({
-      operation: 'EXPERIMENT', garden, target: opp,
-      prompt: `Design the cheapest discriminating experiment that can materially change whether we pursue this. It must avoid recurring obligations, contracts, Sean's identity, cold outreach, and public deployment unless separately approved. The experiment must produce external evidence; internal reasoning alone is not a successful test. Avoid merely repeating prior experiments.\nPRIVATE-BUILD VALIDATION GATE: ${JSON.stringify(gate)}\nREQUIRED VALIDATION DIMENSION: ${requiredDimension ?? 'Choose an uncovered dimension that most cheaply reduces remaining uncertainty.'}\nVALIDATION DIMENSIONS: failure_reality = direct evidence the claimed failure actually occurs; buyer_demand = evidence buyers/workflows care enough to seek or pay for resolution; distribution_access = evidence passive discoverability/channel access; resolution_complexity = evidence resolution is not a trivial filter; willingness_to_pay = direct pricing/purchase evidence.\nV0 EXECUTION CAPABILITY: autonomous execution supports public web_search; a deterministic direct Maps→website sample only for the Google Maps Business → Website Identity Guard; and a deterministic read-only SPF/DMARC DNS sampler only for the current Transactional Email Authentication Preflight API branch. Direct DNS does not discover unknown DKIM selectors or prove inbox placement. Prefer a fresh executable method and do not invent generic DNS, GitHub, registry, or API enumeration capabilities.\nPREVIOUS EXPERIMENTS: ${JSON.stringify(previous.map((x) => ({name:x.name,status:x.status,actionType:x.actionType,method:x.method ?? null,validationDimension:x.validationDimension ?? null,result:x.result ?? null})))}\nReturn one experiment with exactly one validationDimension.`,
-    });
-    const e = result.data.experiment;
-    if (!e) return { changed: false, summary: 'No experiment proposed.', action: 'EXPERIMENT' };
-    if (requiredDimension && e.validationDimension !== requiredDimension) {
-      throw new Error(`Experiment targeted ${e.validationDimension}; policy requires ${requiredDimension} before additional dimensions.`);
-    }
-    const { exp, auth } = authorizeExperiment(garden, opp, e);
-    return {
-      changed: true,
-      summary: auth.allowed
-        ? `Experiment authorized: ${exp.name} [${exp.validationDimension}]`
-        : `Experiment requires approval: ${exp.name}`,
-      action: 'EXPERIMENT',
-    };
+    // Normal experiment design is deterministic policy. Save the model call for the
+    // actual evidence search instead of asking cognition to invent a wrapper for it.
+    return authorizeGenericWebExperiment(garden, opp, targetDimension);
   }
 
   if (pressure.type === 'EXECUTE_EXPERIMENT') {
@@ -365,8 +499,6 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
       };
     }
 
-    // Public-web execution remains read-only and separately authorized. No publishing,
-    // human contact, unauthorized purchases, or external writes.
     if (exp.actionType !== 'web_search') {
       exp.status = 'blocked_capability';
       exp.blockedReason = `v0 has no autonomous executor for actionType=${exp.actionType}, method=${exp.method ?? 'none'}.`;
@@ -382,7 +514,7 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
       garden,
       target: { opportunity: opp, experiment: exp },
       allowWebSearch: true,
-      prompt: `Execute only the authorized public-web evidence search described by this experiment. Search for concrete evidence relevant to the stated test, success condition, kill condition, and validation dimension (${exp.validationDimension ?? 'unspecified'}). Prefer primary sources, marketplace/product evidence, user problem reports, documentation, and concrete workflow evidence over generic commentary. Do not take any external write action. Do not contact people.\nReturn {"verdict":"supports|weakens|inconclusive","finding":"...","observations":["..."]}. The verdict is provisional; source URLs are the external evidence.`
+      prompt: `Execute only the authorized public-web evidence search described by this experiment. Search for concrete evidence relevant to the stated test, success condition, kill condition, and validation dimension (${exp.validationDimension ?? 'unspecified'}). Prefer primary sources, marketplace/product evidence, user problem reports, documentation, and concrete workflow evidence over generic commentary. Do not take any external write action. Do not contact people. Return a conservative verdict: supports only when the external evidence actually meets the success condition; weakens when it materially meets the kill condition; otherwise inconclusive.`,
     });
     const sources = (result.sources ?? []).filter((s) => s?.url);
     exp.status = 'result_ready';
@@ -408,7 +540,7 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     const opp = byId(garden.opportunities, pressure.targetId);
     const result = await reasoner.reason({
       operation: 'BUILD_PLAN', garden, target: opp,
-      prompt: `Produce a minimal PRIVATE build plan only. Do not publish or spend. Identify inherited infrastructure from existing Fruit and the passive nutrient channel. The status validated means only that evidence has earned a private build plan; it does not mean the business is proven.\nReturn {"buildPlan":{"artifact":"...","privateSteps":[],"inherited":[],"publicBoundary":"...","estimatedMaintenance":"..."}}`,
+      prompt: `Produce a minimal PRIVATE build plan only. Do not publish or spend. Identify inherited infrastructure from existing Fruit and the passive nutrient channel. The status validated means only that evidence has earned a private build plan; it does not mean the business is proven. Return the smallest build that can create a real measurable Fruit.`,
     });
     opp.buildPlan = result.data.buildPlan ?? null;
     opp.status = 'build_ready';
@@ -440,10 +572,13 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
 
     if (predeclaredKillConditionMet(exp)) {
       opp.status = 'dormant';
+      opp.selectedForExperiment = false;
+      opp.selectionState = 'dormant';
+      opp.selectionCooldown = false;
       opp.dormantAt = nowIso();
       opp.validationGate = validationGateSnapshot(garden, opp.id);
       opp.failedBecause = `Predeclared kill condition met by ${exp.id}: ${exp.killCondition}`;
-      opp.epistemicNote = 'Dormant, not disproven: the bounded direct sample met its predeclared kill condition, so further spend on this branch is not justified unless materially new evidence changes the context.';
+      opp.epistemicNote = 'Dormant, not disproven: the bounded direct sample met its predeclared kill condition, so further testing is not justified unless materially new evidence, a different population, or a new measurement capability changes the context.';
 
       const principle = 'Predeclared kill conditions outrank curiosity: when a bounded reality test meets its kill condition, stop spending on that branch unless materially new evidence changes the context.';
       if (!(garden.soil ?? []).some((x) => x.principle === principle)) {
@@ -481,14 +616,9 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     ) {
       markMeasurementBlocked(garden, opp, exp, exp.validationDimension);
     } else {
-      // Weak/inconclusive evidence does not prove absence. Keep the idea testable when a
-      // materially different bounded measurement method still exists; otherwise later
-      // routing can preserve it as measurement_blocked instead of repeating a method.
       opp.status = 'needs_test';
       opp.validationGate = validationGateSnapshot(garden, opp.id);
-      opp.epistemicNote = exp.method === 'email_auth_dns_sample'
-        ? `Experiment ${exp.id} did not justify failure-reality promotion. DNS limitations are preserved; a materially different public-evidence method may still be tried once.`
-        : `Experiment ${exp.id} did not justify promotion; further reality contact is required through a materially different method.`;
+      opp.epistemicNote = `Experiment ${exp.id} did not justify promotion; further reality contact requires a materially different method.`;
     }
 
     return {
