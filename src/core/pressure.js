@@ -11,8 +11,11 @@ export function classifyPressure(garden) {
   const seed = garden.opportunities.find((x) => x.status === 'seed');
   if (seed) return { type: 'FALSIFY', targetId: seed.id, why: 'A living seed has not earned attention yet.' };
 
+  const needsTest = garden.opportunities.find((x) => x.status === 'needs_test' && !x.experimentId);
+  if (needsTest) return { type: 'EXPERIMENT', targetId: needsTest.id, why: 'The idea is plausible but lacks external evidence; design the cheapest discriminating reality test.' };
+
   const supported = garden.opportunities.find((x) => x.status === 'supported' && !x.experimentId);
-  if (supported) return { type: 'EXPERIMENT', targetId: supported.id, why: 'The remaining uncertainty should be pushed into reality.' };
+  if (supported) return { type: 'EXPERIMENT', targetId: supported.id, why: 'External evidence supports the seed, but the remaining uncertainty should be pushed into reality.' };
 
   const validated = garden.opportunities.find((x) => x.status === 'validated' && !x.fruitId);
   if (validated) return { type: 'BUILD_PLAN', targetId: validated.id, why: 'Evidence has earned a private build plan.' };
