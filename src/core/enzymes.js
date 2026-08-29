@@ -43,7 +43,6 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     opp.provisionalVerdict = result.data.verdict ?? null;
 
     if (externalSources.length === 0) {
-      // Model reasoning can justify a test, but cannot create empirical support by itself.
       opp.status = 'needs_test';
       opp.epistemicNote = 'No external evidence was retrieved in this breath; model reasoning is provisional only.';
     } else if (result.data.verdict === 'compost') {
@@ -63,9 +62,10 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
   if (pressure.type === 'EXPERIMENT') {
     const opp = byId(garden.opportunities, pressure.targetId);
     if (!opp) throw new Error('EXPERIMENT target not found.');
+    const previous = garden.experiments.filter((x) => x.opportunityId === opp.id);
     const result = await reasoner.reason({
       operation: 'EXPERIMENT', garden, target: opp,
-      prompt: `Design the cheapest discriminating experiment that can materially change whether we pursue this. It must avoid recurring obligations, contracts, Sean's identity, cold outreach, and public deployment unless separately approved. The experiment must produce external evidence; internal reasoning alone is not a successful test.\nReturn {"experiment":{"name":"...","tests":"...","actionType":"observe|web_search|create_private|sandbox|spend|public_deploy|human_contact","oneTimeCostUsd":0,"recurringUsd":0,"successCondition":"...","killCondition":"..."}}`,
+      prompt: `Design the cheapest discriminating experiment that can materially change whether we pursue this. It must avoid recurring obligations, contracts, Sean's identity, cold outreach, and public deployment unless separately approved. The experiment must produce external evidence; internal reasoning alone is not a successful test. Avoid merely repeating prior experiments.\nPREVIOUS EXPERIMENTS: ${JSON.stringify(previous.map((x) => ({name:x.name,status:x.status,actionType:x.actionType,result:x.result ?? null})))}\nReturn {"experiment":{"name":"...","tests":"...","actionType":"observe|web_search|create_private|sandbox|spend|public_deploy|human_contact","oneTimeCostUsd":0,"recurringUsd":0,"successCondition":"...","killCondition":"..."}}`,
     });
     const e = result.data.experiment;
     if (!e) return { changed: false, summary: 'No experiment proposed.', action: 'EXPERIMENT' };
@@ -75,6 +75,50 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     opp.experimentId = exp.id;
     if (auth.requiresApproval) garden.approvals.push({ id: id('approval'), status: 'pending', createdAt: nowIso(), action: exp, reason: auth.reason });
     return { changed: true, summary: auth.allowed ? `Experiment authorized: ${exp.name}` : `Experiment requires approval: ${exp.name}`, action: 'EXPERIMENT' };
+  }
+
+  if (pressure.type === 'EXECUTE_EXPERIMENT') {
+    const exp = byId(garden.experiments, pressure.targetId);
+    if (!exp) throw new Error('EXECUTE_EXPERIMENT target not found.');
+    if (!exp.authorization?.allowed || exp.status !== 'authorized') {
+      throw new Error('Experiment execution requested without valid authorization.');
+    }
+
+    // First-live execution capability is intentionally tiny: only an already-authorized
+    // public web evidence search may execute autonomously. No publishing, contact, purchases,
+    // account changes, code deployment, or external writes are implemented here.
+    if (exp.actionType !== 'web_search') {
+      exp.status = 'blocked_capability';
+      exp.blockedReason = `v0 has no autonomous executor for actionType=${exp.actionType}.`;
+      return { changed: true, summary: `Experiment stopped at capability membrane: ${exp.name}`, action: 'EXECUTE_EXPERIMENT' };
+    }
+
+    const opp = byId(garden.opportunities, exp.opportunityId);
+    if (!opp) throw new Error('Experiment opportunity not found.');
+    const result = await reasoner.reason({
+      operation: 'EXECUTE_EXPERIMENT',
+      garden,
+      target: { opportunity: opp, experiment: exp },
+      allowWebSearch: true,
+      prompt: `Execute only the authorized public-web evidence search described by this experiment. Search for concrete evidence relevant to the stated test, success condition, and kill condition. Prefer primary sources, marketplace/product evidence, user problem reports, documentation, and concrete workflow evidence over generic commentary. Do not take any external write action. Do not contact people.\nReturn {"verdict":"supports|weakens|inconclusive","finding":"...","observations":["..."]}. The verdict is provisional; source URLs are the external evidence.`
+    });
+    const sources = (result.sources ?? []).filter((s) => s?.url);
+    exp.status = 'result_ready';
+    exp.executedAt = nowIso();
+    exp.result = {
+      verdict: result.data.verdict ?? 'inconclusive',
+      finding: result.data.finding ?? null,
+      observations: result.data.observations ?? [],
+      sources,
+      sourceCount: sources.length,
+      responseId: result.rawId ?? null,
+    };
+    return {
+      changed: true,
+      summary: `${exp.name}: ${exp.result.verdict} with ${sources.length} external source(s).`,
+      action: 'EXECUTE_EXPERIMENT',
+      sources,
+    };
   }
 
   if (pressure.type === 'BUILD_PLAN') {
@@ -90,10 +134,40 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
 
   if (pressure.type === 'INTEGRATE') {
     const event = byId(garden.events, pressure.targetId);
-    if (event) event.status = 'processed';
+    if (event) {
+      event.status = 'processed';
+      return { changed: true, summary: 'Reality event integrated.', action: 'INTEGRATE' };
+    }
+
     const exp = byId(garden.experiments, pressure.targetId);
-    if (exp) exp.status = 'integrated';
-    return { changed: true, summary: 'Reality event marked integrated; domain-specific integration is intentionally minimal in v0.', action: 'INTEGRATE' };
+    if (!exp || exp.status !== 'result_ready') return { changed: false, summary: 'No result ready for integration.', action: 'INTEGRATE' };
+    const opp = byId(garden.opportunities, exp.opportunityId);
+    if (!opp) throw new Error('Integrated experiment opportunity not found.');
+
+    const sources = exp.result?.sources ?? [];
+    opp.sources = [...new Map([...(opp.sources ?? []), ...sources].map((s) => [s.url, s])).values()];
+    opp.externalEvidence = [...new Set([...(opp.externalEvidence ?? []), ...sources.map((s) => s.url)])];
+    opp.lastExperimentFinding = exp.result?.finding ?? null;
+
+    if (sources.length > 0 && exp.result?.verdict === 'supports') {
+      opp.status = 'supported';
+      opp.epistemicNote = `Externally supported by experiment ${exp.id}; not economically validated.`;
+    } else {
+      // A weak/inconclusive web search does not prove absence. Keep the idea testable rather than
+      // pretending search silence is a decisive falsification.
+      opp.status = 'needs_test';
+      opp.epistemicNote = `Experiment ${exp.id} did not justify promotion; further reality contact is required.`;
+    }
+
+    exp.status = 'integrated';
+    exp.integratedAt = nowIso();
+    opp.experimentId = null;
+    return {
+      changed: true,
+      summary: `${exp.name} integrated: ${opp.name} is ${opp.status} with ${sources.length} external source(s).`,
+      action: 'INTEGRATE',
+      sources,
+    };
   }
 
   return { changed: false, summary: `No enzyme for ${pressure.type}.`, action: pressure.type };
