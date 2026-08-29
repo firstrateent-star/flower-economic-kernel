@@ -300,7 +300,10 @@ function structuralIssues(profileResults) {
       addIssue(issues, 'PROFILE_FETCH_FAILED', 'fail', `Crawler profile ${result.profile} could not retrieve the page.`, { profile: result.profile, error: result.error });
       continue;
     }
-    if (result.status >= 400) addIssue(issues, 'HTTP_ERROR', 'fail', `Crawler profile ${result.profile} received HTTP ${result.status}.`, { profile: result.profile, status: result.status });
+    if (result.status >= 400) {
+      addIssue(issues, 'HTTP_ERROR', 'fail', `Crawler profile ${result.profile} received HTTP ${result.status}.`, { profile: result.profile, status: result.status });
+      continue;
+    }
     const contentType = String(result.contentType ?? '').toLowerCase();
     if (!contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
       addIssue(issues, 'NON_HTML_RESPONSE', 'fail', `Crawler profile ${result.profile} did not receive HTML.`, { profile: result.profile, contentType: result.contentType });
