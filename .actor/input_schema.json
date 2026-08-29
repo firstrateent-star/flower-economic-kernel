@@ -3,7 +3,7 @@
   "type": "object",
   "schemaVersion": 1,
   "properties": {
-    "maxBreaths": {"title":"Maximum breaths this pulse","type":"integer","description":"Hard cap to prevent runaway recursive cognition.","default":3,"minimum":1,"maximum":5},
+    "maxBreaths": {"title":"Maximum breaths this pulse","type":"integer","description":"Hard cap to prevent runaway recursive cognition.","default":1,"minimum":1,"maximum":1},
     "event": {"title":"Optional reality event","type":"object","description":"External usage/revenue/experiment evidence that should wake the Garden."}
   }
 }
