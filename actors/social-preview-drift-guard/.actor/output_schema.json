@@ -1,0 +1,19 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Social Preview Drift Guard output",
+  "description": "Per-URL audit results are written to the default dataset. A compact run summary is stored in the OUTPUT record of the default key-value store.",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "URL audit results",
+      "description": "One machine-readable audit item per inspected URL, including verdict, risk score, issues, crawler-profile observations, and preview-image checks.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items?view=overview"
+    },
+    "summary": {
+      "type": "string",
+      "title": "Run summary",
+      "description": "Aggregate PASS/RISK/FAIL/INCONCLUSIVE counts and diagnostic summary for the run.",
+      "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/OUTPUT"
+    }
+  }
+}
