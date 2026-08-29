@@ -72,8 +72,10 @@ export function classifyPressure(garden) {
   const validated = garden.opportunities.find((x) => x.status === 'validated' && !x.fruitId);
   if (validated) return { type: 'BUILD_PLAN', targetId: validated.id, why: 'Evidence has earned a private build plan.' };
 
-  const active = garden.opportunities.some((x) => !['compost', 'dormant', 'fruit'].includes(x.status));
-  if (!active) return { type: 'EXPAND', targetId: null, why: 'No living opportunity remains; expand the search space.' };
+  // measurement_blocked branches remain preserved in the Garden for future capabilities,
+  // but they should not prevent Flower from exploring new actionable soil today.
+  const active = garden.opportunities.some((x) => !['compost', 'dormant', 'fruit', 'measurement_blocked'].includes(x.status));
+  if (!active) return { type: 'EXPAND', targetId: null, why: 'No currently actionable opportunity remains; preserve blocked history and expand the search space.' };
 
   return { type: 'STILLNESS', targetId: null, why: 'No additional autonomous cognition is currently justified.' };
 }
