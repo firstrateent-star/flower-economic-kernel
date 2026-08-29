@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "name": "Social Preview Drift Guard GitHub Action",
+  "status": "private_staged_ci_passed",
+  "createdAt": "2026-08-29",
+  "sourcePath": "distribution/social-preview-drift-guard-action",
+  "feedsFruit": "fruit_social_preview_drift_guard",
+  "publicEngineUrl": "https://apify.com/firstrate/social-preview-drift-guard-api",
+  "privateImplementationExposed": false,
+  "purpose": "Convert one-time Store discovery into recurring machine-to-machine usage by making the paid Actor a CI/deployment gate.",
+  "runtime": {
+    "kind": "composite_github_action",
+    "apifyAuthentication": "delegated_to_official_setup_apify_cli_action",
+    "actorInvocation": "apify actors call firstrate/social-preview-drift-guard-api --silent --output-dataset",
+    "maxUrlsPerInvocation": 100,
+    "launchPriceUsdPerObservedUrl": 0.005,
+    "approxMaxObservedEventCostPerInvocationUsd": 0.5
+  },
+  "semantics": {
+    "PASS": "success",
+    "RISK": "warning by default",
+    "FAIL": "error and CI failure by default",
+    "INCONCLUSIVE": "measurement warning; underlying url-checked event is not charged"
+  },
+  "verification": {
+    "deterministicCi": "passed",
+    "workflow": "Social Preview Action CI",
+    "workflowRunId": 33239955923,
+    "verifiedCommit": "656b304cf84dd72e358571df9be317baace8af1e",
+    "liveActorEndToEndFromPublicAction": "pending_public_repo_and_secret"
+  },
+  "nextBoundary": {
+    "type": "human_public_repo_creation",
+    "recommendedRepository": "firstrateent-star/social-preview-drift-guard-action",
+    "reason": "The connected GitHub tool can populate existing repositories but cannot create a new top-level repository. GitHub recommends a dedicated public repository for Marketplace Actions."
+  }
+}
