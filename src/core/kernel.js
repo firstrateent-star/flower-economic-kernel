@@ -4,12 +4,34 @@ import { runSelection } from './selection.js';
 import { addTrace } from './transitions.js';
 import { nowIso } from './utils.js';
 
+function applyPostIntegrationSelectionPolicy(garden, pressure) {
+  if (pressure.type !== 'INTEGRATE') return null;
+  const exp = (garden.experiments ?? []).find((x) => x.id === pressure.targetId);
+  if (!exp || exp.status !== 'integrated' || exp.result?.verdict === 'supports') return null;
+
+  const opp = (garden.opportunities ?? []).find((x) => x.id === exp.opportunityId);
+  if (!opp || opp.selectedForExperiment !== true) return null;
+
+  opp.selectedForExperiment = false;
+  opp.selectionState = 'cooldown';
+  opp.selectionCooldown = true;
+  opp.selectionCooldownAt = nowIso();
+  opp.selectionCooldownReason = `Experiment ${exp.id} returned ${exp.result?.verdict ?? 'non-supporting'} evidence in ${exp.validationDimension ?? 'an unknown dimension'}.`;
+  return opp;
+}
+
 export async function breathe({ garden, reasoner }) {
   const before = JSON.stringify(garden);
   const pressure = classifyPressure(garden);
   const result = pressure.type === 'SELECT'
     ? await runSelection({ garden, reasoner })
     : await runEnzyme({ garden, pressure, reasoner });
+
+  const cooled = applyPostIntegrationSelectionPolicy(garden, pressure);
+  if (cooled) {
+    result.summary = `${result.summary} Selection released ${cooled.name} into cooldown so another surviving sibling can receive comparable reality contact.`;
+  }
+
   garden.status.lastPressure = pressure;
   garden.status.lastBreathAt = nowIso();
 
