@@ -1,0 +1,20 @@
+{
+  "name": "revenue-path-sentinel",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "framer-plugin dev",
+    "pack": "framer-plugin pack",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@framer/plugin": "^4.0.0",
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "typescript": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {}
+}
