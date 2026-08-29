@@ -29,6 +29,24 @@ await Actor.main(async () => {
   }
   if (repaired.length) log.warning('Epistemic state repaired', { opportunities: repaired });
 
+  // One-time migration for the first successfully integrated reality experiment.
+  // It searched public demand plus failure signals; conservatively credit only
+  // buyer_demand so a separate experiment must still establish failure_reality.
+  const stateMigrations = [];
+  for (const exp of garden.experiments ?? []) {
+    if (
+      exp.id === 'exp_94251fcac534'
+      && exp.opportunityId === 'opp_maps_website_pointer_guard'
+      && exp.status === 'integrated'
+      && !exp.validationDimension
+    ) {
+      exp.validationDimension = 'buyer_demand';
+      exp.migrationNote = 'Legacy first experiment conservatively classified as buyer_demand; failure_reality remains independently unearned.';
+      stateMigrations.push(`${exp.id}:buyer_demand`);
+    }
+  }
+  if (stateMigrations.length) log.info('Garden state migrated', { migrations: stateMigrations });
+
   // First-live v0 deliberately disables external event ingestion.
   // We re-enable event-driven waking only after the basic falsification loop is proven.
 
@@ -57,6 +75,7 @@ await Actor.main(async () => {
       error: message,
       pulseCount: Number(garden.status?.pulseCount ?? 0),
       persistentStore: STORE_NAME,
+      stateMigrations,
     });
     throw error;
   }
@@ -74,6 +93,7 @@ await Actor.main(async () => {
     pulseCount: garden.status.pulseCount,
     persistentStore: STORE_NAME,
     epistemicRepairs: repaired,
+    stateMigrations,
   };
 
   // Per-run output remains easy to inspect; durable Garden state lives above.
