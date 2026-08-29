@@ -1,0 +1,8 @@
+{
+  "actorSpecification": 1,
+  "name": "social-preview-drift-guard",
+  "title": "Social Preview Drift Guard API",
+  "version": "0.1",
+  "buildTag": "latest",
+  "input": "./input_schema.json"
+}
