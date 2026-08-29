@@ -3,6 +3,6 @@
   "name": "flower-economic-kernel-v0",
   "title": "Flower Economic Kernel v0 (Private)",
   "version": "0.1",
-  "build": {"dockerfile": "./Dockerfile"},
+  "buildTag": "latest",
   "input": "./input_schema.json"
 }
