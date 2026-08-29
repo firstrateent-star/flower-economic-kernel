@@ -8,6 +8,13 @@ export function classifyPressure(garden) {
   const readyExperiment = garden.experiments.find((x) => x.status === 'result_ready');
   if (readyExperiment) return { type: 'INTEGRATE', targetId: readyExperiment.id, why: 'An experiment result is ready.' };
 
+  const authorizedExperiment = garden.experiments.find((x) => x.status === 'authorized');
+  if (authorizedExperiment) return {
+    type: 'EXECUTE_EXPERIMENT',
+    targetId: authorizedExperiment.id,
+    why: 'A low-risk experiment already passed the autonomy membrane and is ready for bounded execution.',
+  };
+
   const seed = garden.opportunities.find((x) => x.status === 'seed');
   if (seed) return { type: 'FALSIFY', targetId: seed.id, why: 'A living seed has not earned attention yet.' };
 
