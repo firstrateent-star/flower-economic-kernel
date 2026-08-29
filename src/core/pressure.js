@@ -24,6 +24,37 @@ export function classifyPressure(garden) {
   const readyExperiment = garden.experiments.find((x) => x.status === 'result_ready');
   if (readyExperiment) return { type: 'INTEGRATE', targetId: readyExperiment.id, why: 'An experiment result is ready.' };
 
+  // FRUIT LOCK: once validated evidence has become private source, shipping outranks
+  // speculative research. Keep the organism focused until the Fruit reaches a real
+  // deployment/measurement boundary or is explicitly abandoned.
+  const privateSourceFruit = (garden.fruits ?? []).find((x) => x.status === 'private_source_ready');
+  if (privateSourceFruit) return {
+    type: 'VERIFY_FRUIT',
+    targetId: privateSourceFruit.id,
+    why: 'Validated evidence already has private source. Verify the Fruit before spending another breath on discovery.',
+  };
+
+  const privateVerifiedFruit = (garden.fruits ?? []).find((x) => x.status === 'private_verified');
+  if (privateVerifiedFruit) return {
+    type: 'HUMAN',
+    targetId: privateVerifiedFruit.id,
+    why: `Private Fruit source is verified. The next irreducible boundary is a private Apify deployment from ${privateVerifiedFruit.sourcePath ?? 'its source path'} and one real platform run; public release remains gated.`,
+  };
+
+  const privateDeployedFruit = (garden.fruits ?? []).find((x) => x.status === 'private_deployed');
+  if (privateDeployedFruit) return {
+    type: 'HUMAN',
+    targetId: privateDeployedFruit.id,
+    why: 'Private Actor deployment exists. Run the acceptance sample and record real runtime cost/output before monetization or publication.',
+  };
+
+  const publishReadyFruit = (garden.fruits ?? []).find((x) => x.status === 'publish_ready');
+  if (publishReadyFruit) return {
+    type: 'HUMAN',
+    targetId: publishReadyFruit.id,
+    why: 'Fruit is technically ready for Store publication. Pricing and public exposure require explicit Center-holder approval.',
+  };
+
   const authorizedExperiment = garden.experiments.find((x) => x.status === 'authorized');
   if (authorizedExperiment) return {
     type: 'EXECUTE_EXPERIMENT',
@@ -31,14 +62,13 @@ export function classifyPressure(garden) {
     why: 'A low-risk experiment already passed the autonomy membrane and is ready for bounded execution.',
   };
 
-  // Once evidence earns the private-build gate, convert that evidence into an artifact
-  // before spending another breath on speculative siblings. This is still private and
-  // does not cross the public-deployment or spending membrane.
+  // A validated opportunity without a source artifact still earns a private build stage.
+  // Fruit Forge manifests can bypass prose planning by linking real private source first.
   const validated = garden.opportunities.find((x) => x.status === 'validated' && !x.fruitId);
   if (validated) return {
     type: 'BUILD_PLAN',
     targetId: validated.id,
-    why: 'Evidence has earned a private build plan; convert validated knowledge into Fruit before allocating more speculative experiments.',
+    why: 'Evidence has earned a private build artifact; convert validated knowledge into Fruit before allocating more speculative experiments.',
   };
 
   const seed = garden.opportunities.find((x) => x.status === 'seed');
@@ -79,8 +109,6 @@ export function classifyPressure(garden) {
   const supported = testable.find((x) => x.status === 'supported');
   if (supported) return { type: 'EXPERIMENT', targetId: supported.id, why: 'External evidence supports the seed, but the remaining uncertainty should be pushed into reality.' };
 
-  // measurement_blocked branches remain preserved in the Garden for future capabilities,
-  // but they should not prevent Flower from exploring new actionable soil today.
   const active = garden.opportunities.some((x) => !['compost', 'dormant', 'fruit', 'measurement_blocked'].includes(x.status));
   if (!active) return { type: 'EXPAND', targetId: null, why: 'No currently actionable opportunity remains; preserve blocked history and expand the search space.' };
 
