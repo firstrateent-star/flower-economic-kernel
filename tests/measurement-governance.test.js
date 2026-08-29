@@ -22,6 +22,23 @@ function inconclusiveWebExperiment(opportunityId, id = 'exp_failure_web') {
   };
 }
 
+function supportingBuyerDemandExperiment(opportunityId) {
+  return {
+    id: 'exp_buyer_support',
+    opportunityId,
+    status: 'integrated',
+    actionType: 'web_search',
+    validationDimension: 'buyer_demand',
+    result: {
+      verdict: 'supports',
+      finding: 'External evidence supports buyer demand.',
+      observations: [],
+      sources: [{ title: 'Buyer evidence', url: 'https://example.org/buyer-evidence' }],
+      sourceCount: 1,
+    },
+  };
+}
+
 test('non-Maps inconclusive failure web search becomes measurement_blocked on integration', async () => {
   const garden = structuredClone(seed);
   const opp = {
@@ -34,7 +51,7 @@ test('non-Maps inconclusive failure web search becomes measurement_blocked on in
     experimentId: 'exp_failure_web',
   };
   garden.opportunities = [opp];
-  garden.experiments = [inconclusiveWebExperiment(opp.id)];
+  garden.experiments = [supportingBuyerDemandExperiment(opp.id), inconclusiveWebExperiment(opp.id)];
 
   const result = await pulse({ garden, reasoner: new MockReasoner(), maxBreaths: 1 });
 
@@ -53,7 +70,7 @@ test('Maps pointer guard preserves its branch-specific direct-sample escape hatc
   opp.selectedForExperiment = true;
   opp.selectionState = 'selected';
   opp.experimentId = 'exp_failure_web';
-  garden.experiments = [inconclusiveWebExperiment(opp.id)];
+  garden.experiments = [supportingBuyerDemandExperiment(opp.id), inconclusiveWebExperiment(opp.id)];
 
   await pulse({ garden, reasoner: new MockReasoner(), maxBreaths: 1 });
 
