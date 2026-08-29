@@ -8,6 +8,31 @@ function uniqueUrls(input) {
   return [...new Set(values)].slice(0, 100);
 }
 
+function normalizeMeasurementResult(result) {
+  const profileResults = Array.isArray(result?.profiles) ? result.profiles : [];
+  const allProfilesTransportFailed = profileResults.length > 0 && profileResults.every((profile) => Boolean(profile?.error));
+  if (!allProfilesTransportFailed) {
+    return {
+      ...result,
+      measurementStatus: 'observed',
+    };
+  }
+
+  return {
+    ...result,
+    verdict: 'INCONCLUSIVE',
+    riskScore: null,
+    measurementStatus: 'inconclusive',
+    measurementReason: 'ALL_PROFILES_TRANSPORT_FAILED',
+    issues: (result?.issues ?? []).map((issue) => {
+      if (issue?.code === 'PROFILE_FETCH_FAILED' || issue?.code === 'ALL_PROFILES_FAILED') {
+        return { ...issue, severity: 'measurement' };
+      }
+      return issue;
+    }),
+  };
+}
+
 function summarizeIssues(results) {
   const counts = new Map();
   for (const result of results) {
@@ -22,7 +47,7 @@ function summarizeIssues(results) {
       return { severity, code: codeParts.join(':'), count };
     })
     .sort((a, b) => {
-      const rank = { fail: 3, risk: 2, info: 1, unknown: 0 };
+      const rank = { fail: 4, risk: 3, measurement: 2, info: 1, unknown: 0 };
       return (rank[b.severity] ?? 0) - (rank[a.severity] ?? 0) || b.count - a.count || a.code.localeCompare(b.code);
     })
     .slice(0, 12);
@@ -89,14 +114,15 @@ async function runActor() {
 
   const results = await mapConcurrent(workUrls, maxConcurrency, async (url, index) => {
     log.info('Checking URL', { index: index + 1, total: workUrls.length, url });
-    return inspectUrl(url, { profiles, timeoutMs, maxBytes, checkImages });
+    const rawResult = await inspectUrl(url, { profiles, timeoutMs, maxBytes, checkImages });
+    return normalizeMeasurementResult(rawResult);
   });
 
   const delivered = [];
   let chargeLimitReached = workUrls.length < urls.length;
 
   for (const result of results) {
-    if (pricingInfo.isPayPerEvent) {
+    if (pricingInfo.isPayPerEvent && result.verdict !== 'INCONCLUSIVE') {
       const chargeResult = await Actor.pushData(result, 'url-checked');
       if (Number(chargeResult?.chargedCount ?? 0) > 0) delivered.push(result);
       if (chargeResult?.eventChargeLimitReached) {
@@ -120,14 +146,21 @@ async function runActor() {
     pass: delivered.filter((x) => x.verdict === 'PASS').length,
     risk: delivered.filter((x) => x.verdict === 'RISK').length,
     fail: delivered.filter((x) => x.verdict === 'FAIL').length,
+    inconclusive: delivered.filter((x) => x.verdict === 'INCONCLUSIVE').length,
     firstResult: firstResult ? {
       inputUrl: firstResult.inputUrl ?? null,
       verdict: firstResult.verdict ?? null,
       riskScore: firstResult.riskScore ?? null,
+      measurementStatus: firstResult.measurementStatus ?? null,
+      measurementReason: firstResult.measurementReason ?? null,
       issueCodes: (firstResult.issues ?? []).slice(0, 12).map((issue) => ({
         code: issue.code ?? null,
         severity: issue.severity ?? null,
       })),
+      profileErrors: (firstResult.profiles ?? [])
+        .filter((profile) => profile?.error)
+        .slice(0, 6)
+        .map((profile) => ({ profile: profile.profile ?? null, error: profile.error ?? null })),
     } : null,
     issueSummary,
     profiles,
@@ -135,7 +168,7 @@ async function runActor() {
     chargeLimitReached,
     pricingModel: pricingInfo.isPayPerEvent ? 'pay_per_event' : 'platform_or_unmonetized',
     rulesetVersion: '0.1.0',
-    note: 'Each dataset item is one URL audit. PASS/RISK/FAIL describes public crawler-facing metadata consistency, not a guarantee of any platform’s cached or final rendered card.',
+    note: 'PASS/RISK/FAIL is emitted only when the page was observed. INCONCLUSIVE means the Actor could not gather enough transport-level evidence to judge the URL. Inconclusive results are not charged as url-checked events.',
   };
 
   await Actor.setValue('OUTPUT', summary);
