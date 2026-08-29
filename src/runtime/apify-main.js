@@ -7,23 +7,12 @@ import seed from '../../garden/seed.json' with { type: 'json' };
 const STORE_KEY = 'FLOWER_GARDEN';
 await Actor.init();
 try {
-  const input = (await Actor.getInput()) ?? {};
+  await Actor.getInput(); // Input currently carries only the one-breath UI guard.
   const existing = await Actor.getValue(STORE_KEY);
   const garden = existing ?? structuredClone(seed);
 
-  const hasMeaningfulEvent = input.event
-    && typeof input.event === 'object'
-    && !Array.isArray(input.event)
-    && Object.keys(input.event).length > 0;
-
-  if (hasMeaningfulEvent) {
-    garden.events.push({
-      id: input.event.id ?? `event_${Date.now()}`,
-      status: 'new',
-      createdAt: new Date().toISOString(),
-      ...input.event,
-    });
-  }
+  // First-live v0 deliberately disables external event ingestion.
+  // We re-enable event-driven waking only after the basic falsification loop is proven.
 
   // v0 safety rule: one manual run = one paid reasoning breath.
   const maxBreaths = 1;
