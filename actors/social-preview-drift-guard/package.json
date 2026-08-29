@@ -1,0 +1,18 @@
+{
+  "name": "social-preview-drift-guard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Apify Actor that detects cross-crawler social preview metadata drift and broken preview state.",
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "node --test",
+    "check": "node --check src/main.js && node --check src/core.js"
+  },
+  "dependencies": {
+    "apify": "^3.7.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
