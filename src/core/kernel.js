@@ -1,6 +1,6 @@
 import { classifyPressure } from './pressure.js';
 import { runEnzyme } from './enzymes.js';
-import { runSelection } from './selection.js';
+import { runSelection, selectionRequiresReasoner } from './selection.js';
 import { addTrace } from './transitions.js';
 import { nowIso } from './utils.js';
 
@@ -21,9 +21,26 @@ function applyPostIntegrationSelectionPolicy(garden, pressure) {
   return opp;
 }
 
-export async function breathe({ garden, reasoner }) {
+export function pressureCostClass(garden, pressure) {
+  if (!pressure) return 'free';
+  if (['EXPAND', 'FALSIFY', 'BUILD_PLAN'].includes(pressure.type)) return 'reasoner';
+  if (pressure.type === 'SELECT') return selectionRequiresReasoner(garden) ? 'reasoner' : 'free';
+  if (pressure.type === 'EXPERIMENT') return 'free';
+
+  if (pressure.type === 'EXECUTE_EXPERIMENT') {
+    const exp = (garden.experiments ?? []).find((x) => x.id === pressure.targetId);
+    if (!exp) return 'free';
+    if (exp.method === 'email_auth_dns_sample') return 'free';
+    if (exp.actionType === 'web_search') return 'web_search';
+    if (exp.actionType === 'spend') return 'spend';
+    return 'free';
+  }
+
+  return 'free';
+}
+
+export async function breathe({ garden, reasoner, pressure = classifyPressure(garden) }) {
   const before = JSON.stringify(garden);
-  const pressure = classifyPressure(garden);
   const result = pressure.type === 'SELECT'
     ? await runSelection({ garden, reasoner })
     : await runEnzyme({ garden, pressure, reasoner });
@@ -47,15 +64,43 @@ export async function breathe({ garden, reasoner }) {
   return { pressure, result, changed: before !== JSON.stringify(garden) };
 }
 
-export async function pulse({ garden, reasoner, maxBreaths = 3 }) {
+// A pulse now crosses at most one costly frontier, then automatically carries the
+// Garden through every safe deterministic transition that follows. This reduces human
+// clicking without silently multiplying model calls, web searches, or external spend.
+export async function pulse({ garden, reasoner, maxBreaths = 12, maxCostlyBreaths = 1 }) {
   const breaths = [];
+  let costlyBreaths = 0;
+  let stoppedByCostFrontier = false;
+
   for (let i = 0; i < maxBreaths; i += 1) {
-    const step = await breathe({ garden, reasoner });
+    const pressure = classifyPressure(garden);
+    const costClass = pressureCostClass(garden, pressure);
+    const costly = costClass !== 'free';
+
+    if (costly && costlyBreaths >= maxCostlyBreaths) {
+      stoppedByCostFrontier = true;
+      break;
+    }
+
+    const step = await breathe({ garden, reasoner, pressure });
+    step.costClass = costClass;
     breaths.push(step);
+    if (costly) costlyBreaths += 1;
+
     if (['HUMAN', 'STILLNESS'].includes(step.pressure.type)) break;
     if (!step.result.changed) break;
   }
+
   garden.status.lastPulseAt = nowIso();
   garden.status.pulseCount = Number(garden.status.pulseCount ?? 0) + 1;
-  return { garden, breaths };
+  return {
+    garden,
+    breaths,
+    stoppedByCostFrontier,
+    runBudget: {
+      costlyBreathsUsed: costlyBreaths,
+      maxCostlyBreaths,
+      maxBreaths,
+    },
+  };
 }
