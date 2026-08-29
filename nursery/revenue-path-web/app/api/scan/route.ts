@@ -3,8 +3,10 @@ import * as cheerio from 'cheerio'
 import dns from 'node:dns/promises'
 import net from 'node:net'
 
-const INTENT = ['buy','checkout','pay','purchase','subscribe','donate','book','booking','order','get started','start now','sign up','signup','join','pricing','quote','contact sales','reserve','hire','apply','enroll','upgrade']
-const CHALLENGE = /(verify you are human|access denied|captcha|just a moment|enable javascript and cookies|checking your browser|bot detection|security check)/i
+const INTENT = ['buy','checkout','pay','purchase','subscribe','donate','book','booking','order','get started','start now','sign up','signup','join','pricing','quote','contact sales','reserve','hire','apply','enroll','upgrade','contact','demo','trial','download','shop now','learn more']
+const TRACKING_KEYS = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid','msclkid','ttclid']
+
+type Finding = { severity: 'critical' | 'warning' | 'info'; code: string; label: string; href?: string; message: string; fix: string }
 
 function privateIp(ip: string) {
   if (net.isIPv4(ip)) {
@@ -34,58 +36,74 @@ function looksNonProduction(href: string) {
     const u = new URL(href)
     const host = u.hostname.toLowerCase()
     const path = u.pathname.toLowerCase()
-    const query = u.searchParams
     if (host === 'localhost' || host === '127.0.0.1') return true
     if (/(^|\.)example\.(com|org|net)$/i.test(host)) return true
     if (/(^|\.)(staging|sandbox|preview|test)(\.|$)/i.test(host)) return true
     if (/\/(staging|sandbox|preview|test|todo|placeholder)(\/|$)/i.test(path)) return true
-    if (/stripe\.com$/i.test(host) && (/\/test(\/|$)/i.test(path) || [...query.values()].some(v => /^test_/i.test(v)))) return true
-    if (/paypal\.com$/i.test(host) && /sandbox/i.test(path)) return true
     if (/squareupsandbox\.com$/i.test(host)) return true
     return false
   } catch { return false }
 }
 
-async function safeFetch(target: URL, timeoutMs = 8000) {
+async function safeFetch(url: URL | string, init: RequestInit = {}) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  const timer = setTimeout(() => controller.abort(), 8000)
   try {
-    return await fetch(target, {
+    return await fetch(url, {
       signal: controller.signal,
-      redirect: 'manual',
       headers: {
-        'user-agent': 'Mozilla/5.0 (compatible; RevenuePathSentinel/0.3; +https://flower-economic-kernel.vercel.app)',
+        'user-agent': 'Mozilla/5.0 (compatible; PaidTrafficPreflight/0.3; +https://flower-economic-kernel.vercel.app)',
         'accept': 'text/html,application/xhtml+xml,*/*;q=0.8',
         'accept-language': 'en-US,en;q=0.9',
       },
       cache: 'no-store',
+      ...init,
     })
   } finally { clearTimeout(timer) }
 }
 
-async function fetchFollowingSafeRedirects(start: URL, maxRedirects = 3) {
+async function followRedirects(start: URL) {
+  const chain: string[] = [start.toString()]
   let current = start
-  for (let i = 0; i <= maxRedirects; i++) {
-    await validateTarget(current.toString())
-    const res = await safeFetch(current)
-    if (![301,302,303,307,308].includes(res.status)) return { res, finalUrl: current }
-    const location = res.headers.get('location')
-    if (!location) return { res, finalUrl: current }
-    current = new URL(location, current)
+  let response: Response | null = null
+  for (let i = 0; i < 6; i++) {
+    response = await safeFetch(current, { redirect: 'manual' })
+    if (![301,302,303,307,308].includes(response.status)) break
+    const location = response.headers.get('location')
+    if (!location) break
+    const next = new URL(location, current)
+    await validateTarget(next.toString())
+    chain.push(next.toString())
+    current = next
   }
-  throw new Error('Too many redirects.')
+  if (!response) throw new Error('Unable to fetch target.')
+  return { response, finalUrl: current, chain }
+}
+
+function trackingPresent(html: string) {
+  const lower = html.toLowerCase()
+  return {
+    google: lower.includes('googletagmanager.com') || lower.includes('gtag(') || lower.includes('google-analytics.com'),
+    meta: lower.includes('connect.facebook.net') || lower.includes('fbq('),
+    tiktok: lower.includes('analytics.tiktok.com') || lower.includes('ttq.'),
+    microsoft: lower.includes('bat.bing.com') || lower.includes('uetq'),
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const target = await validateTarget(String(body?.url || '').trim())
-    const { res, finalUrl } = await fetchFollowingSafeRedirects(target)
+    const started = Date.now()
+    const { response: res, finalUrl, chain } = await followRedirects(target)
+    const responseMs = Date.now() - started
 
     if ([401,403,429].includes(res.status)) {
-      return NextResponse.json({ url: target.toString(), findings: [], status: 'blocked', notice: `This site blocked automated inspection (HTTP ${res.status}). A clean result cannot be claimed.`, observed: 0, checked: 0, blockedChecks: 0 })
+      return NextResponse.json({ status:'blocked', findings:[], notice:`This site blocked automated inspection (HTTP ${res.status}). We cannot truthfully certify this paid-traffic path from a server-side scan.` })
     }
-    if (!res.ok) throw new Error(`Target returned HTTP ${res.status}.`)
+    if (!res.ok) {
+      return NextResponse.json({ status:'scanned', findings:[{ severity:'critical', code:'landing_http_failure', label:'Landing page unavailable', href:finalUrl.toString(), message:`The paid destination returned HTTP ${res.status}.`, fix:'Pause traffic to this URL until the production landing page returns successfully.' }], summary:{ responseMs, finalUrl:finalUrl.toString(), redirects:chain.length-1 } })
+    }
 
     const type = res.headers.get('content-type') || ''
     if (!type.includes('text/html')) throw new Error('Target did not return an HTML page.')
@@ -93,15 +111,12 @@ export async function POST(req: NextRequest) {
     if (html.length > 2_000_000) throw new Error('Page is too large for this first-pass scan.')
 
     const $ = cheerio.load(html)
-    const visibleText = `${$('title').text()} ${$('body').text().slice(0, 5000)}`
-    if (CHALLENGE.test(visibleText)) {
-      return NextResponse.json({ url: target.toString(), findings: [], status: 'blocked', notice: 'The site returned a bot/security challenge page rather than normal page content. A clean result cannot be claimed.', observed: 0, checked: 0, blockedChecks: 0 })
-    }
-
-    const findings: any[] = []
-    const candidates: { label: string; href: string }[] = []
+    const findings: Finding[] = []
     let highIntentObserved = 0
+    let forms = 0
+    const destinations: {label:string; href:string}[] = []
 
+    $('form').each(() => { forms += 1 })
     $('a,button').each((_, el) => {
       const node = $(el)
       const tag = String((el as any).tagName || '').toLowerCase()
@@ -112,55 +127,49 @@ export async function POST(req: NextRequest) {
       highIntentObserved += 1
 
       if (tag === 'a' && (!rawHref || rawHref === '#' || /^javascript:/i.test(rawHref))) {
-        findings.push({ severity:'critical', code:'dead_cta', label, href:rawHref, message:'A high-intent link has no meaningful navigable destination.', fix:'Point this link at the real checkout, booking, signup, pricing, or sales destination.' })
+        findings.push({ severity:'critical', code:'dead_cta', label:label || 'High-intent link', href:rawHref, message:'A conversion-oriented link has no meaningful destination.', fix:'Give the CTA a verified production destination before sending paid traffic.' })
         return
       }
       if (!rawHref) return
-
       const href = absolute(finalUrl, rawHref)
-      if (looksNonProduction(href)) {
-        findings.push({ severity:'critical', code:'test_or_placeholder', label, href, message:'This high-intent CTA appears to point at a clearly non-production destination.', fix:'Replace it with the verified live production destination before sending traffic.' })
-      }
-      if (/^http:\/\//i.test(href) && /(pay|checkout|buy|purchase|order|subscribe|donate|book)/i.test(hay)) {
-        findings.push({ severity:'critical', code:'insecure_money_link', label, href, message:'A money-related CTA uses plain HTTP instead of HTTPS.', fix:'Use the HTTPS production URL and verify the redirect chain.' })
-      }
-      if (tag === 'a' && /^https?:/i.test(href) && !candidates.some(c => c.href === href) && candidates.length < 8) candidates.push({ label, href })
+      if (looksNonProduction(href)) findings.push({ severity:'critical', code:'nonproduction_cta', label:label || 'High-intent link', href, message:'A conversion-oriented CTA points to a clearly non-production destination.', fix:'Replace it with the live production destination.' })
+      if (/^http:\/\//i.test(href)) findings.push({ severity:'warning', code:'insecure_cta', label:label || 'High-intent link', href, message:'A conversion-oriented destination uses HTTP rather than HTTPS.', fix:'Use the HTTPS production URL.' })
+      if (destinations.length < 6) destinations.push({label:label || 'CTA', href})
     })
 
-    let checked = 0
-    let blockedChecks = 0
-    for (const candidate of candidates) {
+    const originalTracking = TRACKING_KEYS.filter(k => target.searchParams.has(k))
+    const lostTracking = originalTracking.filter(k => !finalUrl.searchParams.has(k))
+    if (lostTracking.length) findings.push({ severity:'critical', code:'tracking_params_lost', label:'Tracking lost in redirect', href:finalUrl.toString(), message:`The redirect path dropped: ${lostTracking.join(', ')}. Paid clicks may arrive without campaign attribution.`, fix:'Preserve campaign parameters through every redirect or map them explicitly at the destination.' })
+
+    if (responseMs > 4000) findings.push({ severity:'warning', code:'slow_landing_response', label:'Slow landing response', href:finalUrl.toString(), message:`The server-side landing response took about ${(responseMs/1000).toFixed(1)} seconds.`, fix:'Investigate hosting, redirect, CDN, and server latency before scaling paid traffic.' })
+
+    const trackers = trackingPresent(html)
+    if (!Object.values(trackers).some(Boolean)) findings.push({ severity:'warning', code:'no_common_ad_tracking', label:'No common paid-media tracking detected', href:finalUrl.toString(), message:'We did not see common Google, Meta, TikTok, or Microsoft tracking scripts in the returned HTML.', fix:'If this page receives paid traffic, verify conversion/analytics tracking in a real browser and tag debugger.' })
+
+    if (highIntentObserved === 0 && forms === 0) findings.push({ severity:'warning', code:'no_visible_conversion_action', label:'No visible conversion action in HTML', href:finalUrl.toString(), message:'The server-rendered page exposed no obvious conversion CTA or form.', fix:'Verify the real browser experience has a clear conversion action above the fold and that JavaScript rendering is functioning.' })
+
+    for (const d of destinations) {
       try {
-        const { res: destRes, finalUrl: destUrl } = await fetchFollowingSafeRedirects(new URL(candidate.href), 2)
-        checked += 1
-        if ([401,403,429].includes(destRes.status)) {
-          blockedChecks += 1
-          continue
-        }
-        if (destRes.status === 404 || destRes.status === 410 || destRes.status >= 500) {
-          findings.push({ severity:'critical', code:'broken_destination', label:candidate.label, href:candidate.href, message:`This high-intent destination returned HTTP ${destRes.status}.`, fix:'Repair or replace this destination and verify the full customer conversion path.' })
-        }
-        if (looksNonProduction(destUrl.toString())) {
-          findings.push({ severity:'critical', code:'redirected_nonproduction', label:candidate.label, href:candidate.href, message:'This high-intent destination redirects into a clearly non-production URL.', fix:'Update the CTA or redirect chain so customers reach the verified production destination.' })
-        }
-      } catch {
-        checked += 1
-      }
+        const u = await validateTarget(d.href)
+        const check = await safeFetch(u, { redirect:'follow', method:'GET' })
+        if (check.status === 404 || check.status === 410 || check.status >= 500) findings.push({ severity:'critical', code:'cta_destination_failure', label:d.label, href:d.href, message:`This conversion destination returned HTTP ${check.status}.`, fix:'Repair or replace this destination before sending paid traffic.' })
+      } catch { /* destination could block or be non-http; do not invent a fault */ }
     }
 
-    const limited = highIntentObserved === 0 || (checked > 0 && blockedChecks === checked)
     return NextResponse.json({
-      url: target.toString(),
-      findings: findings.slice(0, 100),
-      status: limited ? 'limited' : 'scanned',
-      notice: highIntentObserved === 0
-        ? 'No high-intent CTA markup was visible in the server-rendered HTML. The site may render conversion actions with JavaScript, so this result is inconclusive.'
-        : (checked > 0 && blockedChecks === checked)
-          ? 'High-intent CTAs were found, but their destinations blocked automated verification. The page was inspected, but destination health remains inconclusive.'
-          : undefined,
-      observed: highIntentObserved,
-      checked,
-      blockedChecks,
+      status:'scanned',
+      findings: findings.slice(0,100),
+      notice:'Preflight checks the public paid-click path visible from the server. JavaScript-only behavior and actual form/payment submission still require browser-level monitoring.',
+      summary:{
+        requestedUrl:target.toString(),
+        finalUrl:finalUrl.toString(),
+        redirects:chain.length-1,
+        responseMs,
+        ctasObserved:highIntentObserved,
+        formsObserved:forms,
+        destinationsChecked:destinations.length,
+        trackers,
+      },
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
