@@ -11,7 +11,7 @@ const STORE_KEY = 'FLOWER_GARDEN';
 function activeOpportunitySnapshot(garden) {
   return (garden.opportunities ?? [])
     .filter((opp) => !['dormant', 'compost', 'fruit'].includes(opp.status))
-    .slice(0, 5)
+    .slice(0, 8)
     .map((opp) => ({
       id: opp.id,
       name: opp.name,
@@ -22,6 +22,21 @@ function activeOpportunitySnapshot(garden) {
       cheapestRealityTest: opp.cheapestRealityTest ?? null,
       experimentId: opp.experimentId ?? null,
     }));
+}
+
+function logOpportunitySnapshot(phase, opportunities) {
+  for (const opp of opportunities) {
+    log.info('Flower opportunity', {
+      phase,
+      id: opp.id,
+      name: opp.name,
+      status: opp.status,
+      nutrientChannel: opp.nutrientChannel,
+      realityAccess: opp.realityAccess,
+      cheapestRealityTest: opp.cheapestRealityTest,
+      experimentId: opp.experimentId,
+    });
+  }
 }
 
 await Actor.main(async () => {
@@ -110,6 +125,7 @@ await Actor.main(async () => {
     phase: 'before',
     activeOpportunities: activeBefore,
   });
+  logOpportunitySnapshot('before', activeBefore);
   log.info('Flower pressure selected', {
     pressure: startingPressure,
     pulseCountBefore: Number(garden.status?.pulseCount ?? 0),
@@ -163,5 +179,6 @@ await Actor.main(async () => {
     phase: 'after',
     activeOpportunities: activeAfter,
   });
+  logOpportunitySnapshot('after', activeAfter);
   log.info('Flower pulse complete', output);
 });
