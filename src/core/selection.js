@@ -1,5 +1,21 @@
 import { id, nowIso } from './utils.js';
 
+function latestIntegratedExperiment(garden, opportunityId) {
+  return (garden.experiments ?? [])
+    .filter((x) => x.opportunityId === opportunityId && x.status === 'integrated')
+    .sort((a, b) => String(b.integratedAt ?? b.executedAt ?? b.createdAt ?? '').localeCompare(String(a.integratedAt ?? a.executedAt ?? a.createdAt ?? '')))[0] ?? null;
+}
+
+function hasFreshNonSupportingResult(garden, opportunity) {
+  if (opportunity.selectionCooldown === true) return true;
+  const latest = latestIntegratedExperiment(garden, opportunity.id);
+  if (!latest || latest.result?.verdict === 'supports') return false;
+
+  const selectedAt = Date.parse(opportunity.lastSelectionAt ?? 0);
+  const integratedAt = Date.parse(latest.integratedAt ?? latest.executedAt ?? latest.createdAt ?? 0);
+  return Number.isFinite(integratedAt) && integratedAt >= selectedAt;
+}
+
 export async function runSelection({ garden, reasoner }) {
   const candidates = (garden.opportunities ?? []).filter((x) =>
     ['needs_test', 'supported'].includes(x.status) && !x.experimentId
@@ -13,7 +29,7 @@ export async function runSelection({ garden, reasoner }) {
     };
   }
 
-  const freshCandidates = candidates.filter((x) => x.selectionCooldown !== true);
+  const freshCandidates = candidates.filter((x) => !hasFreshNonSupportingResult(garden, x));
   const eligible = freshCandidates.length > 0 ? freshCandidates : candidates;
 
   if (eligible.length === 1) {
@@ -22,6 +38,10 @@ export async function runSelection({ garden, reasoner }) {
       candidate.selectedForExperiment = candidate.id === chosen.id;
       candidate.selectionState = candidate.id === chosen.id ? 'selected' : 'reserve';
       candidate.lastSelectionAt = nowIso();
+      if (candidate.id === chosen.id) {
+        candidate.selectionCooldown = false;
+        candidate.selectionCooldownReason = null;
+      }
     }
 
     garden.selections ??= [];
@@ -30,7 +50,7 @@ export async function runSelection({ garden, reasoner }) {
       createdAt: nowIso(),
       chosenOpportunityId: chosen.id,
       reserveOpportunityIds: candidates.filter((x) => x.id !== chosen.id).map((x) => x.id),
-      rationale: 'Deterministic breadth-first allocation: the other surviving sibling is cooling down after a non-supporting external experiment.',
+      rationale: 'Deterministic breadth-first allocation: another surviving sibling has newer non-supporting external evidence and must yield the next test slot.',
       candidateIds: candidates.map((x) => x.id),
       responseId: null,
       usage: null,
@@ -38,7 +58,7 @@ export async function runSelection({ garden, reasoner }) {
 
     return {
       changed: true,
-      summary: `Selected ${chosen.name} deterministically while a sibling cools down after a non-supporting experiment.`,
+      summary: `Selected ${chosen.name} deterministically while a sibling yields after a non-supporting experiment.`,
       action: 'SELECT',
     };
   }
@@ -87,6 +107,10 @@ export async function runSelection({ garden, reasoner }) {
     candidate.selectedForExperiment = candidate.id === chosen.id;
     candidate.selectionState = candidate.id === chosen.id ? 'selected' : 'reserve';
     candidate.lastSelectionAt = nowIso();
+    if (candidate.id === chosen.id) {
+      candidate.selectionCooldown = false;
+      candidate.selectionCooldownReason = null;
+    }
   }
 
   garden.selections ??= [];
