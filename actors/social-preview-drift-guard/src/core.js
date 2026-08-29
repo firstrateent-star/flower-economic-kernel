@@ -155,10 +155,23 @@ async function resolvePublicAddresses(hostname) {
   return records;
 }
 
+export function createSafeLookup(addresses) {
+  const records = addresses.map(({ address, family }) => ({ address, family }));
+  let addressIndex = 0;
+  return (_hostname, options, callback) => {
+    if (options?.all === true) {
+      callback(null, records);
+      return;
+    }
+    const record = records[Math.min(addressIndex, records.length - 1)];
+    addressIndex += 1;
+    callback(null, record.address, record.family);
+  };
+}
+
 async function requestOnce(urlString, { method = 'GET', userAgent, timeoutMs, maxBytes, extraHeaders = {} }) {
   const url = new URL(urlString);
   const addresses = await resolvePublicAddresses(url.hostname);
-  let addressIndex = 0;
   const transport = url.protocol === 'https:' ? https : http;
 
   return new Promise((resolve, reject) => {
@@ -174,11 +187,7 @@ async function requestOnce(urlString, { method = 'GET', userAgent, timeoutMs, ma
         'accept-encoding': 'identity',
         ...extraHeaders,
       },
-      lookup: (_hostname, _options, callback) => {
-        const record = addresses[Math.min(addressIndex, addresses.length - 1)];
-        addressIndex += 1;
-        callback(null, record.address, record.family);
-      },
+      lookup: createSafeLookup(addresses),
       servername: url.hostname,
     }, (res) => {
       const chunks = [];
