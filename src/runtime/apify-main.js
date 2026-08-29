@@ -87,6 +87,16 @@ function growthYield(before, after, costlyBreathsUsed) {
   };
 }
 
+function hasSupportingDimension(garden, opportunityId, dimension) {
+  return (garden.experiments ?? []).some((exp) =>
+    exp.opportunityId === opportunityId
+    && exp.status === 'integrated'
+    && exp.validationDimension === dimension
+    && exp.result?.verdict === 'supports'
+    && (exp.result?.sources ?? []).some((source) => source?.url)
+  );
+}
+
 await Actor.main(async () => {
   await Actor.getInput();
 
@@ -170,6 +180,46 @@ await Actor.main(async () => {
         opp.epistemicNote = 'Dormant, not disproven: direct DNS reality contact weakened the claimed hard-failure mechanism enough that another semantic search is not justified without materially new evidence or a different population.';
         stateMigrations.push(`${opp.id}:dns_kill_to_dormant`);
       }
+    }
+  }
+
+  // Evidence-bearing expansion v1 predated source-level dimension provenance. It could
+  // retrieve a mixed pool of demand, documentation, and failure sources and then credit
+  // that whole pool to failure_reality. Once the Garden learns a stricter epistemic rule,
+  // legacy promotion must not silently retain privileges earned under the weaker rule.
+  // Preserve the historical finding, but remove it from the validation gate until the
+  // dimension is re-earned with mapped provenance or a direct bounded sensor.
+  for (const exp of garden.experiments ?? []) {
+    if (
+      exp.method === 'evidence_bearing_expand_v1'
+      && exp.status === 'integrated'
+      && exp.validationDimension === 'failure_reality'
+      && exp.result?.verdict === 'supports'
+      && exp.result?.provenanceStatus !== 'source_mapped'
+    ) {
+      exp.result.legacyVerdict = 'supports';
+      exp.result.verdict = 'inconclusive';
+      exp.result.provenanceStatus = 'legacy_unmapped';
+      exp.migrationNote = 'Repaired after source-provenance hardening: the legacy scout source pool was not mapped specifically to failure_reality, so its support is historical context rather than validation credit.';
+
+      const opp = (garden.opportunities ?? []).find((x) => x.id === exp.opportunityId);
+      if (opp && !['fruit', 'dormant', 'compost'].includes(opp.status)) {
+        const buyerSupported = hasSupportingDimension(garden, opp.id, 'buyer_demand');
+        opp.status = buyerSupported ? 'supported' : 'needs_test';
+        opp.validatedAt = null;
+        opp.buildPlan = null;
+        opp.validationGate = {
+          pass: false,
+          migrationNote: 'Legacy failure-reality scout lost validation credit after source-provenance hardening.',
+        };
+        opp.selectedForExperiment = true;
+        opp.selectionState = 'selected';
+        opp.selectionCooldown = false;
+        opp.epistemicNote = buyerSupported
+          ? 'Buyer demand remains externally supported. Failure reality must be re-earned with source-mapped provenance before a private build plan is justified.'
+          : 'Legacy failure-reality support was provenance-unmapped and has been demoted; the branch remains testable, not disproven.';
+      }
+      stateMigrations.push(`${exp.id}:legacy_failure_provenance_demoted`);
     }
   }
 
