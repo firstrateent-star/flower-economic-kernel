@@ -73,16 +73,31 @@ function growthYield(before, after, costlyBreathsUsed) {
     edges: Number(after.metrics.edgeCount ?? 0) - Number(before.metrics.edgeCount ?? 0),
     reusableArchetypes: Number(after.metrics.reusableArchetypeCount ?? 0) - Number(before.metrics.reusableArchetypeCount ?? 0),
     reusableCapabilities: Number(after.metrics.reusableCapabilityCount ?? 0) - Number(before.metrics.reusableCapabilityCount ?? 0),
+    earnedEvidenceCenters: Number(after.metrics.earnedEvidenceCenterCount ?? 0) - Number(before.metrics.earnedEvidenceCenterCount ?? 0),
+    resolvedCenters: Number(after.metrics.resolvedCenterCount ?? 0) - Number(before.metrics.resolvedCenterCount ?? 0),
+    validatedOpportunities: Number(after.metrics.validatedOpportunityCount ?? 0) - Number(before.metrics.validatedOpportunityCount ?? 0),
+    buildReadyOpportunities: Number(after.metrics.buildReadyOpportunityCount ?? 0) - Number(before.metrics.buildReadyOpportunityCount ?? 0),
   };
-  const reusableGeometryGain = Math.max(0, delta.edges)
+
+  const reuseGeometryGain = Math.max(0, delta.edges)
     + Math.max(0, delta.reusableArchetypes)
     + Math.max(0, delta.reusableCapabilities);
+  const evidenceGeometryGain = Math.max(0, delta.earnedEvidenceCenters)
+    + Math.max(0, delta.validatedOpportunities)
+    + Math.max(0, delta.buildReadyOpportunities);
+  const functionalGeometryGain = reuseGeometryGain + evidenceGeometryGain;
+
   return {
     delta,
     costlyFrontiers: Number(costlyBreathsUsed ?? 0),
-    reusableGeometryGain,
-    reusableGeometryPerCostlyFrontier: costlyBreathsUsed > 0
-      ? Number((reusableGeometryGain / costlyBreathsUsed).toFixed(2))
+    reuseGeometryGain,
+    evidenceGeometryGain,
+    functionalGeometryGain,
+    reuseGeometryPerCostlyFrontier: costlyBreathsUsed > 0
+      ? Number((reuseGeometryGain / costlyBreathsUsed).toFixed(2))
+      : null,
+    functionalGeometryPerCostlyFrontier: costlyBreathsUsed > 0
+      ? Number((functionalGeometryGain / costlyBreathsUsed).toFixed(2))
       : null,
   };
 }
@@ -183,12 +198,6 @@ await Actor.main(async () => {
     }
   }
 
-  // Evidence-bearing expansion v1 predated source-level dimension provenance. It could
-  // retrieve a mixed pool of demand, documentation, and failure sources and then credit
-  // that whole pool to failure_reality. Once the Garden learns a stricter epistemic rule,
-  // legacy promotion must not silently retain privileges earned under the weaker rule.
-  // Preserve the historical finding, but remove it from the validation gate until the
-  // dimension is re-earned with mapped provenance or a direct bounded sensor.
   for (const exp of garden.experiments ?? []) {
     if (
       exp.method === 'evidence_bearing_expand_v1'
