@@ -3,7 +3,7 @@
   "id": "fruit_social_preview_drift_guard",
   "opportunityId": "opp_b7681c126171",
   "name": "Social Preview Drift Guard API",
-  "stage": "private_source_ready",
+  "stage": "monetization_ready",
   "platform": "Apify",
   "sourcePath": "actors/social-preview-drift-guard",
   "failureArchetype": "Cross-consumer representation drift",
@@ -12,11 +12,27 @@
   "capabilityFamily": "representation_comparison",
   "permissions": "limited",
   "standby": false,
+  "privateVerification": {
+    "status": "passed",
+    "calibration": {
+      "pass": 1,
+      "risk": 1,
+      "fail": 1,
+      "inconclusive": 0
+    },
+    "defaultMemoryMb": 256,
+    "observedPeakMemoryMb": 57.6,
+    "batchUrls": 3,
+    "displayedRunCostUsd": 0,
+    "displayedCostWasRounded": true,
+    "runtimeSecondsApprox": 2
+  },
   "monetization": {
     "preferredModel": "pay_per_event",
     "primaryEvent": "url-checked",
     "suggestedInitialPriceUsdPerEvent": 0.005,
-    "pricingReason": "Distinct drift/risk analysis rather than commodity metadata extraction; benchmark real platform cost before publication and keep a healthy contribution margin."
+    "chargeOnlyObservedResults": true,
+    "pricingReason": "Private Apify calibration showed the intended PASS/RISK/FAIL behavior at 256 MB with a three-URL run cost displayed as $0.000; $0.005 per observed URL leaves substantial platform-cost headroom while remaining suitable for bulk automation."
   },
   "passiveDistribution": {
     "channels": ["Apify Store search", "Apify API", "MCP/agentic discovery", "CI workflows", "CMS/SEO automation"],
@@ -27,6 +43,7 @@
     "bounded SSRF-aware public HTTP fetch",
     "multi-crawler response comparison",
     "deterministic PASS/RISK/FAIL rule engine",
+    "explicit observed-vs-inconclusive measurement semantics",
     "one-result-per-input Apify dataset contract",
     "pay-per-event result charging path",
     "honest capability and limitation envelope"
