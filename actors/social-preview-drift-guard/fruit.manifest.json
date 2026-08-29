@@ -62,7 +62,32 @@
     "approvedInitialPriceUsdPerEvent": 0.005,
     "chargeOnlyObservedResults": true,
     "passPlatformUsageToUser": false,
+    "estimatedCreatorShareBeforePlatformCostUsdPerEvent": 0.004,
+    "volumeReference": {
+      "checksForApprox100UsdBeforePlatformCost": 25000,
+      "checksForApprox1000UsdBeforePlatformCost": 250000,
+      "daily100UrlCustomerApproxMonthlyChecks": 3000,
+      "daily100UrlCustomerApproxCreatorShareBeforePlatformCostUsd": 12
+    },
     "pricingReason": "Private Apify calibration showed the intended PASS/RISK/FAIL behavior at 256 MB with a three-URL run cost displayed as $0.000; $0.005 per observed URL leaves substantial platform-cost headroom while remaining suitable for bulk automation."
+  },
+  "economicFrequencyAssessment": {
+    "status": "frequency_is_now_the_primary_uncertainty",
+    "oneShotHumanUse": "economically_weak_at_current_unit_price",
+    "recurringMachineUse": "plausible_and_required_for_meaningful_revenue",
+    "coreInsight": "Low-ticket passive Fruit requires both a nutrient channel and enough throughput. A marketplace listing can solve fulfillment without solving acquisition frequency. Meaningful revenue at $0.005 per observed URL likely requires recurring CI, CMS, sitemap, monitoring, or agent workflows rather than isolated manual checks.",
+    "preferredMutationDirection": [
+      "CI/deploy guard that checks changed or published URLs automatically",
+      "scheduled sitemap or site-page preview monitoring",
+      "CMS publish hook or automation-template integration",
+      "agent/MCP invocation where audits occur as a step in publishing workflows"
+    ]
+  },
+  "marketReality2026_08_29": {
+    "status": "store_only_distribution_downgraded",
+    "observation": "Comparable Open Graph/social-preview Actors visible in Apify search currently show very low total/monthly user counts despite prices spanning free or usage-only through $1, $20, and much higher per 1,000 audits. This weakens the hypothesis that Apify Store traffic alone will produce meaningful volume quickly.",
+    "interpretation": "The category appears real but low-throughput inside Apify. Price is not the dominant current bottleneck; recurring use and distribution surface density are more important.",
+    "doNotInfer": "No stranger usage during the first day is not evidence that the product itself is unwanted; fresh indexing and quality data are still pending."
   },
   "passiveDistribution": {
     "channels": [
@@ -72,8 +97,9 @@
       "Apify MCP search-actors",
       "agentic payment discovery",
       "Apify API",
-      "CI workflows",
+      "GitHub/CI distribution wrapper",
       "CMS/SEO automation",
+      "scheduled monitoring workflows",
       "select external backlinks"
     ],
     "agenticCompatibilityTarget": true,
@@ -103,10 +129,14 @@
     },
     "externalBacklink": {
       "status": "not_seeded"
+    },
+    "recurringDistributionWrapper": {
+      "status": "not_built",
+      "highestLeverageCandidate": "public thin GitHub Action or CI example that calls the private-source Apify Actor and keeps monetization on Apify"
     }
   },
   "distributionPlan": {
-    "orientation": "passive_first",
+    "orientation": "passive_first_recurring_machine_use",
     "priority": [
       {
         "step": 1,
@@ -120,16 +150,21 @@
       },
       {
         "step": 3,
+        "channel": "Recurring machine-use wrapper",
+        "why": "At the current unit price, meaningful revenue depends more on repeated automated audits than on one-off human checks. Favor CI, deployment, sitemap, CMS, and agent workflows that can repeatedly invoke the Actor without ongoing Center-holder labor."
+      },
+      {
+        "step": 4,
         "channel": "SEO name, description, README, and categories",
         "why": "Use phrases people actually search for such as Open Graph checker, social preview checker, Twitter Card checker, broken preview image, and canonical conflict while preserving the differentiated crawler-drift wedge."
       },
       {
-        "step": 4,
+        "step": 5,
         "channel": "Agentic discovery",
         "why": "Once KYC and eligibility are satisfied, limited-permission PPE Actors without Standby or passed-through usage can be discoverable to autonomous agents."
       },
       {
-        "step": 5,
+        "step": 6,
         "channel": "Selective external backlinks",
         "why": "One useful launch post, tutorial, or public examples repository can seed search authority without requiring ongoing manual marketing."
       }
@@ -137,7 +172,8 @@
     "avoidUntilEvidence": [
       "paid advertising before customer lifetime value and repeat usage are known",
       "high-maintenance daily social posting",
-      "large promotion launches before onboarding and quality-score issues are resolved"
+      "large promotion launches before onboarding and quality-score issues are resolved",
+      "mistaking marketplace existence for sufficient marketplace throughput"
     ]
   },
   "inheritance": [
@@ -147,7 +183,8 @@
     "explicit observed-vs-inconclusive measurement semantics",
     "one-result-per-input Apify dataset contract",
     "pay-per-event result charging path",
-    "honest capability and limitation envelope"
+    "honest capability and limitation envelope",
+    "channel-throughput and usage-frequency lesson for future low-ticket Fruit"
   ],
   "growthLoop": {
     "publicSignals": [
@@ -158,10 +195,12 @@
       "revenue and paid events",
       "bookmarks",
       "ratings/issues when available",
-      "search/MCP discoverability"
+      "search/MCP discoverability",
+      "repeat paid checks per external user"
     ],
     "firstOptimizationOrder": [
       "quality-score blockers",
+      "recurring machine-use path",
       "listing/search fit",
       "published example tasks",
       "run reliability",
@@ -170,6 +209,6 @@
       "new crawler profiles"
     ],
     "replicationRule": "Extract a capability into the Fruit Forge only after a live Fruit demonstrates repeated usefulness or after the same capability appears in at least two validated Fruit.",
-    "publicMutationGate": "No autonomous public code or pricing change; generate private candidate changes and require Center-holder approval before release."
+    "publicMutationGate": "No autonomous public code, new public distribution wrapper, or pricing change; generate private candidate changes and require Center-holder approval before release."
   }
 }
