@@ -45,7 +45,7 @@ function structuredFormatFor(operation) {
           candidates: {
             type: 'array',
             minItems: 1,
-            maxItems: 3,
+            maxItems: 2,
             items: {
               type: 'object',
               properties: {
@@ -172,16 +172,23 @@ export class OpenAIReasoner {
       const dormant = (garden.opportunities ?? [])
         .filter((x) => ['dormant', 'compost'].includes(x.status))
         .map((x) => ({ name: x.name, thesis: x.thesis, failedBecause: x.failedBecause ?? x.epistemicNote ?? null }));
-      boundedPrompt = `${prompt}\n\nGENERATION RULES:\n- Return 1-3 candidates in descending order of expected economic usefulness; the first candidate will be tested first.\n- Seeds are hypotheses only. Do not imply evidence or validation.\n- Prefer existing machine/buyer nutrient channels with metered or self-serve payment and automatic fulfillment.\n- Prefer opportunities whose claimed failure or demand can be directly sampled from public or low-cost machine-readable reality; cheap reality access is part of the product thesis, not an afterthought.\n- Prefer a cheapest discriminating test that could kill the seed in one or two breaths for <= $0.50 before any build.\n- Favor inheritance from existing Flower infrastructure, code patterns, marketplace familiarity, or distribution knowledge.\n- Penalize consulting, cold outreach, physical fulfillment, procurement watches, speculative trading/gambling, regulated/gray-market activity, identity use, contracts, recurring obligations, and anything requiring Sean's continuing labor.\n- Do not return a cosmetic variant of an existing Fruit or a dormant/composted branch unless materially new context resolves the reason it failed.\n- Diversity matters: candidates should occupy genuinely different economic mechanisms or nutrient channels when possible.\nDORMANT/COMPOSTED HISTORY: ${JSON.stringify(dormant)}\nKeep every field concise.`;
+      boundedPrompt = `${prompt}\n\nGENERATION RULES:\n- Return 1-2 candidates in descending order of expected economic usefulness; the first candidate will be tested first.\n- Seeds are hypotheses only. Do not imply evidence or validation.\n- Prefer existing machine/buyer nutrient channels with metered or self-serve payment and automatic fulfillment.\n- Prefer opportunities whose claimed failure or demand can be directly sampled from public or low-cost machine-readable reality; cheap reality access is part of the product thesis, not an afterthought.\n- Prefer a cheapest discriminating test that could kill the seed in one or two breaths for <= $0.50 before any build.\n- Favor inheritance from existing Flower infrastructure, code patterns, marketplace familiarity, or distribution knowledge.\n- Penalize consulting, cold outreach, physical fulfillment, procurement watches, speculative trading/gambling, regulated/gray-market activity, identity use, contracts, recurring obligations, and anything requiring Sean's continuing labor.\n- Do not return a cosmetic variant of an existing Fruit or a dormant/composted branch unless materially new context resolves the reason it failed.\n- Diversity matters: candidates should occupy genuinely different economic mechanisms or nutrient channels when possible.\nDORMANT/COMPOSTED HISTORY: ${JSON.stringify(dormant)}\nOUTPUT BUDGET: Return no prose outside the schema. Keep each field to one short sentence or phrase. Prefer compression over explanation.`;
     } else if (operation === 'EXECUTE_EXPERIMENT') {
       boundedPrompt = `${prompt}\nOUTPUT BUDGET: Keep finding under 500 characters. Return at most 4 observations, each under 220 characters. Do not place source URLs in observations; sources are captured separately by the API.`;
     }
+
+    // max_output_tokens also includes reasoning tokens. Expansion needs modest extra headroom
+    // for low-effort reasoning plus strict JSON, while every other operation keeps the lower
+    // global ceiling. This is a completion guard, not permission to produce longer prose.
+    const operationMaxOutputTokens = operation === 'EXPAND'
+      ? Math.max(this.maxOutputTokens, 2000)
+      : this.maxOutputTokens;
 
     const body = {
       model: this.model,
       instructions,
       reasoning: { effort: this.reasoningEffort },
-      max_output_tokens: this.maxOutputTokens,
+      max_output_tokens: operationMaxOutputTokens,
       input: `OPERATION: ${operation}\nTARGET: ${JSON.stringify(target ?? null)}\nSOIL: ${JSON.stringify(garden.soil)}\nFRUIT: ${JSON.stringify(garden.fruits)}\n\n${boundedPrompt}`,
       ...(structuredFormat ? { text: { format: structuredFormat } } : {}),
       ...(useWebSearch ? {
