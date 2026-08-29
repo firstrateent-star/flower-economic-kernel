@@ -29,17 +29,37 @@ inputs:
 outputs:
   pass:
     description: 'Number of PASS results.'
+    value: ${{ steps.guard.outputs.pass }}
   risk:
     description: 'Number of RISK results.'
+    value: ${{ steps.guard.outputs.risk }}
   fail:
     description: 'Number of FAIL results.'
+    value: ${{ steps.guard.outputs.fail }}
   inconclusive:
     description: 'Number of INCONCLUSIVE measurements.'
+    value: ${{ steps.guard.outputs.inconclusive }}
   worst-verdict:
     description: 'Worst verdict observed: PASS, RISK, FAIL, INCONCLUSIVE, or NONE.'
+    value: ${{ steps.guard.outputs.worst-verdict }}
   results-json:
     description: 'Compact JSON array of Actor results.'
+    value: ${{ steps.guard.outputs.results-json }}
 
 runs:
-  using: 'node24'
-  main: 'index.js'
+  using: 'composite'
+  steps:
+    - name: Set up Apify CLI
+      uses: apify/setup-apify-cli-action@v1.1.0
+      with:
+        token: ${{ inputs.apify-token }}
+
+    - name: Run Social Preview Drift Guard
+      id: guard
+      shell: bash
+      env:
+        DRIFT_GUARD_URLS: ${{ inputs.urls }}
+        DRIFT_GUARD_PROFILES: ${{ inputs.profiles }}
+        DRIFT_GUARD_CHECK_IMAGES: ${{ inputs.check-images }}
+        DRIFT_GUARD_FAIL_ON: ${{ inputs.fail-on }}
+      run: node "$GITHUB_ACTION_PATH/run.js"
