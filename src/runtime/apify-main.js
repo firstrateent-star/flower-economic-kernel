@@ -11,7 +11,12 @@ try {
   const existing = await Actor.getValue(STORE_KEY);
   const garden = existing ?? structuredClone(seed);
 
-  if (input.event) {
+  const hasMeaningfulEvent = input.event
+    && typeof input.event === 'object'
+    && !Array.isArray(input.event)
+    && Object.keys(input.event).length > 0;
+
+  if (hasMeaningfulEvent) {
     garden.events.push({
       id: input.event.id ?? `event_${Date.now()}`,
       status: 'new',
