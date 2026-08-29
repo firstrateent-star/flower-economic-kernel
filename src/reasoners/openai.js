@@ -81,12 +81,16 @@ export class OpenAIReasoner {
     // after the deterministic autonomy membrane has authorized a web-search experiment.
     const useWebSearch = this.enableWebSearch || allowWebSearch === true;
     const structuredFormat = structuredFormatFor(operation);
+    const boundedPrompt = operation === 'EXECUTE_EXPERIMENT'
+      ? `${prompt}\nOUTPUT BUDGET: Keep finding under 500 characters. Return at most 4 observations, each under 220 characters. Do not place source URLs in observations; sources are captured separately by the API.`
+      : prompt;
+
     const body = {
       model: this.model,
       instructions,
       reasoning: { effort: this.reasoningEffort },
       max_output_tokens: this.maxOutputTokens,
-      input: `OPERATION: ${operation}\nTARGET: ${JSON.stringify(target ?? null)}\nSOIL: ${JSON.stringify(garden.soil)}\nFRUIT: ${JSON.stringify(garden.fruits)}\n\n${prompt}`,
+      input: `OPERATION: ${operation}\nTARGET: ${JSON.stringify(target ?? null)}\nSOIL: ${JSON.stringify(garden.soil)}\nFRUIT: ${JSON.stringify(garden.fruits)}\n\n${boundedPrompt}`,
       ...(structuredFormat ? { text: { format: structuredFormat } } : {}),
       ...(useWebSearch ? {
         tools: [{ type: 'web_search_preview', search_context_size: 'low' }],
