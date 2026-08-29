@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "fruit_social_preview_drift_guard",
+  "opportunityId": "opp_b7681c126171",
+  "name": "Social Preview Drift Guard API",
+  "stage": "private_source_ready",
+  "platform": "Apify",
+  "sourcePath": "actors/social-preview-drift-guard",
+  "failureArchetype": "Cross-consumer representation drift",
+  "archetypeFamily": "representation_drift",
+  "reusableCapability": "Crawler-conditioned metadata and preview consistency comparison",
+  "capabilityFamily": "representation_comparison",
+  "permissions": "limited",
+  "standby": false,
+  "monetization": {
+    "preferredModel": "pay_per_event",
+    "primaryEvent": "url-checked",
+    "suggestedInitialPriceUsdPerEvent": 0.005,
+    "pricingReason": "Distinct drift/risk analysis rather than commodity metadata extraction; benchmark real platform cost before publication and keep a healthy contribution margin."
+  },
+  "passiveDistribution": {
+    "channels": ["Apify Store search", "Apify API", "MCP/agentic discovery", "CI workflows", "CMS/SEO automation"],
+    "agenticCompatibilityTarget": true,
+    "requirements": ["pay-per-event only", "limited permissions", "no Standby", "developer KYC", "do not pass platform usage through"]
+  },
+  "inheritance": [
+    "bounded SSRF-aware public HTTP fetch",
+    "multi-crawler response comparison",
+    "deterministic PASS/RISK/FAIL rule engine",
+    "one-result-per-input Apify dataset contract",
+    "pay-per-event result charging path",
+    "honest capability and limitation envelope"
+  ],
+  "growthLoop": {
+    "publicSignals": ["Store users7Days", "Store users30Days", "public run success rate", "bookmarks", "ratings/issues when available"],
+    "firstOptimizationOrder": ["listing/search fit", "run reliability", "pricing margin", "rule coverage", "new crawler profiles"],
+    "replicationRule": "Extract a capability into the Fruit Forge only after a live Fruit demonstrates repeated usefulness or after the same capability appears in at least two validated Fruit.",
+    "publicMutationGate": "No autonomous public code or pricing change; generate private candidate changes and require Center-holder approval before release."
+  }
+}
