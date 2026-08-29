@@ -18,10 +18,30 @@ export function classifyPressure(garden) {
   const seed = garden.opportunities.find((x) => x.status === 'seed');
   if (seed) return { type: 'FALSIFY', targetId: seed.id, why: 'A living seed has not earned attention yet.' };
 
-  const needsTest = garden.opportunities.find((x) => x.status === 'needs_test' && !x.experimentId);
+  const testable = garden.opportunities.filter((x) => ['needs_test', 'supported'].includes(x.status) && !x.experimentId);
+  const selected = testable.find((x) => x.selectedForExperiment === true);
+  if (selected) {
+    return {
+      type: 'EXPERIMENT',
+      targetId: selected.id,
+      why: selected.status === 'supported'
+        ? 'This sibling won the current selection round and has external support; push its remaining uncertainty into reality.'
+        : 'This sibling won the current selection round; design its cheapest discriminating reality test.',
+    };
+  }
+
+  if (testable.length > 1) {
+    return {
+      type: 'SELECT',
+      targetId: null,
+      why: 'Multiple siblings survived falsification; compare them before allocating the next experiment breath.',
+    };
+  }
+
+  const needsTest = testable.find((x) => x.status === 'needs_test');
   if (needsTest) return { type: 'EXPERIMENT', targetId: needsTest.id, why: 'The idea is plausible but lacks external evidence; design the cheapest discriminating reality test.' };
 
-  const supported = garden.opportunities.find((x) => x.status === 'supported' && !x.experimentId);
+  const supported = testable.find((x) => x.status === 'supported');
   if (supported) return { type: 'EXPERIMENT', targetId: supported.id, why: 'External evidence supports the seed, but the remaining uncertainty should be pushed into reality.' };
 
   const validated = garden.opportunities.find((x) => x.status === 'validated' && !x.fruitId);
