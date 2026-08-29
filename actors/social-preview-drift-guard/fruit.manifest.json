@@ -29,13 +29,17 @@
   },
   "publicMeasurement": {
     "status": "awaiting_external_usage",
+    "actorQualityStatus": "not_yet_available",
+    "searchIndexStatus": "pending_fresh_publication_indexing",
     "nextEvidence": [
       "first external user run",
       "first paid url-checked event",
       "first repeat user",
-      "first public issue, rating, or review"
+      "first public issue, rating, or review",
+      "first Actor quality score",
+      "first independent search or MCP discovery"
     ],
-    "principle": "Publication is not validation of distribution. Treat stranger usage, paid events, repeat use, and feedback as the next reality evidence before speculative expansion outranks live-Fruit learning."
+    "principle": "Publication is not validation of distribution. Treat stranger usage, paid events, repeat use, feedback, quality scoring, and discoverability as the next reality evidence before speculative expansion outranks live-Fruit learning."
   },
   "privateVerification": {
     "status": "passed",
@@ -81,6 +85,26 @@
       "do not pass platform usage through"
     ]
   },
+  "distributionProgress": {
+    "exampleTasks": {
+      "status": "published_by_center_holder",
+      "completedAt": "2026-08-29",
+      "tasks": [
+        "Open Graph & Twitter Card Checker",
+        "Social Preview Drift Across Crawlers",
+        "Broken Preview & Canonical Checker"
+      ]
+    },
+    "actorQuality": {
+      "status": "awaiting_first_score"
+    },
+    "searchIndexing": {
+      "status": "awaiting_indexing"
+    },
+    "externalBacklink": {
+      "status": "not_seeded"
+    }
+  },
   "distributionPlan": {
     "orientation": "passive_first",
     "priority": [
@@ -92,7 +116,7 @@
       {
         "step": 2,
         "channel": "Published example tasks",
-        "why": "Each public task creates a search- and AI-indexable landing page for a specific use case and appears in the Actor Example tasks tab."
+        "why": "Completed: public use-case tasks create additional search- and AI-indexable entry points and appear in the Actor Example tasks surface."
       },
       {
         "step": 3,
