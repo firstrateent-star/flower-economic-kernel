@@ -6,8 +6,11 @@ const STAGE_RANK = {
   private_source_ready: 1,
   private_verified: 2,
   private_deployed: 3,
+  monetization_ready: 4,
+  launch_approved_build_pending: 4,
   publish_ready: 4,
   live: 5,
+  public_live: 5,
   fruit: 6,
 };
 
@@ -63,6 +66,8 @@ export async function syncFruitManifests(garden, { rootDir = process.cwd() } = {
         inheritance: manifest.inheritance ?? [],
         monetization: manifest.monetization ?? null,
         passiveDistribution: manifest.passiveDistribution ?? null,
+        publicRelease: manifest.publicRelease ?? null,
+        publicMeasurement: manifest.publicMeasurement ?? null,
         growthLoop: manifest.growthLoop ?? null,
         manifestPath: manifest.manifestPath,
         createdAt: new Date().toISOString(),
@@ -80,6 +85,8 @@ export async function syncFruitManifests(garden, { rootDir = process.cwd() } = {
       fruit.inheritance = manifest.inheritance ?? fruit.inheritance;
       fruit.monetization = manifest.monetization ?? fruit.monetization;
       fruit.passiveDistribution = manifest.passiveDistribution ?? fruit.passiveDistribution;
+      fruit.publicRelease = manifest.publicRelease ?? fruit.publicRelease;
+      fruit.publicMeasurement = manifest.publicMeasurement ?? fruit.publicMeasurement;
       fruit.growthLoop = manifest.growthLoop ?? fruit.growthLoop;
       fruit.manifestPath = manifest.manifestPath;
       fruit.status = moreAdvancedStage(fruit.status, manifest.stage ?? 'private_source_ready');
