@@ -17,3 +17,26 @@ test('pending approval stops autonomous cognition', () => {
   g.approvals.push({ id: 'a1', status: 'pending' });
   assert.equal(classifyPressure(g).type, 'HUMAN');
 });
+
+test('validated branch earns private build plan before speculative siblings', () => {
+  const g = structuredClone(seed);
+  g.opportunities = [
+    {
+      ...structuredClone(seed.opportunities[0]),
+      id: 'opp_validated',
+      status: 'validated',
+      fruitId: null,
+    },
+    {
+      ...structuredClone(seed.opportunities[0]),
+      id: 'opp_reserve',
+      status: 'needs_test',
+    },
+  ];
+
+  assert.deepEqual(classifyPressure(g), {
+    type: 'BUILD_PLAN',
+    targetId: 'opp_validated',
+    why: 'Evidence has earned a private build plan; convert validated knowledge into Fruit before allocating more speculative experiments.',
+  });
+});
