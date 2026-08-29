@@ -70,6 +70,43 @@ function predeclaredKillConditionMet(exp) {
   return false;
 }
 
+function hasBranchSpecificAlternateMeasurement(opp, validationDimension) {
+  return opp?.id === 'opp_maps_website_pointer_guard' && validationDimension === 'failure_reality';
+}
+
+function nonSupportingIntegratedWebSearch(experiments, validationDimension) {
+  return experiments.find((exp) =>
+    exp.status === 'integrated'
+    && exp.actionType === 'web_search'
+    && exp.validationDimension === validationDimension
+    && ['weakens', 'inconclusive'].includes(exp.result?.verdict)
+  ) ?? null;
+}
+
+function markMeasurementBlocked(garden, opp, exp, validationDimension) {
+  opp.status = 'measurement_blocked';
+  opp.selectedForExperiment = false;
+  opp.selectionState = 'measurement_blocked';
+  opp.measurementBlockedAt = nowIso();
+  opp.measurementBlockedDimension = validationDimension ?? null;
+  opp.measurementBlockedExperimentId = exp?.id ?? null;
+  opp.validationGate = validationGateSnapshot(garden, opp.id);
+  opp.measurementBlockedReason = `A bounded public web search returned ${exp?.result?.verdict ?? 'non-supporting'} evidence for ${validationDimension ?? 'the required dimension'}, and v0 has no materially different bounded executor for this opportunity.`;
+  opp.epistemicNote = 'Preserved, not disproven: required reality contact is currently inaccessible with Flower v0 execution methods. Do not repeat the same search; revisit only when a materially different measurement method exists.';
+
+  const principle = 'Measurement methods are opportunity-specific: when a required validation dimension cannot be tested by a materially different bounded executor, preserve the branch as measurement-blocked and redirect capital instead of repeating the same search.';
+  if (!(garden.soil ?? []).some((x) => x.principle === principle)) {
+    garden.soil.push({
+      id: id('soil'),
+      principle,
+      scope: 'experiment governance',
+      status: 'supported',
+      derivedFrom: [opp.id, ...(exp?.id ? [exp.id] : [])],
+      createdAt: nowIso(),
+    });
+  }
+}
+
 export async function runEnzyme({ garden, pressure, reasoner }) {
   if (pressure.type === 'HUMAN' || pressure.type === 'STILLNESS') {
     return { changed: false, summary: pressure.why, action: pressure.type };
@@ -130,20 +167,23 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     const previous = garden.experiments.filter((x) => x.opportunityId === opp.id);
     const gate = validationGateSnapshot(garden, opp.id);
     const requiredDimension = requiredValidationDimension(garden, opp.id);
+    const priorNonSupportingRequiredWebSearch = requiredDimension
+      ? nonSupportingIntegratedWebSearch(previous, requiredDimension)
+      : null;
 
-    // Method-escalation rule: if a failure-reality web search already returned inconclusive,
-    // do not pay for another semantic search. Change measurement method to a direct sample of
-    // actual Maps records and their linked websites. This inherits the proven upstream Actor
-    // pattern from the Exact Match Guard and uses Apify's minimum allowed $0.50 run ceiling
-    // with no recurring spend.
-    const inconclusiveFailureWebSearch = previous.some((x) =>
-      x.validationDimension === 'failure_reality'
-      && x.actionType === 'web_search'
-      && x.status === 'integrated'
-      && x.result?.verdict === 'inconclusive'
-    );
+    // Measurement methods belong to the opportunity they actually measure. The direct
+    // Maps→website sampler is a branch-specific escape hatch, not a generic fallback for
+    // unrelated opportunities that happen to have an inconclusive web-search result.
+    if (priorNonSupportingRequiredWebSearch && !hasBranchSpecificAlternateMeasurement(opp, requiredDimension)) {
+      markMeasurementBlocked(garden, opp, priorNonSupportingRequiredWebSearch, requiredDimension);
+      return {
+        changed: true,
+        summary: `Measurement blocked: ${opp.name} cannot justify another ${requiredDimension} search until a materially different bounded measurement method exists.`,
+        action: 'EXPERIMENT',
+      };
+    }
 
-    if (requiredDimension === 'failure_reality' && inconclusiveFailureWebSearch) {
+    if (priorNonSupportingRequiredWebSearch && hasBranchSpecificAlternateMeasurement(opp, requiredDimension)) {
       const e = {
         name: 'Direct Stratified Maps→Website Identity Sample',
         tests: 'Observe a small stratified sample of live Google Maps business records, fetch each linked website, and compare business-name/phone/location identity signals instead of searching for discussions about the failure.',
@@ -167,7 +207,7 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
 
     const result = await reasoner.reason({
       operation: 'EXPERIMENT', garden, target: opp,
-      prompt: `Design the cheapest discriminating experiment that can materially change whether we pursue this. It must avoid recurring obligations, contracts, Sean's identity, cold outreach, and public deployment unless separately approved. The experiment must produce external evidence; internal reasoning alone is not a successful test. Avoid merely repeating prior experiments.\nPRIVATE-BUILD VALIDATION GATE: ${JSON.stringify(gate)}\nREQUIRED VALIDATION DIMENSION: ${requiredDimension ?? 'Choose an uncovered dimension that most cheaply reduces remaining uncertainty.'}\nVALIDATION DIMENSIONS: failure_reality = direct evidence the claimed failure actually occurs; buyer_demand = evidence buyers/workflows care enough to seek or pay for resolution; distribution_access = evidence passive discoverability/channel access; resolution_complexity = evidence resolution is not a trivial filter; willingness_to_pay = direct pricing/purchase evidence.\nV0 EXECUTION CAPABILITY: autonomous execution currently supports public web_search, plus a deterministic direct Maps→website sample only after an inconclusive failure-reality search. Prefer web_search when it can discriminate; do not repeat an inconclusive method.\nPREVIOUS EXPERIMENTS: ${JSON.stringify(previous.map((x) => ({name:x.name,status:x.status,actionType:x.actionType,method:x.method ?? null,validationDimension:x.validationDimension ?? null,result:x.result ?? null})))}\nReturn one experiment with exactly one validationDimension.`,
+      prompt: `Design the cheapest discriminating experiment that can materially change whether we pursue this. It must avoid recurring obligations, contracts, Sean's identity, cold outreach, and public deployment unless separately approved. The experiment must produce external evidence; internal reasoning alone is not a successful test. Avoid merely repeating prior experiments.\nPRIVATE-BUILD VALIDATION GATE: ${JSON.stringify(gate)}\nREQUIRED VALIDATION DIMENSION: ${requiredDimension ?? 'Choose an uncovered dimension that most cheaply reduces remaining uncertainty.'}\nVALIDATION DIMENSIONS: failure_reality = direct evidence the claimed failure actually occurs; buyer_demand = evidence buyers/workflows care enough to seek or pay for resolution; distribution_access = evidence passive discoverability/channel access; resolution_complexity = evidence resolution is not a trivial filter; willingness_to_pay = direct pricing/purchase evidence.\nV0 EXECUTION CAPABILITY: autonomous execution currently supports public web_search, plus a deterministic direct Maps→website sample only for the Google Maps Business → Website Identity Guard after a non-supporting failure-reality search. Prefer web_search only while it is a fresh discriminating method; do not repeat a non-supporting search without a materially different executor.\nPREVIOUS EXPERIMENTS: ${JSON.stringify(previous.map((x) => ({name:x.name,status:x.status,actionType:x.actionType,method:x.method ?? null,validationDimension:x.validationDimension ?? null,result:x.result ?? null})))}\nReturn one experiment with exactly one validationDimension.`,
     });
     const e = result.data.experiment;
     if (!e) return { changed: false, summary: 'No experiment proposed.', action: 'EXPERIMENT' };
@@ -189,6 +229,9 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     if (!opp) throw new Error('Experiment opportunity not found.');
 
     if (exp.method === 'maps_website_sample') {
+      if (opp.id !== 'opp_maps_website_pointer_guard') {
+        throw new Error('Maps→website direct sampler cannot execute for an unrelated opportunity.');
+      }
       if (exp.actionType !== 'spend' || Number(exp.oneTimeCostUsd ?? Infinity) > 0.50 || Number(exp.recurringUsd ?? 0) !== 0) {
         throw new Error('Direct Maps sample crossed its deterministic cost membrane.');
       }
@@ -215,7 +258,8 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     }
 
     // Public-web execution remains read-only and separately authorized. No publishing,
-    // human contact, purchases other than the direct sample cap above, or external writes.
+    // human contact, purchases other than the branch-specific direct sample cap above,
+    // or external writes.
     if (exp.actionType !== 'web_search') {
       exp.status = 'blocked_capability';
       exp.blockedReason = `v0 has no autonomous executor for actionType=${exp.actionType}, method=${exp.method ?? 'none'}.`;
@@ -310,12 +354,20 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
       } else {
         opp.epistemicNote = `Externally supported by experiment ${exp.id}; private-build gate remains incomplete.`;
       }
+    } else if (
+      sources.length > 0
+      && exp.actionType === 'web_search'
+      && ['weakens', 'inconclusive'].includes(exp.result?.verdict)
+      && !hasBranchSpecificAlternateMeasurement(opp, exp.validationDimension)
+    ) {
+      markMeasurementBlocked(garden, opp, exp, exp.validationDimension);
     } else {
-      // Weak/inconclusive evidence does not prove absence. Keep the idea testable unless a
-      // predeclared kill condition was actually met above.
+      // Weak/inconclusive evidence does not prove absence. Keep the idea testable when a
+      // materially different bounded measurement method still exists; otherwise it is
+      // preserved as measurement_blocked above rather than paying to repeat the same search.
       opp.status = 'needs_test';
       opp.validationGate = validationGateSnapshot(garden, opp.id);
-      opp.epistemicNote = `Experiment ${exp.id} did not justify promotion; further reality contact is required.`;
+      opp.epistemicNote = `Experiment ${exp.id} did not justify promotion; further reality contact is required through a materially different method.`;
     }
 
     return {
