@@ -66,6 +66,28 @@ function inferCapability(entity) {
   return null;
 }
 
+function archetypeFamily(archetype) {
+  const value = slug(archetype);
+  if (!value) return null;
+  if (/identity|pointer|entity|catalog|metadata/.test(value)) return 'identity_integrity';
+  if (/contract|schema|compatib|version|documentation|runtime|drift/.test(value)) return 'representation_drift';
+  if (/duplicate|contradiction|reconciliation/.test(value)) return 'record_consistency';
+  if (/configuration|authentication|policy|spf|dmarc/.test(value)) return 'configuration_integrity';
+  if (/document|structure|reading|order|semantic/.test(value)) return 'semantic_structure_integrity';
+  return value;
+}
+
+function capabilityFamily(capability) {
+  const value = slug(capability);
+  if (!value) return null;
+  if (/identity|entity|catalog.*recon|cross_source.*recon/.test(value)) return 'identity_reconciliation';
+  if (/schema|contract|version|compatib|spec.*runtime|example.*runtime/.test(value)) return 'representation_comparison';
+  if (/record|duplicate|credit.*recon/.test(value)) return 'record_reconciliation';
+  if (/dns|policy|authentication/.test(value)) return 'configuration_inspection';
+  if (/document|structure|graph|reading_order/.test(value)) return 'structure_graph_analysis';
+  return value;
+}
+
 function supportingDimensions(garden, opportunityId) {
   return [...new Set((garden.experiments ?? [])
     .filter((exp) => exp.opportunityId === opportunityId && exp.status === 'integrated' && exp.result?.verdict === 'supports')
@@ -117,26 +139,34 @@ export function refreshGeometry(garden) {
   const centers = [];
 
   for (const fruit of garden.fruits ?? []) {
+    const archetype = inferArchetype(fruit);
+    const reusableCapability = inferCapability(fruit);
     centers.push({
       id: fruit.id,
       kind: 'fruit',
       name: fruit.name,
       status: fruit.status,
-      archetype: inferArchetype(fruit),
-      reusableCapability: inferCapability(fruit),
+      archetype,
+      archetypeFamily: archetypeFamily(archetype),
+      reusableCapability,
+      capabilityFamily: capabilityFamily(reusableCapability),
       nutrientChannel: fruit.platform ?? null,
       coverage: centerCoverage(garden, fruit, 'fruit'),
     });
   }
 
   for (const opp of garden.opportunities ?? []) {
+    const archetype = inferArchetype(opp);
+    const reusableCapability = inferCapability(opp);
     centers.push({
       id: opp.id,
       kind: 'opportunity',
       name: opp.name,
       status: opp.status,
-      archetype: inferArchetype(opp),
-      reusableCapability: inferCapability(opp),
+      archetype,
+      archetypeFamily: archetypeFamily(archetype),
+      reusableCapability,
+      capabilityFamily: capabilityFamily(reusableCapability),
       nutrientChannel: opp.nutrientChannel ?? null,
       coverage: centerCoverage(garden, opp, 'opportunity'),
     });
@@ -145,28 +175,36 @@ export function refreshGeometry(garden) {
   const archetypeGroups = new Map();
   const capabilityGroups = new Map();
   for (const center of centers) {
-    if (center.archetype) {
-      const list = archetypeGroups.get(center.archetype) ?? [];
+    if (center.archetypeFamily) {
+      const list = archetypeGroups.get(center.archetypeFamily) ?? [];
       list.push(center.id);
-      archetypeGroups.set(center.archetype, list);
+      archetypeGroups.set(center.archetypeFamily, list);
     }
-    if (center.reusableCapability) {
-      const list = capabilityGroups.get(center.reusableCapability) ?? [];
+    if (center.capabilityFamily) {
+      const list = capabilityGroups.get(center.capabilityFamily) ?? [];
       list.push(center.id);
-      capabilityGroups.set(center.reusableCapability, list);
+      capabilityGroups.set(center.capabilityFamily, list);
     }
   }
 
   const edges = [];
   for (const [key, ids] of archetypeGroups) {
-    if (ids.length > 1) addPairEdges(edges, key, ids, 'shared_failure_archetype');
+    if (ids.length > 1) addPairEdges(edges, key, ids, 'shared_failure_archetype_family');
   }
   for (const [key, ids] of capabilityGroups) {
-    if (ids.length > 1) addPairEdges(edges, key, ids, 'shared_reusable_capability');
+    if (ids.length > 1) addPairEdges(edges, key, ids, 'shared_reusable_capability_family');
   }
 
-  const archetypes = [...archetypeGroups.entries()].map(([name, ids]) => ({ name, centerIds: [...new Set(ids)], reuseCount: new Set(ids).size }));
-  const capabilities = [...capabilityGroups.entries()].map(([name, ids]) => ({ name, centerIds: [...new Set(ids)], reuseCount: new Set(ids).size }));
+  const archetypes = [...archetypeGroups.entries()].map(([name, ids]) => ({
+    name,
+    centerIds: [...new Set(ids)],
+    reuseCount: new Set(ids).size,
+  }));
+  const capabilities = [...capabilityGroups.entries()].map(([name, ids]) => ({
+    name,
+    centerIds: [...new Set(ids)],
+    reuseCount: new Set(ids).size,
+  }));
   const reusableArchetypes = archetypes.filter((x) => x.reuseCount > 1).length;
   const reusableCapabilities = capabilities.filter((x) => x.reuseCount > 1).length;
 
@@ -176,7 +214,7 @@ export function refreshGeometry(garden) {
   if (edges.length > 0) stage = 'metatrons_cube';
 
   garden.geometry = {
-    version: 1,
+    version: 2,
     stage,
     metaphorNote: 'Sacred-geometry language is used as a functional design metaphor: centers preserve evidence and agency; edges represent reusable relationships. It is not treated as empirical proof by itself.',
     fruitOfLifeCenters: FRUIT_OF_LIFE_CENTERS,
@@ -210,7 +248,9 @@ export function geometryBrief(garden) {
       name: x.name,
       status: x.status,
       archetype: x.archetype,
+      archetypeFamily: x.archetypeFamily,
       reusableCapability: x.reusableCapability,
+      capabilityFamily: x.capabilityFamily,
     })),
   };
 }
