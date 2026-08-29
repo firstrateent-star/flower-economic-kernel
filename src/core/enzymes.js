@@ -57,6 +57,19 @@ function authorizeExperiment(garden, opp, e) {
   return { exp, auth };
 }
 
+function predeclaredKillConditionMet(exp) {
+  if (
+    exp?.method === 'maps_website_sample'
+    && exp?.validationDimension === 'failure_reality'
+    && exp?.result?.verdict === 'weakens'
+  ) {
+    const evaluable = Number(exp.result?.sample?.evaluable ?? 0);
+    const mismatches = Number(exp.result?.sample?.mismatchCandidates ?? Infinity);
+    return evaluable >= 5 && mismatches === 0;
+  }
+  return false;
+}
+
 export async function runEnzyme({ garden, pressure, reasoner }) {
   if (pressure.type === 'HUMAN' || pressure.type === 'STILLNESS') {
     return { changed: false, summary: pressure.why, action: pressure.type };
@@ -268,7 +281,25 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
     exp.integratedAt = nowIso();
     opp.experimentId = null;
 
-    if (sources.length > 0 && exp.result?.verdict === 'supports') {
+    if (predeclaredKillConditionMet(exp)) {
+      opp.status = 'dormant';
+      opp.dormantAt = nowIso();
+      opp.validationGate = validationGateSnapshot(garden, opp.id);
+      opp.failedBecause = `Predeclared kill condition met by ${exp.id}: ${exp.killCondition}`;
+      opp.epistemicNote = 'Dormant, not disproven: the bounded direct sample met its predeclared kill condition, so further spend on this branch is not justified unless materially new evidence changes the context.';
+
+      const principle = 'Predeclared kill conditions outrank curiosity: when a bounded reality test meets its kill condition, stop spending on that branch unless materially new evidence changes the context.';
+      if (!(garden.soil ?? []).some((x) => x.principle === principle)) {
+        garden.soil.push({
+          id: id('soil'),
+          principle,
+          scope: 'experiment governance',
+          status: 'supported',
+          derivedFrom: [opp.id, exp.id],
+          createdAt: nowIso(),
+        });
+      }
+    } else if (sources.length > 0 && exp.result?.verdict === 'supports') {
       opp.status = 'supported';
       const gate = validationGateSnapshot(garden, opp.id);
       opp.validationGate = gate;
@@ -280,8 +311,8 @@ export async function runEnzyme({ garden, pressure, reasoner }) {
         opp.epistemicNote = `Externally supported by experiment ${exp.id}; private-build gate remains incomplete.`;
       }
     } else {
-      // Weak/inconclusive evidence does not prove absence. Keep the idea testable rather than
-      // pretending silence is decisive falsification.
+      // Weak/inconclusive evidence does not prove absence. Keep the idea testable unless a
+      // predeclared kill condition was actually met above.
       opp.status = 'needs_test';
       opp.validationGate = validationGateSnapshot(garden, opp.id);
       opp.epistemicNote = `Experiment ${exp.id} did not justify promotion; further reality contact is required.`;
