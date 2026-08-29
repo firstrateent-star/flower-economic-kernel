@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { compareProfileResults, isPublicIp, parseMetadata, scoreIssues } from '../src/core.js';
+import { compareProfileResults, createSafeLookup, isPublicIp, parseMetadata, scoreIssues } from '../src/core.js';
 
 test('parseMetadata resolves canonical and preview image URLs', () => {
   const html = `<!doctype html><html><head>
@@ -45,4 +45,19 @@ test('private and reserved addresses are rejected', () => {
   }
   assert.equal(isPublicIp('8.8.8.8'), true);
   assert.equal(isPublicIp('2606:4700:4700::1111'), true);
+});
+
+test('safe lookup supports Node multi-address and single-address callback shapes', () => {
+  const records = [
+    { address: '8.8.8.8', family: 4 },
+    { address: '2606:4700:4700::1111', family: 6 },
+  ];
+
+  let multiArgs;
+  createSafeLookup(records)('example.com', { all: true }, (...args) => { multiArgs = args; });
+  assert.deepEqual(multiArgs, [null, records]);
+
+  let singleArgs;
+  createSafeLookup(records)('example.com', { all: false }, (...args) => { singleArgs = args; });
+  assert.deepEqual(singleArgs, [null, '8.8.8.8', 4]);
 });
