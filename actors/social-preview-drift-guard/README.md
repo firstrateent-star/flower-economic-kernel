@@ -1,47 +1,59 @@
 # Social Preview Drift Guard API
 
-A bounded Apify Actor that checks whether a public URL presents a consistent, usable social-preview state across crawler-style user agents.
+Check whether a public URL has a **consistent, usable social-preview state across crawler-style consumers** before it reaches a publishing workflow, CMS, CI pipeline, or automated agent.
 
-This is **not another Open Graph extractor**. The main output is a deterministic `PASS`, `RISK`, `FAIL`, or `INCONCLUSIVE` verdict with machine-readable reasons.
+Instead of only extracting Open Graph tags, Social Preview Drift Guard returns a deterministic decision for each URL:
+
+- `PASS` — the tested crawler-facing state was observed and no material issue was detected
+- `RISK` — the page was observed, but social-preview weaknesses or inconsistencies were found
+- `FAIL` — the page was observed and a decisive broken or contradictory state was found
+- `INCONCLUSIVE` — the Actor could not gather enough transport-level evidence to judge the URL
+
+The normal starting price is **$0.005 per successfully observed URL**. `INCONCLUSIVE` measurements are not charged as `url-checked` events.
 
 ## What it checks
 
-For each URL the Actor can:
+For each URL, the Actor can fetch the page using multiple crawler-style user agents and compare what each receives. The default profiles represent a normal crawler plus Facebook, X/Twitter, and LinkedIn; Slack and Discord profiles are also available.
 
-- fetch the page as multiple crawler profiles (`default`, Facebook, X/Twitter, LinkedIn, Slack, Discord)
-- compare HTTP status, redirects, canonical URL, `og:title`, `og:image`, `og:url`, Twitter card and image values across profiles
-- flag crawler-conditioned metadata drift
-- flag canonical/`og:url` conflicts
-- detect missing or invalid social metadata
-- probe discovered preview images and verify that they resolve successfully as image content
-- reject private/local/reserved network targets and re-validate redirects
-- separate target failure from measurement failure: complete transport failure returns `INCONCLUSIVE`, not `FAIL`
+Checks include:
 
-One default-dataset item is produced per inspected URL.
+- HTTP status and crawler-dependent status drift
+- redirects and final URL consistency
+- canonical URL consistency
+- `og:title`, `og:image`, and `og:url`
+- Twitter Card metadata
+- crawler-conditioned metadata differences
+- canonical / Open Graph URL conflicts
+- missing or invalid social metadata
+- preview-image reachability and image content type
+- bounded public-network safety checks for URLs and redirects
 
-## Why this exists
+The output is designed for both humans and machines. Every inspected URL produces one dataset item containing the verdict, risk score, issue codes, crawler-profile observations, image checks, and an explicit scope statement.
 
-Metadata extraction is already commoditized. The useful question in automated publishing, CMS, CI, and agent workflows is often:
+## Quick start
 
-> Will this URL present a contradictory or broken preview state when different crawler-like consumers fetch it?
+For one URL:
 
-The Actor converts that question into a compact decision record that another machine can act on.
+```json
+{
+  "url": "https://www.apify.com"
+}
+```
 
-## Example input
+For a batch:
 
 ```json
 {
   "urls": [
     "https://example.com/article-a",
     "https://example.com/article-b"
-  ],
-  "profiles": ["default", "facebook", "x", "linkedin"],
-  "checkImages": true,
-  "maxConcurrency": 4
+  ]
 }
 ```
 
-## Example output shape
+The Actor audits up to 100 URLs per run. The defaults are intended to work without additional configuration.
+
+## Example result
 
 ```json
 {
@@ -51,68 +63,52 @@ The Actor converts that question into a compact decision record that another mac
   "measurementStatus": "observed",
   "issues": [
     {
-      "code": "PROFILE_METADATA_DRIFT",
+      "code": "MISSING_OG_IMAGE",
       "severity": "risk",
-      "message": "Crawler profiles received different og:title values."
+      "message": "og:image is missing."
     }
   ],
-  "profiles": [],
-  "imageChecks": [],
+  "profileCount": 4,
   "rulesetVersion": "0.1.0"
 }
 ```
 
-## Scope and limitations
+## Useful workflows
 
-The Actor compares **public HTTP responses and metadata delivered to crawler-style user agents**. It does not access private social-platform data and does not claim to reproduce proprietary platform caches, ranking logic, or the final card that a platform may render.
+### Publishing QA
 
-A `PASS` means the tested public crawler-facing state was internally consistent under the selected profiles. It is not a guarantee that Facebook, X, LinkedIn, Slack, Discord, or another service will display a particular cached preview.
+Run the Actor before publishing or distributing a URL. A workflow can stop on `FAIL`, request review on `RISK`, continue on `PASS`, and retry or route `INCONCLUSIVE` separately.
 
-`INCONCLUSIVE` means the Actor could not obtain enough transport-level evidence to judge the URL. It is intentionally distinct from `FAIL` and should not be treated as evidence that the target itself is broken.
+### CI and CMS automation
 
-The Actor intentionally uses direct HTTP rather than a browser or proxy by default. This keeps execution cheap, predictable, and suitable for bulk CI/API use.
+Use the machine-readable verdict and issue codes in CI, content pipelines, release checks, CMS publishing flows, or scheduled link-health jobs.
 
-## Private verification
+### Agent and API workflows
 
-A bounded private calibration on Apify established the intended four-state behavior:
+The Actor uses bounded inputs, limited permissions, deterministic verdicts, and one result per URL, making it suitable for programmatic use from the Apify API and automated agents.
 
-- a healthy social-preview page produced `PASS`
-- an observable page missing normal social metadata produced `RISK`
-- an observable nonexistent page produced `FAIL`
-- complete transport failure is represented as `INCONCLUSIVE`
+## Interpreting the verdict
 
-A three-URL calibration batch completed in about two seconds at the Actor's 256 MB default memory allocation, with Apify displaying the run cost rounded to `$0.000`. The same calibration behavior survived the memory reduction from 1024 MB to 256 MB.
+A `PASS` means the **public HTTP responses and metadata returned to the selected crawler-style user agents were internally consistent under this test**. It is not a guarantee that a social platform will display a particular cached or final rendered card.
 
-## Monetization design
+A `FAIL` is reserved for observed decisive problems such as HTTP errors, crawler-dependent status conflicts, material canonical/Open Graph drift, invalid preview-image state, or other fail-severity conditions.
 
-The preferred Store model is **pay per event**, with one visible `url-checked` event per successfully observed URL result. `INCONCLUSIVE` results are not charged as `url-checked` events.
+An `INCONCLUSIVE` result is intentionally different from a failure. It means the Actor could not obtain enough evidence to make a trustworthy PASS/RISK/FAIL judgment. This prevents transport problems from being misreported as defects in the target page.
 
-The initial price target is **$0.005 per observed URL** ($5 / 1,000 checks). Private platform runs have demonstrated sub-cent execution cost with substantial headroom at 256 MB, so this price is intended to prioritize a healthy contribution margin while remaining cheap for CI, CMS, API, and agent usage.
+## Inputs
 
-The Actor is designed to remain on **limited permissions** and not use Standby. For private testing before monetization is enabled, the Actor writes normal dataset items without a custom charge event.
+- `url` — one public HTTP(S) URL
+- `urls` — additional URLs, up to 100 total per run
+- `profiles` — crawler profiles to compare
+- `checkImages` — probe discovered preview images
+- `maxConcurrency` — parallel URL processing limit
+- `requestTimeoutSecs` — per-request timeout
+- `maxHtmlMb` — maximum HTML response size per crawler profile
 
-## Passive-growth design
+## Output and pricing
 
-This Fruit is intended to leave reusable organs behind:
+One default-dataset item is produced for each inspected URL. The run summary also reports aggregate PASS/RISK/FAIL/INCONCLUSIVE counts.
 
-- safe bounded fetch
-- crawler-profile comparison
-- deterministic risk rules
-- explicit observed-vs-inconclusive measurement semantics
-- one-input/one-result dataset semantics
-- pay-per-event charging pattern
-- machine-readable limitations
+The paid event is `url-checked` at **$0.005 per observed URL ($5 per 1,000 checks)**. An inconclusive measurement is returned for diagnostic transparency but is not charged as a successful `url-checked` event.
 
-The parent Flower Economic Kernel can later use public Apify Store statistics and run-health signals to decide whether to improve the listing, harden reliability, change pricing, expand rules, or replicate the same `representation_drift` geometry into a new Fruit.
-
-Public code/pricing mutation remains human-gated. Private candidate improvements can be generated automatically.
-
-## Apify source
-
-This Actor lives in a monorepo. In Apify, use the Git source directory:
-
-```text
-https://github.com/firstrateent-star/flower-economic-kernel#main:actors/social-preview-drift-guard
-```
-
-The private technical and calibration gates have been completed. Public monetization and Store release remain explicit Center-holder decisions.
+Platform caches, proprietary ranking logic, authenticated/private social data, and the exact final card rendered inside a social network are outside the Actor's scope.
