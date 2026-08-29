@@ -3,6 +3,7 @@ import { runEnzyme } from './enzymes.js';
 import { runSelection, selectionRequiresReasoner } from './selection.js';
 import { addTrace } from './transitions.js';
 import { nowIso } from './utils.js';
+import { refreshGeometry } from './geometry.js';
 
 function applyPostIntegrationSelectionPolicy(garden, pressure) {
   if (pressure.type !== 'INTEGRATE') return null;
@@ -52,6 +53,7 @@ export async function breathe({ garden, reasoner, pressure = classifyPressure(ga
 
   garden.status.lastPressure = pressure;
   garden.status.lastBreathAt = nowIso();
+  refreshGeometry(garden);
 
   addTrace(garden, {
     kind: 'breath',
@@ -64,13 +66,15 @@ export async function breathe({ garden, reasoner, pressure = classifyPressure(ga
   return { pressure, result, changed: before !== JSON.stringify(garden) };
 }
 
-// A pulse now crosses at most one costly frontier, then automatically carries the
-// Garden through every safe deterministic transition that follows. This reduces human
-// clicking without silently multiplying model calls, web searches, or external spend.
+// A pulse crosses at most one costly frontier, then automatically carries the
+// Garden through every safe deterministic transition that follows. Sacred-geometry
+// language informs the reuse graph, but does not increase permissions or evidence.
 export async function pulse({ garden, reasoner, maxBreaths = 12, maxCostlyBreaths = 1 }) {
   const breaths = [];
   let costlyBreaths = 0;
   let stoppedByCostFrontier = false;
+
+  refreshGeometry(garden);
 
   for (let i = 0; i < maxBreaths; i += 1) {
     const pressure = classifyPressure(garden);
@@ -91,6 +95,7 @@ export async function pulse({ garden, reasoner, maxBreaths = 12, maxCostlyBreath
     if (!step.result.changed) break;
   }
 
+  refreshGeometry(garden);
   garden.status.lastPulseAt = nowIso();
   garden.status.pulseCount = Number(garden.status.pulseCount ?? 0) + 1;
   return {
