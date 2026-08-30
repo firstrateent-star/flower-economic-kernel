@@ -62,3 +62,37 @@ test('supporting experiments mark only earned validation centers while prose rem
   assert.equal(center.coverage.nutrient_channel, 'claimed');
   assert.equal(center.coverage.passive_discoverability, 'claimed');
 });
+
+test('geometry cache ignores telemetry churn and preserves the exact derived graph', () => {
+  const garden = structuredClone(seed);
+  const first = refreshGeometry(garden);
+  const firstSerialized = JSON.stringify(first);
+  const firstUpdatedAt = first.updatedAt;
+
+  garden.traces.push({
+    id: 'trace_irrelevant_to_geometry',
+    kind: 'telemetry',
+    at: '2026-08-30T17:00:00.000Z',
+  });
+  garden.status.lastBreathAt = '2026-08-30T17:00:00.000Z';
+
+  const second = refreshGeometry(garden);
+  assert.equal(second, first);
+  assert.equal(second.updatedAt, firstUpdatedAt);
+  assert.equal(JSON.stringify(second), firstSerialized);
+});
+
+test('geometry cache invalidates when a geometry-relevant state field changes', () => {
+  const garden = structuredClone(seed);
+  const first = refreshGeometry(garden);
+  const firstSignature = first.inputSignature;
+  const target = garden.opportunities[0];
+
+  target.status = 'validated';
+  const second = refreshGeometry(garden);
+
+  assert.notEqual(second, first);
+  assert.notEqual(second.inputSignature, firstSignature);
+  assert.equal(second.centers.find((x) => x.id === target.id).status, 'validated');
+  assert.equal(second.metrics.validatedOpportunityCount, 1);
+});
