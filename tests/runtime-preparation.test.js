@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import seed from '../garden/seed.json' with { type: 'json' };
 import { prepareRuntimeState } from '../src/core/runtime-preparation.js';
 
-test('shared runtime preparation reaches the canonical HUMAN membrane without cognition', async () => {
+test('shared runtime preparation reaches canonical fresh-challenger pressure without mutating through cognition', async () => {
   const garden = structuredClone(seed);
   const prepared = await prepareRuntimeState({ garden, rootDir: process.cwd() });
 
-  assert.equal(prepared.pressure.type, 'HUMAN');
-  assert.equal(prepared.pressure.targetId, 'fruit_changed_method_navigator');
-  assert.equal(prepared.wake.wake, false);
-  assert.equal(prepared.wake.reason, 'human_membrane');
+  assert.equal(prepared.pressure.type, 'EXPAND');
+  assert.equal(prepared.pressure.targetId, null);
+  assert.equal(prepared.wake.wake, true);
+  assert.match(prepared.wake.reason, /autonomous|pressure|expand/i);
   assert.equal(prepared.observationIngest, null);
 });
 
