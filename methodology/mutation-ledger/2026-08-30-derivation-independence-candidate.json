@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate_not_promoted",
+  "name": "Derivation Independence",
+  "thesis": "Meta-learning recurrence should distinguish repeated descendants of one causal lineage from genuinely independent convergence across distinct derivation ancestries.",
+  "origin": {
+    "historicalPath": "Flower of Life dimensional inquiry -> projection ambiguity -> A_n frontier law -> rediscovery of sparse activation and irreversible-risk concepts already present in the kernel",
+    "trigger": "The same operational ideas re-emerged from a mathematically different route, revealing that raw episode/domain recurrence cannot tell independent convergence from repeated lineage."
+  },
+  "affectedDecisions": [
+    "ranking meta-learning mechanisms by recurrence",
+    "eligibility for prospective meta-tests",
+    "confidence assigned to cross-domain recurrence",
+    "whether repeated restatements are treated as new support"
+  ],
+  "causalInputs": [
+    "explicit derivation ancestry for supporting episodes",
+    "positive/negative episode outcomes",
+    "prospective comparable interventions",
+    "domain labels",
+    "evidence strength"
+  ],
+  "complexityThatMustBePreserved": [
+    "direct negative evidence",
+    "prospective causal evidence",
+    "human epistemic corrections",
+    "domain-specific boundary conditions",
+    "external-value uncertainty"
+  ],
+  "candidateRule": "Do not increase confidence merely because one causal lineage is restated across multiple episodes, domains, abstractions, or representations. Treat independent convergence as stronger evidence only when distinct derivation ancestry is explicit enough to defend.",
+  "currentEvidence": [
+    "research/meta-learning/derivation-independence.js",
+    "tests/meta-learning-derivation-independence.test.js",
+    "research/dimensional/an-growth.js",
+    "src/core/terminal-governance.js",
+    "src/core/reasoner-view.js"
+  ],
+  "falsifier": "Annotating real historical episodes with defensible derivation ancestry does not change any candidate ranking, confidence interpretation, or future test allocation compared with raw recurrence, or the ancestry bookkeeping adds more ambiguity/burden than it removes.",
+  "rollbackPath": "Keep the research audit cold and leave src/core/meta-learning.js unchanged.",
+  "stoppingCondition": "Do not modify canonical meta-learning until a real-history audit demonstrates at least one decision-relevant difference between raw recurrence and derivation-independent recurrence.",
+  "epistemicBoundary": "Independent convergence increases evidential diversity; it does not establish universal truth, external usefulness, physical dimensional claims, or canonical authority.",
+  "protectedDomainTouch": false
+}
