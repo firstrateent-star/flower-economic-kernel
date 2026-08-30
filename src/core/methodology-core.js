@@ -1,4 +1,4 @@
-export const FLOWER_METHODOLOGY_VERSION = '2026-08-30.integrated-v2';
+export const FLOWER_METHODOLOGY_VERSION = '2026-08-30.integrated-v3';
 
 export const FLOWER_METHODOLOGY = Object.freeze({
   version: FLOWER_METHODOLOGY_VERSION,
@@ -6,22 +6,47 @@ export const FLOWER_METHODOLOGY = Object.freeze({
     root: 'STATE -> GRADIENT -> PROBE -> RETURN -> UPDATED STATE',
     layered: 'CENTER -> SENSE -> GRADIENT -> NURSERY -> REALITY -> ORCHARD/PRUNE -> RETURN -> CENTER\'',
     orientation: 'Increase generative capacity while preserving agency, reality contact, love as a non-reductive orientation, and the conditions for future good growth.',
+    terminalValueAim: 'Optimize the true objective named by the Center-holder. Internal sophistication, deployments, research, and activity remain means unless the actual objective names them as ends.',
     efficiencyAim: 'Increase decision-relevant complexity capacity faster than the human, compute, capital, recomputation, and state-churn cost required to keep that complexity usable.',
   },
   invariants: [
     'Evidence outranks elegance and accountable external truth outranks persuasive narrative.',
+    'Terminal objective lock: internal activity, sophistication, deployments, listings, and proxy metrics cannot silently replace the true objective.',
     'A branch must earn depth; buildability, listings, traffic, and advertised money are not demand.',
+    'Diversity precedes expensive depth; no branch is privileged merely because it was discovered first.',
+    'The current champion must continue earning attention against living challengers and can be replaced when opportunity cost changes.',
     'Human attention is scarce capital; interruptions should scale with sovereignty transitions, not internal transition count.',
     'No return path means an incomplete cycle; nourishing return should regenerate money, capability, distribution, trust, information, or optionality.',
     'Preserve uncertainty, negative evidence, counterexamples, minority branches, provenance, downstream obligations, and sovereignty boundaries when they can change a future decision.',
     'Novelty earns significance only when it improves prediction, intervention, optionality, regeneration, or return.',
     'New habitats trigger corpus-first capability search before invention.',
+    'When external participation is required, reachable demand/distribution and truthful fulfillment must be established before heavy construction.',
+    'Autonomy is a direction of compression after value is evidenced, not a purity gate that can reject a faster truthful path to value.',
     'No semantic transition means no cognition and no persistent-state mutation.',
     'Repeated reconciliation must converge to a fixed point under unchanged state and evidence.',
     'The same Garden and evidence must prepare to the same decision state regardless of storage/runtime adapter.',
     'Efficiency may compress execution and representation only when the same or better decisions remain possible.',
     'The organism exists to nourish the human Center-holder; the human does not exist to nourish the organism.',
   ],
+  terminalGovernance: {
+    principle: 'Grow backward from the terminal event: terminal outcome <- external action <- trust <- access/distribution <- need/demand <- truthful fulfillment.',
+    economicApproximation: 'FruitVelocity = P(terminal fruit in horizon) x ExpectedNetValue x Regeneration / (HumanAttention + Capital + Latency + Friction + ProxyRisk).',
+    gates: [
+      'Name the terminal evidence that would count as success before expensive depth.',
+      'Demand, access/distribution, and fulfillment are separate states; unknown is not pass.',
+      'Use tiny reversible reality probes to reduce the uncertainty most capable of changing allocation.',
+      'A successful local action must survive the future-state check: if this works, can the next state be fulfilled without hidden obligation?',
+      'Metrics are servants of the objective; explicitly test how maximizing a metric could damage the thing it represents.',
+    ],
+  },
+  fieldGovernance: {
+    diversityBeforeDepth: 'Maintain heterogeneous siblings before costly specialization; deep recursion is earned by comparative evidence rather than momentum.',
+    championChallenger: 'Every major allocation compares the current champion against the best living challengers and relevant unused alternatives.',
+    branchMetabolism: 'Branches consume attention, capital, compute, and latency budgets. Additional resources are earned by terminal movement or decision-changing evidence.',
+    lifecycle: ['exploratory', 'active', 'resting', 'rejected', 'revived'],
+    twoTemperatureSearch: 'Keep bounded exploration alive while exploiting the strongest evidenced path; short-horizon pressure may dominate a first-fruit experiment without extinguishing longer-horizon discovery.',
+    multiTimescaleValue: 'Evaluate short-, medium-, and long-horizon value with weights chosen by the actual objective instead of hard-coding one temporal preference universally.',
+  },
   efficiency: {
     thesis: 'Complex memory. Sparse motion. Preserve meaning; optimize residency, activation, recomputation, and transmission.',
     laws: [
@@ -35,6 +60,7 @@ export const FLOWER_METHODOLOGY = Object.freeze({
       'Historical complexity may move from hot to cold storage only after durable preservation; memory location must not alter economic pressure or truth.',
       'Use hysteresis/batching where threshold-triggered maintenance would otherwise chatter.',
       'Compression must remove execution noise or reconstructible redundancy, never unresolved decision-capable information.',
+      'Methodological complexity itself is taxed: a new rule must add more practical decision capability than mandatory execution burden.',
     ],
   },
   dualCultivation: {
@@ -58,6 +84,7 @@ export const FLOWER_METHODOLOGY = Object.freeze({
       'What returns to make the next cycle cheaper, better, safer, or more capable?',
       'Under unchanged reality, does the system converge and remain still?',
       'Has local efficiency improved while global complexity capacity, ethics, or sovereignty degraded?',
+      'Has the method started optimizing a proxy, preserving a branch through sunk cost, or requiring recursion whose expected value is lower than acting?',
     ],
   },
   mutationGovernance: {
@@ -85,24 +112,28 @@ export const FLOWER_METHODOLOGY = Object.freeze({
       'human identity',
     ],
     authorityRule: 'A mutation touching a protected domain may be privately analyzed or technically supported, but cannot self-promote to canonical authority without explicit human authorization.',
-    evaluationRule: 'Prefer Pareto improvement across transition yield, human burden, compute, state churn, external truth, regeneration, and decision capability; never collapse methodology quality to one vanity score.',
+    evaluationRule: 'Prefer Pareto improvement across terminal alignment, transition yield, human burden, compute, state churn, external truth, regeneration, and decision capability; never collapse methodology quality to one vanity score.',
     memoryRule: 'Preserve methodology candidates and assessments outside the hot operating method using stable semantic fingerprints and accountable evidence ancestry. Same proposal plus same evidence reuses the prior assessment; materially new evidence may reopen the same proposal without pretending it is a novel mutation.',
   },
   operatingLoop: [
+    'LOCK: name the actual terminal objective, admissible success evidence, constraints, and sovereignty boundaries before optimizing.',
     'SENSE: absorb current state, evidence, resources, constraints, commitments, and uncertainty without promoting inference to fact.',
-    'DIFFERENTIATE: rank gradients globally while allowing many petals to remain independently alive.',
+    'DIVERSIFY: preserve heterogeneous live alternatives before expensive depth and keep bounded exploration alive.',
+    'DIFFERENTIATE: rank gradients globally using terminal value, opportunity cost, evidence quality, and branch metabolism rather than momentum.',
     'ACTIVATE: wake only the smallest decision-relevant causal region; retain global comparison when the operation is inherently global.',
     'PROBE: cross the cheapest reversible frontier that can materially change the decision; predeclare success and kill signals.',
     'CLOSE: propagate deterministic consequences toward a fixed point without requiring human clock pulses.',
     'RETURN: project observed truth into accountable state, regenerate capability/memory/distribution, and update priorities.',
     'TEMPER: move inactive but valuable complexity to cheaper representations or memory tiers without deleting provenance.',
+    'ACT: when the expected value of safe action exceeds another recursive analysis pass, move into reality rather than recurse ceremonially.',
     'REST: when no material transition or autonomous pressure exists, perform no cognition and no semantic mutation.',
     'RECURSE: apply the same audit to the methodology and efficiency machinery themselves; retain mutations only when evidence or formal equivalence earns them.',
   ],
   stopConditions: [
-    'A genuine sovereignty/legal/identity/publication boundary is the highest-value unresolved action.',
-    'Free/machine evidence is saturated and no autonomous sibling has higher transition yield.',
+    'A genuine sovereignty/legal/identity/publication boundary is the highest-value unresolved action after the best available challenger/search pressure has been considered.',
+    'Free/machine evidence is saturated and no autonomous sibling or fresh exploration has higher expected terminal yield.',
     'The current state is a semantic fixed point under available evidence.',
-    'The next proposed work would reduce global transition yield, complexity capacity, agency, or regeneration.',
+    'Another recursive pass has lower expected value than a safe available action.',
+    'The next proposed work would reduce global transition yield, complexity capacity, agency, terminal alignment, or regeneration.',
   ],
 });
