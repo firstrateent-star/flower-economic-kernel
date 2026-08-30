@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "garden_economic_root_v0",
   "createdAt": "2026-08-28T00:00:00.000Z",
-  "updatedAt": "2026-08-30T06:30:00.000Z",
+  "updatedAt": "2026-08-30T14:22:00.000Z",
   "center": {
     "rootGoal": "Increase the human Center-holder's sovereign capacity by cultivating low-maintenance economic Fruit whose accumulated money, knowledge, infrastructure, capability, and distribution lower the cost of producing subsequent Fruit.",
     "direction": "Discover or reactivate, cheaply falsify, and cultivate machine-mediated internet capabilities that can acquire, fulfill, and monetize with minimal continuing human labor; search the existing corpus before inventing new organisms.",
@@ -16,6 +16,7 @@
       "Independent repeat use and settled value outrank raw transaction, listing, download, or claim counts.",
       "Human identity, KYC, legal, publication, and relationship actions compete for scarce Center-holder attention rather than triggering automatically.",
       "Concrete artifact truth outranks stale planning state.",
+      "New habitats trigger a corpus scan before invention.",
       "No debt, hidden obligations, human impersonation, or unauthorized public exposure."
     ],
     "autonomy": {
@@ -33,7 +34,13 @@
       "harvestAccess": false
     }
   },
-  "status": {"generation": 1, "pulseCount": 0, "lastPulseAt": null, "lastBreathAt": null, "lastPressure": null},
+  "status": {
+    "generation": 2,
+    "pulseCount": 0,
+    "lastPulseAt": null,
+    "lastBreathAt": "2026-08-30T14:22:00.000Z",
+    "lastPressure": "RECONCILE_SURVIVING_ORGANISMS"
+  },
   "soil": [
     {"id":"soil_structural_complementarity","principle":"Prefer problems a dominant upstream product is structurally unlikely to solve because the resolution sits outside its core job.","scope":"economic opportunity selection","status":"supported","derivedFrom":["historical_flower_av_watch"]},
     {"id":"soil_resolution_complexity_floor","principle":"Reject candidates whose resolution collapses to a trivial filter unless another moat such as distribution makes trivial implementation irrelevant.","scope":"economic opportunity selection","status":"supported","derivedFrom":["historical_flower_av_watch"]},
@@ -43,16 +50,125 @@
     {"id":"soil_buyer_context","principle":"Problem reality can transfer across buyer types, but willingness-to-pay cannot. Human SaaS demand, developer marketplace demand, enterprise procurement, and autonomous-agent micropayments require separate demand evidence.","scope":"market validation","status":"supported","derivedFrom":["x402_vs_human_saas_reconciliation_2026_08_30"]},
     {"id":"soil_independent_demand","principle":"Measure demand using independent payer/user breadth, repeat use, settled value, recency, and source-of-truth reconciliation. Raw calls, downloads, listings, or advertised money are insufficient alone.","scope":"market validation","status":"supported","derivedFrom":["x402_concentration_reconciliation_2026_08_30"]},
     {"id":"soil_human_actuation_portfolio","principle":"Human-only boundary actions compete for scarce Center-holder attention. Reaching KYC, legal, public-release, identity, or outreach membranes does not automatically earn an interruption.","scope":"governance and activation","status":"supported","derivedFrom":["human_actuation_portfolio_2026_08_30"]},
-    {"id":"soil_artifact_truth","principle":"Executable artifacts, CI results, settlement receipts, and other concrete evidence outrank older manifests or planning narratives when state conflicts.","scope":"state reconciliation","status":"supported","derivedFrom":["social_preview_distribution_reconciliation_2026_08_30"]}
+    {"id":"soil_artifact_truth","principle":"Executable artifacts, CI results, settlement receipts, and other concrete evidence outrank older manifests or planning narratives when state conflicts.","scope":"state reconciliation","status":"supported","derivedFrom":["social_preview_distribution_reconciliation_2026_08_30"]},
+    {"id":"soil_multi_rail_distribution","principle":"Distribution is a vector, not a boolean. Store, API, agentic payments, MCP, CI wrappers, IDE marketplaces, search, and direct installation may occupy different states simultaneously.","scope":"distribution state","status":"supported","derivedFrom":["social_preview_distribution_reconciliation_2026_08_30"]},
+    {"id":"soil_free_evidence_saturation","principle":"When machine-carried evidence is saturated and only human-authorized exposure can resolve the remaining uncertainty, stop adjacent research and feature work; rank the boundary for actuation or park it.","scope":"attention governance","status":"supported","derivedFrom":["human_actuation_portfolio_2026_08_30"]}
   ],
   "fruits": [
-    {"id":"fruit_exact_match_guard","name":"Google Maps Exact Match Guard","status":"live","platform":"Apify","repository":"firstrateent-star/google-maps-exact-match-guard","monthlyRevenueUsd":null,"maintenanceBurden":"unknown","inheritance":["Fail-closed trust-adapter pattern","Apify Actor deployment familiarity","Google Maps identity-drift market evidence","Machine-to-machine metered-delivery pattern"],"notes":"Generation 0/1 reference Fruit. Leave untouched until external usage evidence warrants change."}
+    {
+      "id":"fruit_exact_match_guard",
+      "name":"Google Maps Exact Match Guard",
+      "status":"live",
+      "platform":"Apify",
+      "monthlyRevenueUsd":null,
+      "maintenanceBurden":"unknown",
+      "marketTruth":"unresolved",
+      "externalUsage":"unresolved",
+      "inheritance":["Fail-closed trust-adapter pattern","Apify Actor deployment familiarity","Google Maps identity-drift market evidence","Machine-to-machine metered-delivery pattern"],
+      "nextPressure":"Observe external usage before mutation.",
+      "notes":"Generation 0/1 reference Fruit. Leave untouched until external usage evidence warrants change."
+    },
+    {
+      "id":"fruit_social_preview_drift_guard",
+      "name":"Social Preview Drift Guard API",
+      "status":"live",
+      "platform":"Apify",
+      "pricing":{"model":"PAY_PER_EVENT","event":"url-checked","usdPerObservedUrl":0.005},
+      "technicalTruth":"passed_private_verification",
+      "marketTruth":"unresolved",
+      "externalUsage":"unresolved",
+      "distributionRails":{
+        "apifyStore":"live",
+        "apifyApi":"live",
+        "apifyAgenticPayments":"eligibility_unresolved",
+        "githubAction":"private_staged_ci_passed",
+        "publicGithubAction":"not_released",
+        "searchIndexing":"not_yet_reconciled"
+      },
+      "structuralAgenticFit":{"payPerEvent":true,"eventOnlyCharging":true,"limitedPermissions":true,"standby":false},
+      "unresolvedAgenticTruth":["developer KYC state","allowsAgenticUsers flag"],
+      "inheritance":["Crawler-conditioned representation comparison","deterministic PASS/RISK/FAIL/INCONCLUSIVE semantics","bounded public-URL inspection","pay-per-event delivery","recurring CI wrapper"],
+      "nextPressure":"Reconcile explicit agentic eligibility or first independent usage before feature mutation.",
+      "notes":"Existing live capability may gain new distribution from platform changes without code changes."
+    },
+    {
+      "id":"fruit_changed_method_navigator",
+      "name":"Changed Method Navigator",
+      "status":"market_ready_private",
+      "platform":"JetBrains IntelliJ",
+      "technicalTruth":{
+        "realSdkBuild":"pass",
+        "pluginVerifierCurrentTarget":"pass",
+        "realPsiFunctionalTest":"pass",
+        "target":"IntelliJ IDEA 2026.1.4"
+      },
+      "marketTruth":"unresolved",
+      "independentProblemEvidence":"present",
+      "adjacentPaidMarketEvidence":"present",
+      "freeEvidenceSaturated":true,
+      "distributionRails":{"privateCiArtifact":"ready","jetbrainsHidden":"not_authorized","jetbrainsPublic":"not_authorized"},
+      "humanBoundaryRequired":true,
+      "nextPressure":"Human-authorized low-discovery market exposure; no more feature work before return.",
+      "inheritance":["Line-diff to Java PSI symbol mapping","real IntelliJ functional-test harness","current-target Plugin Verifier CI","developer-review transformation evidence"],
+      "notes":"Highest-ranked current human actuation candidate; technical work frozen until market return."
+    }
   ],
   "opportunities": [
-    {"id":"opp_maps_website_pointer_guard","name":"Google Maps Business → Website Identity Guard","status":"needs_test","thesis":"A correct Google Maps business entity can contain a stale, wrong, parent, or unrelated website pointer; downstream contact enrichment can then work perfectly on the wrong entity.","moneyFlow":"Google Maps scraping and contact enrichment workflows","buyer":"lead-data, enrichment, and automation users","buyerType":"automation_and_data_workflows","nutrientChannel":"Apify / API workflows using Google Maps data","passivity":"Potentially high if metered machine-to-machine verification","autonomyCompatibility":"Potentially high","reproductivePotential":"Could branch into website/contact attribution trust adapters","reusableCapability":"Maps-to-website identity comparison with fail-closed mismatch classification","buyerContextEvidence":"Place-detail and enrichment APIs show current machine-paid activity, but direct willingness-to-pay for a pointer-integrity guard remains unresolved.","independentPayerBreadth":"unresolved_for_guard","repeatPaidUse":"unresolved_for_guard","settledValueEvidence":"unresolved_for_guard","corpusMatch":"Direct deterministic Maps→website sampler already exists.","humanBoundaryRequired":false,"freeEvidenceSaturated":false,"evidence":[],"counterEvidence":[],"sources":[],"ancestry":["Trusted Pointer Drift","Exact Match Guard"],"lastRationale":"First live falsification concluded the thesis is plausible but not yet economically demonstrated; external evidence is still required.","epistemicNote":"Model reasoning only. Preserved as needs_test, not supported."}
+    {
+      "id":"opp_maps_website_pointer_guard",
+      "name":"Google Maps Business → Website Identity Guard",
+      "status":"needs_test",
+      "thesis":"A correct Google Maps business entity can contain a stale, wrong, parent, or unrelated website pointer; downstream contact enrichment can then work perfectly on the wrong entity.",
+      "moneyFlow":"Google Maps scraping and contact enrichment workflows",
+      "buyer":"lead-data, enrichment, and automation users",
+      "buyerType":"automation_and_data_workflows",
+      "nutrientChannel":"Apify / API workflows using Google Maps data",
+      "passivity":"Potentially high if metered machine-to-machine verification",
+      "autonomyCompatibility":"Potentially high",
+      "reproductivePotential":"Could branch into website/contact attribution trust adapters",
+      "reusableCapability":"Maps-to-website identity comparison with fail-closed mismatch classification",
+      "buyerContextEvidence":"Place-detail and enrichment APIs show current machine-paid activity, but direct willingness-to-pay for a pointer-integrity guard remains unresolved.",
+      "independentPayerBreadth":"unresolved_for_guard",
+      "repeatPaidUse":"unresolved_for_guard",
+      "settledValueEvidence":"unresolved_for_guard",
+      "corpusMatch":"Direct deterministic Maps→website sampler already exists.",
+      "humanBoundaryRequired":false,
+      "freeEvidenceSaturated":false,
+      "evidence":[],
+      "counterEvidence":[],
+      "sources":[],
+      "ancestry":["Trusted Pointer Drift","Exact Match Guard"],
+      "lastRationale":"First live falsification concluded the thesis is plausible but not yet economically demonstrated; external evidence is still required.",
+      "epistemicNote":"Model reasoning only. Preserved as needs_test, not supported."
+    }
+  ],
+  "humanActuationQueue": [
+    {
+      "rank":1,
+      "organismId":"fruit_changed_method_navigator",
+      "action":"Authorize a low-discovery JetBrains Marketplace market probe (prefer hidden initial exposure if the Center-holder chooses to cross the legal/vendor membrane).",
+      "why":"Technical truth and independent problem evidence are strong; free evidence is saturated; only real user exposure resolves the next uncertainty.",
+      "state":"awaiting_explicit_authorization"
+    },
+    {
+      "rank":2,
+      "organismId":"fruit_social_preview_drift_guard",
+      "action":"Complete/reconcile Apify developer KYC only if agentic eligibility is not already active and the distribution value justifies it.",
+      "why":"The live Actor structurally fits agentic-payment rules, but explicit eligibility remains unresolved and external usage is not yet demonstrated.",
+      "state":"parked_pending_more_platform_truth"
+    },
+    {
+      "rank":3,
+      "organismId":"fruit_social_preview_drift_guard",
+      "action":"Authorize creation/release of a public GitHub Action repository.",
+      "why":"Private wrapper and CI are ready, but public release is a distribution experiment for a Fruit that has not yet returned independent use.",
+      "state":"staged_not_earned_over_rank_1"
+    }
   ],
   "experiments": [],
-  "events": [],
+  "events": [
+    {"at":"2026-08-30T14:22:00.000Z","type":"STATE_RECONCILIATION","summary":"Canonical Garden updated to include live Social Preview Fruit, market-ready Changed Method Navigator, multi-rail distribution state, and ranked human actuation queue."}
+  ],
   "approvals": [],
   "traces": []
 }
