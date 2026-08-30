@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "epistemicStatus": "direct_human_origin_correction_reconciled_as_generative_provenance",
+  "purpose": "Preserve the difference between Flower's historical/generative origin and its later executable abstractions so compression does not rewrite ancestry or close unexplored possibility.",
+  "episodes": [
+    {
+      "id": "meta_origin_flower_of_life_dimensional_inquiry",
+      "observedTrigger": "The repository's root-reset history described the earliest functional growth loop as though it were the whole origin, while the Center-holder corrected that Flower actually began with the Flower of Life itself and an inquiry into understanding or accessing something like an alternate dimension.",
+      "decisionRelevantMove": "Separate generative provenance from executable abstraction: preserve the Flower-of-Life/dimensional question as historical origin while keeping literal alternate-dimensional access unverified and preserving later tested operational abstractions for execution.",
+      "mechanismsApplied": ["provenance_preserving_abstraction", "causal_differentiation", "cold_history_preservation"],
+      "mechanismsViolated": ["provenance_preserving_abstraction"],
+      "mechanismsInferred": ["projection_boundary", "novelty_preservation"],
+      "domains": ["methodology_memory", "dimensional_inquiry", "human_epistemic_correction", "novelty_governance"],
+      "evidenceStrength": "observed_plus_tested",
+      "causalEvidence": "direct_center_holder_historical_correction_plus_repository_reconciliation",
+      "evidence": ["docs/FLOWER_ORIGIN_PROVENANCE.md", "docs/FLOWER_ROOT_RECURSION_AND_ABUNDANCE_RESET_2026-08-29.md"],
+      "observedOutcome": "The lineage can now retain the original strange question without forcing it into executable physics claims, while the compact methodology remains usable for current decisions.",
+      "outcomeState": "supported",
+      "externalValueVerified": false,
+      "humanEpistemicCorrection": true,
+      "flourishingEffects": {
+        "agency": "positive",
+        "truth": "positive",
+        "capability": "positive",
+        "resourceEfficiency": "mixed",
+        "optionalities": "positive",
+        "regeneration": "positive",
+        "externalWellbeing": "unknown"
+      },
+      "falsifier": "Preserving generative provenance as cold memory repeatedly adds material execution burden, creates unfalsifiable privilege for origin stories, or fails to recover any decision-relevant alternative that would otherwise have been lost."
+    }
+  ]
+}
