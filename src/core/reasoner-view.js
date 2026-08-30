@@ -1,4 +1,4 @@
-import { opportunityEvidenceMemory } from './evidence-memory.js';
+import { FLOWER_METHODOLOGY } from './methodology-core.js';
 
 function clone(value) {
   return value == null ? value : structuredClone(value);
@@ -37,26 +37,7 @@ function fruitView(fruits = []) {
   }));
 }
 
-function decisionClassForOperation(operation) {
-  if (['PUBLIC_DEPLOY', 'SPEND', 'MARKET_COMMITMENT'].includes(operation)) return 'public_or_spend';
-  if (operation === 'HUMAN') return 'human_sovereignty';
-  if (operation === 'BUILD_PLAN') return 'private_reversible';
-  return 'exploration';
-}
-
-function compactEvidenceMemory(garden, opportunityId, { asOf, decisionClass }) {
-  return opportunityEvidenceMemory(garden, opportunityId, { asOf, decisionClass }).map((item) => ({
-    dimension: item.dimension,
-    sourceCount: item.sourceCount,
-    latestObservedAt: item.latestObservedAt,
-    volatility: item.freshness.profile.volatility,
-    freshnessStatus: item.freshness.status,
-    freshnessAction: item.freshness.action,
-  }));
-}
-
-function opportunityView(garden, opportunities = [], { operation, asOf }) {
-  const decisionClass = decisionClassForOperation(operation);
+function opportunityView(opportunities = []) {
   return opportunities.map((opp) => ({
     id: opp.id,
     name: opp.name,
@@ -76,7 +57,6 @@ function opportunityView(garden, opportunities = [], { operation, asOf }) {
     whyNow: opp.whyNow ?? null,
     externalEvidence: clone(opp.externalEvidence ?? []),
     validationGate: clone(opp.validationGate ?? null),
-    evidenceMemory: compactEvidenceMemory(garden, opp.id, { asOf, decisionClass }),
     failedBecause: opp.failedBecause ?? null,
     measurementBlockedReason: opp.measurementBlockedReason ?? null,
     epistemicNote: opp.epistemicNote ?? null,
@@ -162,12 +142,7 @@ function operationActivation({ garden, operation, target }) {
   };
 }
 
-export function buildReasonerGardenView({
-  garden,
-  operation = null,
-  target = null,
-  asOf = new Date().toISOString(),
-} = {}) {
+export function buildReasonerGardenView({ garden, operation = null, target = null } = {}) {
   if (!garden) throw new Error('buildReasonerGardenView requires a Garden.');
 
   const activation = operationActivation({ garden, operation, target });
@@ -181,9 +156,10 @@ export function buildReasonerGardenView({
     schemaVersion: garden.schemaVersion,
     id: garden.id,
     center: clone(garden.center),
+    methodology: clone(FLOWER_METHODOLOGY),
     soil: soilView(garden.soil),
     fruits: fruitView(fruits),
-    opportunities: opportunityView(garden, opportunities, { operation, asOf }),
+    opportunities: opportunityView(opportunities),
     scoutMisses: operation === 'EXPAND' ? clone((garden.scoutMisses ?? []).slice(-20)) : [],
     geometry: geometryView(garden.geometry, activation.ids),
     portfolioSummary: {
@@ -195,8 +171,7 @@ export function buildReasonerGardenView({
     reasonerView: {
       operation,
       activation,
-      evidenceDecisionClass: decisionClassForOperation(operation),
-      asOf,
+      methodologyVersion: FLOWER_METHODOLOGY.version,
       omittedAsExecutionNoise: [
         'traces',
         'events',
