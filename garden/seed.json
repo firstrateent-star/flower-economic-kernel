@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "garden_economic_root_v0",
   "createdAt": "2026-08-28T00:00:00.000Z",
-  "updatedAt": "2026-08-30T14:36:00.000Z",
+  "updatedAt": "2026-08-30T14:42:00.000Z",
   "center": {
     "rootGoal": "Increase the human Center-holder's sovereign capacity by cultivating low-maintenance economic Fruit whose accumulated money, knowledge, infrastructure, capability, and distribution lower the cost of producing subsequent Fruit.",
     "direction": "Discover or reactivate, cheaply falsify, and cultivate machine-mediated internet capabilities that can acquire, fulfill, and monetize with minimal continuing human labor; search the existing corpus before inventing new organisms.",
@@ -18,6 +18,7 @@
       "Concrete artifact truth outranks stale planning state.",
       "New habitats trigger a corpus scan before invention.",
       "Recovered capability must pass current market comparison before reactivation.",
+      "A useful deterministic check is not automatically a standalone product; preserve weak-market checks as reusable components.",
       "No debt, hidden obligations, human impersonation, or unauthorized public exposure."
     ],
     "autonomy": {
@@ -36,11 +37,11 @@
     }
   },
   "status": {
-    "generation": 3,
+    "generation": 4,
     "pulseCount": 0,
     "lastPulseAt": null,
-    "lastBreathAt": "2026-08-30T14:36:00.000Z",
-    "lastPressure": "RECOVER_COMPARE_PRUNE"
+    "lastBreathAt": "2026-08-30T14:42:00.000Z",
+    "lastPressure": "COMPONENT_VS_STANDALONE_RECONCILIATION"
   },
   "soil": [
     {"id":"soil_structural_complementarity","principle":"Prefer problems a dominant upstream product is structurally unlikely to solve because the resolution sits outside its core job.","scope":"economic opportunity selection","status":"supported","derivedFrom":["historical_flower_av_watch"]},
@@ -49,6 +50,7 @@
     {"id":"soil_reproduction","principle":"Economic reproduction occurs only when later Fruit inherit money, knowledge, infrastructure, code, distribution, or market evidence that lowers the human/capital/uncertainty cost of the next generation.","scope":"portfolio reproduction","status":"supported","derivedFrom":["historical_flower_economic_root"]},
     {"id":"soil_corpus_first","principle":"A newly discovered market, payment rail, or distribution habitat does not justify a new build until existing verified capabilities have been scanned for a fit. Prefer reactivation and reuse when they answer the same transformation.","scope":"opportunity generation and distribution","status":"supported","derivedFrom":["corpus_first_distribution_leverage_2026_08_30"]},
     {"id":"soil_recovery_requires_revalidation","principle":"Finding old code is not evidence that its market opportunity survived. Recovered capability must be compared against current substitutes, usage and distribution truth before reactivation.","scope":"corpus recovery","status":"supported","derivedFrom":["rag_crawl_preflight_recovery_2026_08_30"]},
+    {"id":"soil_component_vs_standalone","principle":"A useful check becomes standalone Fruit only when demand breadth, repetition, scarcity/authority, endogenous triggering, or protection of a larger committed flow justify standalone distribution. Otherwise retain it as a reusable component.","scope":"product boundary selection","status":"supported","derivedFrom":["component_vs_standalone_fruit_2026_08_30"]},
     {"id":"soil_buyer_context","principle":"Problem reality can transfer across buyer types, but willingness-to-pay cannot. Human SaaS demand, developer marketplace demand, enterprise procurement, and autonomous-agent micropayments require separate demand evidence.","scope":"market validation","status":"supported","derivedFrom":["x402_vs_human_saas_reconciliation_2026_08_30"]},
     {"id":"soil_independent_demand","principle":"Measure demand using independent payer/user breadth, repeat use, settled value, recency, and source-of-truth reconciliation. Raw calls, downloads, listings, or advertised money are insufficient alone.","scope":"market validation","status":"supported","derivedFrom":["x402_concentration_reconciliation_2026_08_30"]},
     {"id":"soil_human_actuation_portfolio","principle":"Human-only boundary actions compete for scarce Center-holder attention. Reaching KYC, legal, public-release, identity, or outreach membranes does not automatically earn an interruption.","scope":"governance and activation","status":"supported","derivedFrom":["human_actuation_portfolio_2026_08_30"]},
@@ -135,37 +137,30 @@
       "inheritance":["route-before-crawl pattern","machine-readable corpus validation","bounded sitemap inventory","JS rendering-risk classification","crawl/token/embed cost estimation","short-circuit expensive work when a cheaper route is validated"],
       "reactivationGate":"Only reconsider if independent demand/throughput rises materially, a distribution rail appears with broad payer evidence, or another active Fruit needs the routing capability internally.",
       "nextPressure":"none; retain capability without maintenance"
-    }
-  ],
-  "opportunities": [
+    },
     {
-      "id":"opp_maps_website_pointer_guard",
+      "id":"cap_maps_website_identity_guard",
       "name":"Google Maps Business → Website Identity Guard",
-      "status":"needs_test",
-      "thesis":"A correct Google Maps business entity can contain a stale, wrong, parent, or unrelated website pointer; downstream contact enrichment can then work perfectly on the wrong entity.",
-      "moneyFlow":"Google Maps scraping and contact enrichment workflows",
-      "buyer":"lead-data, enrichment, and automation users",
-      "buyerType":"automation_and_data_workflows",
-      "nutrientChannel":"Apify / API workflows using Google Maps data",
-      "passivity":"Potentially high if metered machine-to-machine verification",
-      "autonomyCompatibility":"Potentially high",
-      "reproductivePotential":"Could branch into website/contact attribution trust adapters",
-      "reusableCapability":"Maps-to-website identity comparison with fail-closed mismatch classification",
-      "buyerContextEvidence":"Place-detail and enrichment APIs show current machine-paid activity, but direct willingness-to-pay for a pointer-integrity guard remains unresolved.",
-      "independentPayerBreadth":"unresolved_for_guard",
-      "repeatPaidUse":"unresolved_for_guard",
-      "settledValueEvidence":"unresolved_for_guard",
-      "corpusMatch":"Direct deterministic Maps→website sampler already exists.",
-      "humanBoundaryRequired":false,
-      "freeEvidenceSaturated":false,
-      "evidence":[],
-      "counterEvidence":[],
-      "sources":[],
-      "ancestry":["Trusted Pointer Drift","Exact Match Guard"],
-      "lastRationale":"First live falsification concluded the thesis is plausible but not yet economically demonstrated; external evidence is still required.",
-      "epistemicNote":"Model reasoning only. Preserved as needs_test, not supported."
+      "status":"standalone_downgraded_component_retained",
+      "sourcePath":"src/experiments/maps-website-sample.js",
+      "technicalTruth":"deterministic classifier and bounded direct-sample experiment exist",
+      "problemTruth":"supported_as_failure_mode",
+      "standaloneMarketTruth":"weak_current_evidence",
+      "capability":"Fail-closed comparison of Maps business identity against website name, phone and location signals to detect mismatch candidates before downstream enrichment trusts the website.",
+      "currentMarketComparison":{
+        "broadCategory":"business/entity resolution and verification",
+        "currentSubstitutes":["1Lookup Business Verify website_matches signal","Apify Business Verification API","Enigma business match/entity resolution"],
+        "apifyNearSubstituteObservedAt":"2026-08-30",
+        "apifyNearSubstituteTotalUsers":2,
+        "apifyNearSubstituteMonthlyActiveUsers":1,
+        "interpretation":"Business verification is real, but current evidence does not support another standalone lightweight verification Actor."
+      },
+      "inheritance":["business-name normalization","website organization-name extraction","phone/location corroboration","fail-closed mismatch_candidate semantics","trusted-pointer verification pattern"],
+      "reactivationGate":"Embed only when a higher-frequency enrichment, lead-routing, procurement or resolution organism demonstrates that wrong website pointers are a material parent-flow failure, or when standalone independent demand materially strengthens.",
+      "nextPressure":"none as standalone product"
     }
   ],
+  "opportunities": [],
   "humanActuationQueue": [
     {
       "rank":1,
@@ -192,7 +187,8 @@
   "experiments": [],
   "events": [
     {"at":"2026-08-30T14:22:00.000Z","type":"STATE_RECONCILIATION","summary":"Canonical Garden updated to include live Social Preview Fruit, market-ready Changed Method Navigator, multi-rail distribution state, and ranked human actuation queue."},
-    {"at":"2026-08-30T14:36:00.000Z","type":"CORPUS_RECOVERY_PRUNE","summary":"Recovered RAG Crawl Preflight capability from existing public repository, compared it against a current near-direct Apify substitute showing 2 total users / 1 monthly active user, and retained the capability in cold storage rather than rebuilding or publishing it."}
+    {"at":"2026-08-30T14:36:00.000Z","type":"CORPUS_RECOVERY_PRUNE","summary":"Recovered RAG Crawl Preflight capability from existing public repository, compared it against a current near-direct Apify substitute showing 2 total users / 1 monthly active user, and retained the capability in cold storage rather than rebuilding or publishing it."},
+    {"at":"2026-08-30T14:42:00.000Z","type":"STANDALONE_DOWNGRADE","summary":"Fresh entity-resolution and Apify market comparison showed the Maps→website identity check is better preserved as a reusable trust component than promoted as another standalone validation Actor."}
   ],
   "approvals": [],
   "traces": []
