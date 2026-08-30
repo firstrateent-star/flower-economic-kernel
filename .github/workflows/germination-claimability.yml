@@ -1,0 +1,33 @@
+name: Germination Claimability Scan
+
+on:
+  push:
+    branches:
+      - experiment/germination-claimability
+    paths:
+      - 'experiments/germination-claimability/**'
+      - '.github/workflows/germination-claimability.yml'
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scan claimable bounties
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node experiments/germination-claimability/scan.mjs
+      - name: Upload claimability report
+        uses: actions/upload-artifact@v4
+        with:
+          name: germination-claimability-report
+          path: |
+            experiments/germination-claimability/claimability-report.json
+            experiments/germination-claimability/CLAIMABILITY_REPORT.md
+          if-no-files-found: error
