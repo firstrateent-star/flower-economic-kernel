@@ -7,6 +7,7 @@ import { ingestFruitObservation } from '../core/observations.js';
 import { reconcileCanonicalControlPlane } from '../core/state-reconcile.js';
 import { migrateLegacyRuntimeState } from '../core/legacy-state-migrations.js';
 import { syncFruitManifests } from '../core/fruit-forge.js';
+import { reconcileDistributionTruth } from '../core/distribution-truth.js';
 import { OpenAIReasoner } from '../reasoners/openai.js';
 import seed from '../../garden/seed.json' with { type: 'json' };
 
@@ -79,6 +80,7 @@ await Actor.main(async () => {
   const garden = canonical.garden;
   const legacy = migrateLegacyRuntimeState(garden);
   const manifestSync = await syncFruitManifests(garden);
+  const distributionTruth = reconcileDistributionTruth(garden);
 
   let observationIngest = null;
   if (input.observation) {
@@ -105,6 +107,7 @@ await Actor.main(async () => {
     canonicalReconciliation: canonical.changes,
     legacyMigrations: legacy.stateMigrations,
     manifestChanges: manifestSync.changes,
+    distributionTruthChanges: distributionTruth.changes,
     observationChanged: observationIngest?.changed ?? false,
   });
 
@@ -122,6 +125,7 @@ await Actor.main(async () => {
       legacyMigrations: legacy.stateMigrations,
       epistemicRepairs: legacy.repaired,
       manifestChanges: manifestSync.changes,
+      distributionTruthChanges: distributionTruth.changes,
       observationIngest: observationIngest
         ? { changed: observationIngest.changed, reason: observationIngest.reason }
         : null,
@@ -158,6 +162,7 @@ await Actor.main(async () => {
       legacyMigrations: legacy.stateMigrations,
       epistemicRepairs: legacy.repaired,
       manifestChanges: manifestSync.changes,
+      distributionTruthChanges: distributionTruth.changes,
       activeOpportunities: activeOpportunitySnapshot(garden),
       geometry: geometryBefore,
     };
@@ -196,6 +201,7 @@ await Actor.main(async () => {
     legacyMigrations: legacy.stateMigrations,
     epistemicRepairs: legacy.repaired,
     manifestChanges: manifestSync.changes,
+    distributionTruthChanges: distributionTruth.changes,
     observationIngest: observationIngest
       ? { changed: observationIngest.changed, reason: observationIngest.reason }
       : null,
