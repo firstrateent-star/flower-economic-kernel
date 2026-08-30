@@ -133,36 +133,80 @@ function targetIdFromArgs(target) {
   return null;
 }
 
+// Geometry is a derived projection. refreshGeometry replaces its centers array whenever
+// decision-relevant geometry input changes, so array identity is a safe cache boundary for
+// normal runtime use. Synthetic fixtures likewise replace the array when testing invalidation.
+// WeakMap keeps the index non-persistent and lets obsolete geometry be reclaimed automatically.
+const neighborhoodIndexByCenters = new WeakMap();
+
+function addFamilyMember(map, family, id) {
+  if (!family || !id) return;
+  const members = map.get(family) ?? [];
+  members.push(id);
+  map.set(family, members);
+}
+
+function neighborhoodIndex(centers) {
+  const cached = neighborhoodIndexByCenters.get(centers);
+  if (cached) {
+    return {
+      index: cached,
+      recordsExamined: 0,
+      lookupMode: 'cached_family_index',
+    };
+  }
+
+  const centerById = new Map();
+  const archetypeMembers = new Map();
+  const capabilityMembers = new Map();
+  let recordsExamined = 0;
+  for (const center of centers) {
+    recordsExamined += 1;
+    if (center?.id) centerById.set(center.id, center);
+    addFamilyMember(archetypeMembers, center?.archetypeFamily, center?.id);
+    addFamilyMember(capabilityMembers, center?.capabilityFamily, center?.id);
+  }
+
+  const index = { centerById, archetypeMembers, capabilityMembers };
+  neighborhoodIndexByCenters.set(centers, index);
+  return {
+    index,
+    recordsExamined,
+    lookupMode: 'built_family_index',
+  };
+}
+
 function targetNeighborhoodResolution(garden, targetId) {
   if (!targetId || !garden.geometry) {
     return { ids: null, recordsExamined: 0, lookupMode: 'no_geometry' };
   }
 
   const centers = garden.geometry.centers ?? [];
-  let targetCenter = null;
-  let recordsExamined = 0;
-  for (const center of centers) {
-    recordsExamined += 1;
-    if (center.id === targetId) {
-      targetCenter = center;
-      break;
-    }
-  }
+  const indexed = neighborhoodIndex(centers);
+  const targetCenter = indexed.index.centerById.get(targetId) ?? null;
   if (!targetCenter) {
-    return { ids: [targetId], recordsExamined, lookupMode: 'scan_target_missing' };
+    return {
+      ids: [targetId],
+      recordsExamined: indexed.recordsExamined,
+      lookupMode: indexed.lookupMode === 'cached_family_index'
+        ? 'cached_target_missing'
+        : 'built_index_target_missing',
+    };
   }
 
   const ids = new Set([targetId]);
-  for (const center of centers) {
-    recordsExamined += 1;
-    if (center.id === targetId) continue;
-    const sharedArchetype = targetCenter.archetypeFamily
-      && center.archetypeFamily === targetCenter.archetypeFamily;
-    const sharedCapability = targetCenter.capabilityFamily
-      && center.capabilityFamily === targetCenter.capabilityFamily;
-    if (sharedArchetype || sharedCapability) ids.add(center.id);
+  if (targetCenter.archetypeFamily) {
+    for (const id of indexed.index.archetypeMembers.get(targetCenter.archetypeFamily) ?? []) ids.add(id);
   }
-  return { ids: [...ids], recordsExamined, lookupMode: 'full_center_scan' };
+  if (targetCenter.capabilityFamily) {
+    for (const id of indexed.index.capabilityMembers.get(targetCenter.capabilityFamily) ?? []) ids.add(id);
+  }
+
+  return {
+    ids: [...ids],
+    recordsExamined: indexed.recordsExamined,
+    lookupMode: indexed.lookupMode,
+  };
 }
 
 function targetNeighborhoodIds(garden, targetId) {
