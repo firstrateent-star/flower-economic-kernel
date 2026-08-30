@@ -37,6 +37,17 @@ function geometrySnapshot(garden) {
   };
 }
 
+function observationSummary(observationIngest) {
+  if (!observationIngest) return null;
+  return {
+    changed: observationIngest.changed,
+    stateChanged: observationIngest.stateChanged,
+    reason: observationIngest.reason,
+    projectedKeys: observationIngest.projectedKeys ?? [],
+    impact: observationIngest.impact ?? null,
+  };
+}
+
 function growthYield(before, after, costlyBreathsUsed) {
   const delta = {
     centers: Number(after.metrics.centerCount ?? 0) - Number(before.metrics.centerCount ?? 0),
@@ -92,8 +103,10 @@ await Actor.main(async () => {
     legacyMigrations: prepared.legacy.stateMigrations,
     manifestChanges: prepared.manifestSync.changes,
     distributionTruthChanges: prepared.distributionTruth.changes,
+    actuationGateChanges: prepared.actuationGates.changes,
     observationChanged: observationIngest?.changed ?? false,
     observationStateChanged: observationIngest?.stateChanged ?? false,
+    observationImpact: observationIngest?.impact ?? null,
   });
 
   if (!wake.wake) {
@@ -117,13 +130,8 @@ await Actor.main(async () => {
       epistemicRepairs: prepared.legacy.repaired,
       manifestChanges: prepared.manifestSync.changes,
       distributionTruthChanges: prepared.distributionTruth.changes,
-      observationIngest: observationIngest
-        ? {
-          changed: observationIngest.changed,
-          stateChanged: observationIngest.stateChanged,
-          reason: observationIngest.reason,
-        }
-        : null,
+      actuationGateChanges: prepared.actuationGates.changes,
+      observationIngest: observationSummary(observationIngest),
       activeOpportunities: activeOpportunitySnapshot(garden),
       geometry: geometryBefore,
     };
@@ -162,6 +170,8 @@ await Actor.main(async () => {
       epistemicRepairs: prepared.legacy.repaired,
       manifestChanges: prepared.manifestSync.changes,
       distributionTruthChanges: prepared.distributionTruth.changes,
+      actuationGateChanges: prepared.actuationGates.changes,
+      observationIngest: observationSummary(observationIngest),
       activeOpportunities: activeOpportunitySnapshot(garden),
       geometry: geometryBefore,
     };
@@ -204,13 +214,8 @@ await Actor.main(async () => {
     epistemicRepairs: prepared.legacy.repaired,
     manifestChanges: prepared.manifestSync.changes,
     distributionTruthChanges: prepared.distributionTruth.changes,
-    observationIngest: observationIngest
-      ? {
-        changed: observationIngest.changed,
-        stateChanged: observationIngest.stateChanged,
-        reason: observationIngest.reason,
-      }
-      : null,
+    actuationGateChanges: prepared.actuationGates.changes,
+    observationIngest: observationSummary(observationIngest),
   };
 
   await writeOutput(output);
