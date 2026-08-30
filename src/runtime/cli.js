@@ -5,6 +5,7 @@ import { loadGarden, saveGarden, loadJson } from '../core/garden.js';
 import { classifyPressure } from '../core/pressure.js';
 import { pulse } from '../core/kernel.js';
 import { classifyWake } from '../core/wake.js';
+import { ingestFruitObservation } from '../core/observations.js';
 import { syncFruitManifests } from '../core/fruit-forge.js';
 import { OpenAIReasoner } from '../reasoners/openai.js';
 
@@ -39,8 +40,14 @@ if (command === 'status') {
 
 if (command === 'pulse') {
   const manifestSync = await syncFruitManifests(garden, { rootDir: root });
+  let observationIngest = null;
+  const observationJson = process.env.FLOWER_OBSERVATION_JSON;
+  if (observationJson) {
+    observationIngest = ingestFruitObservation(garden, JSON.parse(observationJson));
+  }
+
   const pressure = classifyPressure(garden);
-  const wake = classifyWake({ pressure });
+  const wake = classifyWake({ pressure, event: observationIngest?.event ?? null });
 
   if (!wake.wake) {
     garden.status.lastWakeDecision = { ...wake, at: new Date().toISOString(), pressure };
@@ -49,6 +56,7 @@ if (command === 'pulse') {
       skipped: true,
       wake,
       pressure,
+      observationIngest: observationIngest ? { changed: observationIngest.changed, reason: observationIngest.reason } : null,
       manifestChanges: manifestSync.changes,
       pulseCount: garden.status.pulseCount,
       stateFile,
@@ -64,6 +72,7 @@ if (command === 'pulse') {
   console.log(JSON.stringify({
     skipped: false,
     wake,
+    observationIngest: observationIngest ? { changed: observationIngest.changed, reason: observationIngest.reason } : null,
     breaths: result.breaths.map((x) => ({ pressure: x.pressure.type, summary: x.result.summary })),
     nextPressure: classifyPressure(garden),
     manifestChanges: manifestSync.changes,
