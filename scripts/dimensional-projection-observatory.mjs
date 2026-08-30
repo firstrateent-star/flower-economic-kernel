@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { FRUIT_OF_LIFE_CENTERS, refreshGeometry } from '../src/core/geometry.js';
-import { flowerGeometryProjectionAudit, neighborhoodByDimensions } from '../src/core/activation-projection-audit.js';
+import { flowerGeometryProjectionAudit, neighborhoodByDimensions } from '../research/dimensional/activation-projection-audit.js';
 
 const INPUT_PATH = process.env.FLOWER_DIMENSIONAL_GARDEN || 'garden/seed.json';
 const OUTPUT_PATH = process.env.FLOWER_DIMENSIONAL_REPORT || 'reports/dimensional-projection-observatory-latest.json';
