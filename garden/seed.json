@@ -2,24 +2,56 @@
   "schemaVersion": 2,
   "id": "garden_economic_root_v0",
   "createdAt": "2026-08-28T00:00:00.000Z",
-  "updatedAt": "2026-08-30T14:42:00.000Z",
+  "updatedAt": "2026-08-30T16:08:00.000Z",
   "center": {
-    "rootGoal": "Increase the human Center-holder's sovereign capacity by cultivating low-maintenance economic Fruit whose accumulated money, knowledge, infrastructure, capability, and distribution lower the cost of producing subsequent Fruit.",
-    "direction": "Discover or reactivate, cheaply falsify, and cultivate machine-mediated internet capabilities that can acquire, fulfill, and monetize with minimal continuing human labor; search the existing corpus before inventing new organisms.",
+    "rootGoal": "Increase the human Center-holder's sovereign capacity by cultivating verified economic Fruit whose accumulated money, knowledge, infrastructure, capability, trust, and distribution lower the cost of producing subsequent Fruit.",
+    "direction": "Search the full reachable economic field for the shortest truthful path to independently verified value. Establish demand, access/distribution, and fulfillment before heavy construction; prefer existing flows and existing capabilities when they shorten activation distance; after value is evidenced, compress recurring human labor toward low-maintenance or autonomous operation.",
+    "terminalObjective": {
+      "name": "independently verified economic fruit",
+      "primaryEvidence": [
+        "settled creator revenue",
+        "independently attributable paid use",
+        "qualified buyer action with a direct legitimate transaction path"
+      ],
+      "nonTerminalProxies": [
+        "code written",
+        "tests passed",
+        "deployed",
+        "listed",
+        "traffic",
+        "internal sophistication",
+        "platform readiness"
+      ]
+    },
+    "searchPolicy": {
+      "twoTemperature": true,
+      "explorationReserve": 0.15,
+      "challengeHumanBoundaryWithFreshSearch": true,
+      "diversityBeforeDepth": true,
+      "championMustFaceChallengers": true,
+      "distributionBeforeHeavyBuild": true,
+      "fulfillmentBeforeOffer": true,
+      "autonomyAfterValueEvidence": true,
+      "recursionMustEarnAnotherPass": true
+    },
     "invariants": [
       "Reality contact over persuasive narrative.",
       "No epistemic promotion without accountable evidence.",
+      "Terminal objective lock: internal activity and proxy progress do not count as economic Fruit.",
       "The organism exists to nourish the human Center-holder; the human does not exist to nourish the organism.",
-      "Prefer passive discoverability and automatic fulfillment.",
-      "Kill weak branches cheaply before building.",
+      "Prefer the shortest truthful path to verified value; passivity is a downstream compression direction, not a prerequisite for first Fruit.",
+      "Maintain heterogeneous challengers before expensive depth and let evidence dethrone the current champion.",
+      "Kill, rest, or reframe weak branches cheaply before building further.",
+      "Demand, access/distribution, trust, and fulfillment are separate states; unknown is not pass.",
       "Buyer-context demand evidence does not automatically transfer across humans, enterprises, developers, and autonomous agents.",
       "Independent repeat use and settled value outrank raw transaction, listing, download, or claim counts.",
       "Human identity, KYC, legal, publication, and relationship actions compete for scarce Center-holder attention rather than triggering automatically.",
+      "Before interrupting the Center-holder at a mature boundary, compare the boundary against fresh challenger/search pressure unless the user has already chosen that boundary.",
       "Concrete artifact truth outranks stale planning state.",
       "New habitats trigger a corpus scan before invention.",
       "Recovered capability must pass current market comparison before reactivation.",
       "A useful deterministic check is not automatically a standalone product; preserve weak-market checks as reusable components.",
-      "No debt, hidden obligations, human impersonation, or unauthorized public exposure."
+      "No debt, hidden obligations, human impersonation, deceptive offer, or unauthorized public exposure."
     ],
     "autonomy": {
       "observe": true,
@@ -37,16 +69,25 @@
     }
   },
   "status": {
-    "generation": 4,
+    "generation": 5,
     "pulseCount": 0,
     "lastPulseAt": null,
-    "lastBreathAt": "2026-08-30T14:42:00.000Z",
-    "lastPressure": "COMPONENT_VS_STANDALONE_RECONCILIATION"
+    "lastBreathAt": "2026-08-30T16:08:00.000Z",
+    "lastPressure": "TERMINAL_VALUE_AND_CHALLENGER_RESET"
   },
   "soil": [
+    {"id":"soil_terminal_objective_lock","principle":"Name the external terminal evidence before expensive work. Code, deployment, listing, traffic, platform readiness, and methodological sophistication are means unless the objective explicitly names them as ends.","scope":"all economic allocation","status":"supported","derivedFrom":["utopia_first_fruit_pressure_test_2026_08_30"]},
+    {"id":"soil_diversity_before_depth","principle":"Maintain heterogeneous challengers before costly specialization. A branch earns depth by comparative evidence rather than first discovery or accumulated sunk cost.","scope":"opportunity search and selection","status":"supported","derivedFrom":["utopia_first_fruit_pressure_test_2026_08_30"]},
+    {"id":"soil_champion_challenger","principle":"The current champion must continue competing against living challengers and relevant unused alternatives; local improvability is not proof of global opportunity cost fitness.","scope":"attention allocation","status":"supported","derivedFrom":["utopia_first_fruit_pressure_test_2026_08_30"]},
+    {"id":"soil_distribution_before_build","principle":"When success requires an external participant, establish a reachable buyer/user habitat and an honest fulfillment path before heavy construction.","scope":"construction gating","status":"supported","derivedFrom":["utopia_first_fruit_pressure_test_2026_08_30"]},
+    {"id":"soil_autonomy_ladder","principle":"Validate need and value first, then repeat, compress, and automate. Low human burden is a long-run direction and tie-breaker, not a reason to discard a much faster truthful path to first Fruit.","scope":"economic sequencing","status":"supported","derivedFrom":["utopia_first_fruit_pressure_test_2026_08_30"]},
+    {"id":"soil_branch_metabolism","principle":"Branches consume attention, capital, compute, and latency budgets. Further resources must be earned by terminal movement or decision-changing evidence; otherwise rest, prune, or reframe.","scope":"portfolio resource allocation","status":"supported","derivedFrom":["utopia_first_fruit_pressure_test_2026_08_30"]},
+    {"id":"soil_anti_goodhart","principle":"For every operational metric, test how maximizing it could damage the terminal objective. Metrics may order work but may not silently become the objective.","scope":"measurement governance","status":"supported","derivedFrom":["flower_self_recursion_2026_08_30"]},
+    {"id":"soil_recursion_budget","principle":"Another analysis or self-Flower pass must be expected to change a decision, reduce meaningful uncertainty, or remove significant waste. If a safe action has higher expected value, act.","scope":"attention governance","status":"supported","derivedFrom":["flower_self_recursion_2026_08_30"]},
+    {"id":"soil_two_temperature_search","principle":"Preserve bounded exploratory search while exploiting the strongest evidenced path so short-term pressure cannot permanently extinguish novel or longer-horizon branches.","scope":"search portfolio","status":"supported","derivedFrom":["flower_self_recursion_2026_08_30"]},
     {"id":"soil_structural_complementarity","principle":"Prefer problems a dominant upstream product is structurally unlikely to solve because the resolution sits outside its core job.","scope":"economic opportunity selection","status":"supported","derivedFrom":["historical_flower_av_watch"]},
     {"id":"soil_resolution_complexity_floor","principle":"Reject candidates whose resolution collapses to a trivial filter unless another moat such as distribution makes trivial implementation irrelevant.","scope":"economic opportunity selection","status":"supported","derivedFrom":["historical_flower_av_watch"]},
-    {"id":"soil_passive_discoverability","principle":"A Fruit for this Garden should attach to an existing nutrient channel where buyers or machines already search; repeated human outreach is a passivity failure.","scope":"distribution","status":"supported","derivedFrom":["historical_flower_economic_root"]},
+    {"id":"soil_passive_discoverability","principle":"For mature low-maintenance Fruit, prefer attachment to an existing nutrient channel where buyers or machines already search; repeated human outreach is a maintenance warning, not an automatic first-Fruit veto.","scope":"distribution and mature operation","status":"supported","derivedFrom":["historical_flower_economic_root","utopia_first_fruit_pressure_test_2026_08_30"]},
     {"id":"soil_reproduction","principle":"Economic reproduction occurs only when later Fruit inherit money, knowledge, infrastructure, code, distribution, or market evidence that lowers the human/capital/uncertainty cost of the next generation.","scope":"portfolio reproduction","status":"supported","derivedFrom":["historical_flower_economic_root"]},
     {"id":"soil_corpus_first","principle":"A newly discovered market, payment rail, or distribution habitat does not justify a new build until existing verified capabilities have been scanned for a fit. Prefer reactivation and reuse when they answer the same transformation.","scope":"opportunity generation and distribution","status":"supported","derivedFrom":["corpus_first_distribution_leverage_2026_08_30"]},
     {"id":"soil_recovery_requires_revalidation","principle":"Finding old code is not evidence that its market opportunity survived. Recovered capability must be compared against current substitutes, usage and distribution truth before reactivation.","scope":"corpus recovery","status":"supported","derivedFrom":["rag_crawl_preflight_recovery_2026_08_30"]},
@@ -56,7 +97,7 @@
     {"id":"soil_human_actuation_portfolio","principle":"Human-only boundary actions compete for scarce Center-holder attention. Reaching KYC, legal, public-release, identity, or outreach membranes does not automatically earn an interruption.","scope":"governance and activation","status":"supported","derivedFrom":["human_actuation_portfolio_2026_08_30"]},
     {"id":"soil_artifact_truth","principle":"Executable artifacts, CI results, settlement receipts, and other concrete evidence outrank older manifests or planning narratives when state conflicts.","scope":"state reconciliation","status":"supported","derivedFrom":["social_preview_distribution_reconciliation_2026_08_30"]},
     {"id":"soil_multi_rail_distribution","principle":"Distribution is a vector, not a boolean. Store, API, agentic payments, MCP, CI wrappers, IDE marketplaces, search, and direct installation may occupy different states simultaneously.","scope":"distribution state","status":"supported","derivedFrom":["social_preview_distribution_reconciliation_2026_08_30"]},
-    {"id":"soil_free_evidence_saturation","principle":"When machine-carried evidence is saturated and only human-authorized exposure can resolve the remaining uncertainty, stop adjacent research and feature work; rank the boundary for actuation or park it.","scope":"attention governance","status":"supported","derivedFrom":["human_actuation_portfolio_2026_08_30"]}
+    {"id":"soil_free_evidence_saturation","principle":"When machine-carried evidence is saturated and only human-authorized exposure can resolve remaining uncertainty, stop adjacent feature work. Before interrupting the human, compare the mature boundary against the best available challenger or fresh search pressure.","scope":"attention governance","status":"supported","derivedFrom":["human_actuation_portfolio_2026_08_30","utopia_first_fruit_pressure_test_2026_08_30"]}
   ],
   "fruits": [
     {
@@ -92,8 +133,8 @@
       "structuralAgenticFit":{"payPerEvent":true,"eventOnlyCharging":true,"limitedPermissions":true,"standby":false},
       "unresolvedAgenticTruth":["developer KYC state","allowsAgenticUsers flag"],
       "inheritance":["Crawler-conditioned representation comparison","deterministic PASS/RISK/FAIL/INCONCLUSIVE semantics","bounded public-URL inspection","pay-per-event delivery","recurring CI wrapper"],
-      "nextPressure":"Reconcile explicit agentic eligibility or first independent usage before feature mutation.",
-      "notes":"Existing live capability may gain new distribution from platform changes without code changes."
+      "nextPressure":"Passive return sensing only; no active feature or distribution expansion until external evidence or a materially stronger rail earns attention.",
+      "notes":"Live organism now rests while the active Flower reopens the broader reachable economic field."
     },
     {
       "id":"fruit_changed_method_navigator",
@@ -112,9 +153,9 @@
       "freeEvidenceSaturated":true,
       "distributionRails":{"privateCiArtifact":"ready","jetbrainsHidden":"not_authorized","jetbrainsPublic":"not_authorized"},
       "humanBoundaryRequired":true,
-      "nextPressure":"Human-authorized low-discovery market exposure; no more feature work before return.",
+      "nextPressure":"Remain a mature challenger; compare its human-authorized market probe against fresh reachable-value candidates before interrupting the Center-holder.",
       "inheritance":["Line-diff to Java PSI symbol mapping","real IntelliJ functional-test harness","current-target Plugin Verifier CI","developer-review transformation evidence"],
-      "notes":"Highest-ranked current human actuation candidate; technical work frozen until market return."
+      "notes":"No more feature work before market return. Its boundary remains available but no longer monopolizes foreground attention."
     }
   ],
   "coldStorage": [
@@ -126,14 +167,7 @@
       "artifactTruth":"prototype_code_exists_public_repo",
       "technicalTruth":"private_web_ide_test_build_only",
       "capability":"Before deep web ingestion, probe machine-readable corpora, robots/sitemaps, inventory, HTML token size and JavaScript rendering risk; estimate crawl/embed cost and short-circuit when a validated direct corpus is sufficient.",
-      "currentMarketComparison":{
-        "directSubstitute":"Apify Website Crawl Preflight Auditor",
-        "substituteObservedAt":"2026-08-30",
-        "substituteTotalUsers":2,
-        "substituteMonthlyActiveUsers":1,
-        "substitutePrice":"from $1.50 / 1,000 domains audited",
-        "interpretation":"Problem exists and a near-direct product is live, but current visible marketplace throughput is too weak to justify waking this prototype now."
-      },
+      "currentMarketComparison":{"directSubstitute":"Apify Website Crawl Preflight Auditor","substituteObservedAt":"2026-08-30","substituteTotalUsers":2,"substituteMonthlyActiveUsers":1,"substitutePrice":"from $1.50 / 1,000 domains audited","interpretation":"Problem exists and a near-direct product is live, but current visible marketplace throughput is too weak to justify waking this prototype now."},
       "inheritance":["route-before-crawl pattern","machine-readable corpus validation","bounded sitemap inventory","JS rendering-risk classification","crawl/token/embed cost estimation","short-circuit expensive work when a cheaper route is validated"],
       "reactivationGate":"Only reconsider if independent demand/throughput rises materially, a distribution rail appears with broad payer evidence, or another active Fruit needs the routing capability internally.",
       "nextPressure":"none; retain capability without maintenance"
@@ -147,14 +181,7 @@
       "problemTruth":"supported_as_failure_mode",
       "standaloneMarketTruth":"weak_current_evidence",
       "capability":"Fail-closed comparison of Maps business identity against website name, phone and location signals to detect mismatch candidates before downstream enrichment trusts the website.",
-      "currentMarketComparison":{
-        "broadCategory":"business/entity resolution and verification",
-        "currentSubstitutes":["1Lookup Business Verify website_matches signal","Apify Business Verification API","Enigma business match/entity resolution"],
-        "apifyNearSubstituteObservedAt":"2026-08-30",
-        "apifyNearSubstituteTotalUsers":2,
-        "apifyNearSubstituteMonthlyActiveUsers":1,
-        "interpretation":"Business verification is real, but current evidence does not support another standalone lightweight verification Actor."
-      },
+      "currentMarketComparison":{"broadCategory":"business/entity resolution and verification","currentSubstitutes":["1Lookup Business Verify website_matches signal","Apify Business Verification API","Enigma business match/entity resolution"],"apifyNearSubstituteObservedAt":"2026-08-30","apifyNearSubstituteTotalUsers":2,"apifyNearSubstituteMonthlyActiveUsers":1,"interpretation":"Business verification is real, but current evidence does not support another standalone lightweight verification Actor."},
       "inheritance":["business-name normalization","website organization-name extraction","phone/location corroboration","fail-closed mismatch_candidate semantics","trusted-pointer verification pattern"],
       "reactivationGate":"Embed only when a higher-frequency enrichment, lead-routing, procurement or resolution organism demonstrates that wrong website pointers are a material parent-flow failure, or when standalone independent demand materially strengthens.",
       "nextPressure":"none as standalone product"
@@ -165,22 +192,22 @@
     {
       "rank":1,
       "organismId":"fruit_changed_method_navigator",
-      "action":"Authorize a low-discovery JetBrains Marketplace market probe (prefer hidden initial exposure if the Center-holder chooses to cross the legal/vendor membrane).",
-      "why":"Technical truth and independent problem evidence are strong; free evidence is saturated; only real user exposure resolves the next uncertainty.",
+      "action":"Authorize a low-discovery JetBrains Marketplace market probe if this mature boundary still outranks fresh challenger/search pressure.",
+      "why":"Technical truth and independent problem evidence are strong; free evidence is saturated; real user exposure resolves the next uncertainty, but the revised methodology requires opportunity-cost comparison before interrupting the Center-holder.",
       "state":"awaiting_explicit_authorization"
     },
     {
       "rank":2,
       "organismId":"fruit_social_preview_drift_guard",
-      "action":"Complete/reconcile Apify developer KYC only if agentic eligibility is not already active and the distribution value justifies it.",
-      "why":"The live Actor structurally fits agentic-payment rules, but explicit eligibility remains unresolved and external usage is not yet demonstrated.",
+      "action":"Complete/reconcile Apify developer KYC only if new evidence shows agentic eligibility materially improves the shortest path to Fruit.",
+      "why":"The live Actor structurally fits agentic-payment rules, but external usage is not yet demonstrated; passive sensing now outranks active expansion.",
       "state":"parked_pending_more_platform_truth"
     },
     {
       "rank":3,
       "organismId":"fruit_social_preview_drift_guard",
-      "action":"Authorize creation/release of a public GitHub Action repository.",
-      "why":"Private wrapper and CI are ready, but public release is a distribution experiment for a Fruit that has not yet returned independent use.",
+      "action":"Authorize creation/release of a public GitHub Action repository only after external evidence earns another distribution investment.",
+      "why":"Private wrapper and CI are ready, but additional distribution is no longer assumed to be the highest-value next action.",
       "state":"staged_not_earned_over_rank_1"
     }
   ],
@@ -188,7 +215,8 @@
   "events": [
     {"at":"2026-08-30T14:22:00.000Z","type":"STATE_RECONCILIATION","summary":"Canonical Garden updated to include live Social Preview Fruit, market-ready Changed Method Navigator, multi-rail distribution state, and ranked human actuation queue."},
     {"at":"2026-08-30T14:36:00.000Z","type":"CORPUS_RECOVERY_PRUNE","summary":"Recovered RAG Crawl Preflight capability from existing public repository, compared it against a current near-direct Apify substitute showing 2 total users / 1 monthly active user, and retained the capability in cold storage rather than rebuilding or publishing it."},
-    {"at":"2026-08-30T14:42:00.000Z","type":"STANDALONE_DOWNGRADE","summary":"Fresh entity-resolution and Apify market comparison showed the Maps→website identity check is better preserved as a reusable trust component than promoted as another standalone validation Actor."}
+    {"at":"2026-08-30T14:42:00.000Z","type":"STANDALONE_DOWNGRADE","summary":"Fresh entity-resolution and Apify market comparison showed the Maps→website identity check is better preserved as a reusable trust component than promoted as another standalone validation Actor."},
+    {"at":"2026-08-30T16:08:00.000Z","type":"TERMINAL_VALUE_RESET","summary":"Utopia pressure test promoted terminal-objective lock, diversity-before-depth, champion/challenger replacement, distribution-and-fulfillment gating, branch metabolism, anti-Goodhart measurement, two-temperature search, and action-over-unearned-recursion into the economic control plane. Existing public Fruits now rest rather than monopolize foreground search."}
   ],
   "approvals": [],
   "traces": []
