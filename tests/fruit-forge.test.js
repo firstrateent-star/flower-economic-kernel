@@ -2,9 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import seed from '../garden/seed.json' with { type: 'json' };
 import { syncFruitManifests, verifyPrivateFruit } from '../src/core/fruit-forge.js';
-import { classifyPressure } from '../src/core/pressure.js';
 
-test('Fruit Forge registers private source and links the validated opportunity', async () => {
+test('Fruit Forge imports live manifest, links opportunity, and ingests latest distribution reconciliation', async () => {
   const garden = structuredClone(seed);
   garden.opportunities.push({
     id: 'opp_b7681c126171',
@@ -19,11 +18,15 @@ test('Fruit Forge registers private source and links the validated opportunity',
 
   assert.ok(result.manifests.length >= 1);
   assert.ok(fruit);
-  assert.equal(fruit.status, 'private_source_ready');
+  assert.equal(fruit.status, 'live');
   assert.equal(fruit.permissions, 'limited');
   assert.equal(fruit.standby, false);
+  assert.equal(fruit.publicRelease?.economicBoundaryCrossed, true);
+  assert.equal(fruit.distributionState?.rails?.githubAction?.state, 'private_staged_ci_passed');
+  assert.equal(fruit.distributionState?.stalenessDetected?.olderValue, 'not_built');
+  assert.match(fruit.distributionState?.statePath ?? '', /distribution-state-2026-08-30\.json$/);
   assert.equal(opp.fruitId, fruit.id);
-  assert.equal(classifyPressure(garden).type, 'VERIFY_FRUIT');
+  assert.equal(opp.productizationState, 'live');
 });
 
 test('Social Preview Fruit passes its deterministic private-source verifier', async () => {
