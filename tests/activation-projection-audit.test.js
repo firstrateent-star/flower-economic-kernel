@@ -4,7 +4,7 @@ import {
   auditActivationProjection,
   flowerGeometryProjectionAudit,
   neighborhoodByDimensions,
-} from '../src/core/activation-projection-audit.js';
+} from '../research/dimensional/activation-projection-audit.js';
 
 const centers = [
   {
