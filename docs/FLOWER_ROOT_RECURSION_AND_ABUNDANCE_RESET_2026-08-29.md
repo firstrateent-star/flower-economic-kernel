@@ -260,3 +260,45 @@ It is:
 > Preserve what enables further good growth; transform what blocks it; release what consumes more possibility than it creates; and let every real result alter the next act of growth.
 
 That is the root Flower after being run through itself.
+
+## 15. Semantic stillness, fixed points, and runtime confluence — 2026-08-30
+A later recursive test exposed a subtler contradiction: the Flower could correctly decide that no cognition was justified while still rewriting timestamps, resolution metadata, observations, or telemetry. That is false activity. Stillness must apply to state as well as thought.
+
+New law:
+
+> No semantic transition means no cognition and no persistent-state mutation.
+
+A sensor may be invoked without earning a Flower pulse. Observation receipt, persistent-state change, and wake are three distinct facts:
+
+OBSERVATION RECEIVED != STATE CHANGED != FLOWER SHOULD WAKE.
+
+A first sensor baseline may legitimately establish memory without waking the Flower. Repeated metric churn with unchanged decision-relevant truth must not rewrite the Garden merely because time passed or a counter moved.
+
+This creates **Semantic Stillness**:
+
+NoMaterialTruthChange AND NoAutonomousPressure AND NoStateReconciliation
+-> NoReasoning AND NoPersistentMutation.
+
+The same work revealed that reconciliation itself must converge. If repeatedly absorbing the same canonical policy and the same external evidence continues changing state, the system has no real resting state.
+
+For reconciliation operator R and Garden state S:
+
+R(R(S)) = R(S).
+
+This is **Convergent Reconciliation**. It is not just mathematical neatness; it prevents stale fields, timestamp churn, lossy metadata merges, and repeated platform invocations from masquerading as progress.
+
+Resolution provenance is therefore evidence. Once a human-boundary action is resolved, the resolved state and its accountable reason/receipt must survive later canonical reconciliation unless newer evidence legitimately supersedes it.
+
+A related requirement is **Runtime Confluence**:
+
+Same Garden + Same Evidence -> Same Prepared State + Same Pressure.
+
+Storage adapters may differ between a CLI, an Actor, or a future event source. Their truth-preparation sequence may not. Legacy repairs, artifact synchronization, distribution-truth projection, observation ingestion, pressure classification, and wake classification should share one deterministic preparation path.
+
+These laws sharpen the autonomy target. The goal is no longer simply "run without repeated user prompts." It is:
+
+REALITY CHANGE -> PREPARE TRUTH -> MATERIALITY GATE -> BOUNDED FLOWER -> FIXED POINT / SOVEREIGNTY BOUNDARY.
+
+At a fixed point, further recursion without new evidence has negative transition yield because it consumes compute or attention while leaving decision quality unchanged.
+
+Therefore mature autonomy includes the ability to remain exactly still until reality changes.
