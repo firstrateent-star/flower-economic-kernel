@@ -2,6 +2,8 @@ name: Seed-0 Market Flow Scan
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '23 14 * * 1'
   push:
     branches: [main]
     paths:
