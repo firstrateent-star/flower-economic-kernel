@@ -2,7 +2,14 @@
     <id>com.flower.changedmethods</id>
     <name>Changed Method Navigator</name>
     <vendor>Flower v2 Shadow Lab</vendor>
-    <description><![CDATA[Private preflight for navigating methods touched by local VCS changes.]]></description>
+    <description><![CDATA[
+        <p>Review local Java changes method-by-method instead of hunting through changed lines across files.</p>
+        <p>Changed Method Navigator maps IntelliJ's current local VCS changes to Java methods using the IDE's PSI model, then lists only the methods touched by those changes in a dedicated <b>Changed Methods</b> tool window. Select a method to jump directly to it in source.</p>
+        <p>The initial scope is deliberately narrow: Java files, current local VCS changes, changed-method listing, one-click source navigation, and manual refresh. It does not modify project files, classify the meaning or risk of changes, send source code to an external service, or replace the built-in diff viewer.</p>
+    ]]></description>
+    <change-notes><![CDATA[
+        Initial preflight release: identify Java methods touched by current local VCS changes and navigate to them from a dedicated tool window.
+    ]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.vcs</depends>
     <depends>com.intellij.java</depends>
