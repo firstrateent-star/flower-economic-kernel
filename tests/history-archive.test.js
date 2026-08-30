@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import seed from './fixtures/test-seed.js';
+import { classifyPressure } from '../src/core/pressure.js';
 import {
   planTraceArchive,
   commitTraceArchivePlan,
@@ -74,6 +75,21 @@ test('failed archive persistence leaves the Garden byte-for-byte unchanged', asy
   );
 
   assert.equal(JSON.stringify(garden), before);
+});
+
+test('archival is behaviorally invisible to the economic pressure classifier', async () => {
+  const garden = structuredClone(seed);
+  garden.traces = Array.from({ length: 600 }, (_, i) => trace(i));
+  const beforePressure = classifyPressure(garden);
+
+  await archiveTraceHistory(garden, {
+    maxActiveTraces: 256,
+    persistBlock: async () => {},
+  });
+
+  assert.deepEqual(classifyPressure(garden), beforePressure);
+  assert.equal(garden.traces.length, 256);
+  assert.equal(garden.historyArchive.archivedTraceCount, 344);
 });
 
 test('hash-linked archive blocks verify as an append-only provenance chain', () => {
