@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import seed from './fixtures/test-seed.js';
 import { pulse } from '../src/core/kernel.js';
+import { FLOWER_METHODOLOGY_VERSION } from '../src/core/methodology-core.js';
 import { MockReasoner } from '../src/reasoners/mock.js';
 
 test('pulse can falsify a seed and autonomously choose the required failure-reality experiment dimension first', async () => {
@@ -28,6 +29,7 @@ test('pulse can falsify a seed and autonomously choose the required failure-real
   assert.equal(garden.opportunities[0].status, 'supported');
   assert.equal(garden.experiments[0].status, 'authorized');
   assert.equal(garden.experiments[0].validationDimension, 'failure_reality');
+  assert.equal(garden.experiments[0].originMethodologyVersion, FLOWER_METHODOLOGY_VERSION);
 });
 
 test('an authorized web-search experiment routes to bounded execution instead of STILLNESS', async () => {
