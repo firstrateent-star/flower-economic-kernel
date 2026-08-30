@@ -1,0 +1,41 @@
+name: Sense Social Preview Return
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/sense-social-preview-return.js'
+      - '.github/workflows/sense-social-preview-return.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  sense:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require Apify token
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          if [ -z "$APIFY_TOKEN" ]; then
+            echo "APIFY_TOKEN repository secret is missing; refusing authenticated return sensing."
+            exit 1
+          fi
+      - name: Sense authenticated Actor return
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: node scripts/sense-social-preview-return.js
+      - name: Upload return sensor artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: social-preview-return-sensor
+          path: artifacts/social-preview-return-sensor.json
+          retention-days: 30
