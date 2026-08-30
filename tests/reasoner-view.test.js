@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import seed from './fixtures/test-seed.js';
 import { refreshGeometry } from '../src/core/geometry.js';
 import { buildReasonerGardenView } from '../src/core/reasoner-view.js';
+import { FLOWER_METHODOLOGY_VERSION } from '../src/core/methodology-core.js';
 import { OpenAIReasoner } from '../src/reasoners/openai.js';
 import { EfficientOpenAIReasoner } from '../src/reasoners/efficient-openai.js';
 
@@ -19,12 +20,16 @@ test('reasoner Garden view preserves decision structure while removing execution
   const view = buildReasonerGardenView({ garden, operation: 'EXPAND' });
 
   assert.equal(JSON.stringify(garden), original);
+  assert.equal(view.methodology.version, FLOWER_METHODOLOGY_VERSION);
+  assert.ok(view.methodology.dualCultivation.audit.length >= 6);
+  assert.ok(view.methodology.efficiency.laws.some((law) => law.includes('causally affected subgraph')));
   assert.equal(view.soil.length, garden.soil.length);
   assert.deepEqual(view.soil.map((x) => x.principle), garden.soil.map((x) => x.principle));
   assert.equal(view.geometry.centers.length, garden.geometry.centers.length);
   assert.equal(view.geometry.archetypes.length, garden.geometry.archetypes.length);
   assert.equal(view.geometry.capabilities.length, garden.geometry.capabilities.length);
   assert.equal(view.reasonerView.activation.mode, 'global');
+  assert.equal(view.reasonerView.methodologyVersion, FLOWER_METHODOLOGY_VERSION);
   assert.equal('edges' in view.geometry, false);
   assert.equal('traces' in view, false);
   assert.equal('events' in view, false);
@@ -33,7 +38,7 @@ test('reasoner Garden view preserves decision structure while removing execution
   assert.deepEqual(view.fruits[0].distributionRails, garden.fruits[0].distributionRails);
 });
 
-test('targeted reasoning activates only the target geometry neighborhood while retaining portfolio totals', () => {
+test('targeted reasoning activates only the target geometry neighborhood while retaining portfolio totals and full methodology', () => {
   const garden = structuredClone(seed);
   const target = garden.opportunities[0];
   target.failureArchetype = 'identity_pointer_drift';
@@ -62,6 +67,8 @@ test('targeted reasoning activates only the target geometry neighborhood while r
   const visibleIds = new Set(view.geometry.centers.map((center) => center.id));
 
   assert.equal(view.reasonerView.activation.mode, 'target_neighborhood');
+  assert.equal(view.methodology.version, FLOWER_METHODOLOGY_VERSION);
+  assert.ok(view.methodology.invariants.some((law) => law.includes('Human attention is scarce capital')));
   assert.ok(visibleIds.has(target.id));
   assert.ok(visibleIds.has('opp_related_identity'));
   assert.equal(visibleIds.has('opp_unrelated_semantic'), false);
@@ -85,10 +92,11 @@ test('global comparison operations keep the full compressed field', () => {
     assert.equal(view.reasonerView.activation.mode, 'global');
     assert.equal(view.opportunities.length, garden.opportunities.length);
     assert.equal(view.geometry.centers.length, garden.geometry.centers.length);
+    assert.equal(view.methodology.version, FLOWER_METHODOLOGY_VERSION);
   }
 });
 
-test('efficient reasoner passes the projected Garden and target activation into existing reasoner logic', async () => {
+test('efficient reasoner passes the projected Garden, integrated methodology and target activation into existing reasoner logic', async () => {
   const garden = structuredClone(seed);
   refreshGeometry(garden);
   garden.traces.push({ id: 'trace_should_not_cross_boundary', kind: 'telemetry' });
@@ -114,6 +122,8 @@ test('efficient reasoner passes the projected Garden and target activation into 
   }
 
   assert.ok(capturedGarden);
+  assert.equal(capturedGarden.methodology.version, FLOWER_METHODOLOGY_VERSION);
+  assert.ok(capturedGarden.methodology.operatingLoop.some((step) => step.startsWith('REST:')));
   assert.equal('traces' in capturedGarden, false);
   assert.equal('edges' in capturedGarden.geometry, false);
   assert.equal(capturedGarden.reasonerView.activation.targetId, garden.opportunities[0].id);
