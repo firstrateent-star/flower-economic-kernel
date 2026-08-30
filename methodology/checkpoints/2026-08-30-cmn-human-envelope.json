@@ -1,7 +1,9 @@
 {
   "schemaVersion": 1,
   "checkpointId": "checkpoint_cmn_human_2026_08_30",
-  "asOf": "2026-08-30T14:42:00-04:00",
+  "status": "quarantined_temporal_integrity_failure",
+  "capturedAt": "2026-08-30T14:17:00-04:00",
+  "declaredAsOf": "2026-08-30T14:42:00-04:00",
   "methodologyVersion": "2026-08-30.integrated-v2",
   "pressure": {
     "type": "HUMAN",
@@ -26,12 +28,17 @@
       "blobSha": "9c650f9a07e6d2ca592585ece5ea5019af2f2957"
     }
   },
+  "temporalIntegrity": {
+    "pass": false,
+    "reason": "The referenced Garden contains timestamps through 2026-08-30T14:42:00-04:00, which is later than the actual capture time 2026-08-30T14:17:00-04:00. The specimen cannot be used as a hindsight-safe prospective checkpoint.",
+    "policy": "Never repair this by editing historical timestamps or pretending the state existed earlier. Preserve it as a quarantined artifact and capture the next genuinely prospective boundary from real capture time forward."
+  },
   "replayRules": [
-    "Resolve every immutable reference by its exact blob SHA before replay.",
-    "Do not import evidence observed after asOf into canonical or candidate evaluation.",
-    "Candidate evaluation is read-only and may not spend, publish, accept legal terms, choose identity/legal status, contact humans, or mutate live Garden state.",
-    "If a required historical dependency cannot be recovered from immutable references, mark replay incomplete rather than reconstructing it from present-day state.",
-    "Compare decision vectors and protected invariants; do not collapse methodology quality to one score."
+    "Do not use this specimen for methodology comparison while temporalIntegrity.pass is false.",
+    "Resolve every immutable reference by its exact blob SHA before any future inspection.",
+    "Never reconstruct an earlier asOf by subtracting or rewriting timestamps from present state.",
+    "Future checkpoints must prove capturedAt >= every evidence/state timestamp included in the replay envelope.",
+    "Candidate evaluation remains read-only and may not spend, publish, accept legal terms, choose identity/legal status, contact humans, or mutate live Garden state."
   ],
-  "purpose": "First prospective, hindsight-safe replay envelope for comparing future Flower methodology versions against the current CMN sovereignty-boundary decision without duplicating the underlying Garden or methodology content."
+  "purpose": "Quarantined first replay-envelope attempt. It remains preserved as evidence of a temporal-integrity failure so future checkpoint machinery cannot silently repeat the same mistake."
 }
