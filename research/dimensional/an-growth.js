@@ -6,6 +6,13 @@ function binomial(n, k) {
   return Math.round(value);
 }
 
+function factorial(n) {
+  if (!Number.isInteger(n) || n < 0) throw new Error('factorial requires integer n >= 0.');
+  let value = 1;
+  for (let i = 2; i <= n; i += 1) value *= i;
+  return value;
+}
+
 function positiveCompositionCount(total, parts) {
   if (!Number.isInteger(total) || !Number.isInteger(parts) || total < 1 || parts < 1) return 0;
   return binomial(total - 1, parts - 1);
@@ -63,6 +70,26 @@ export function anBallCount(n, radius) {
   return count;
 }
 
+export function anGrowthAsymptotic(n) {
+  if (!Number.isInteger(n) || n < 1) throw new Error('A_n requires integer n >= 1.');
+  const vandermondeNumeratorAtOne = binomial(2 * n, n);
+  return {
+    n,
+    numeratorAtOne: vandermondeNumeratorAtOne,
+    shellLeadingCoefficient: vandermondeNumeratorAtOne / factorial(n - 1),
+    ballLeadingCoefficient: vandermondeNumeratorAtOne / factorial(n),
+    shellDegree: n - 1,
+    ballDegree: n,
+    asymptoticFrontierToFieldFactor: n,
+    relation: 'shell/ball ~ n/radius',
+  };
+}
+
+export function frontierToFieldRatio(n, radius) {
+  if (!Number.isInteger(radius) || radius < 1) throw new Error('Frontier ratio requires integer radius >= 1.');
+  return anShellCount(n, radius) / anBallCount(n, radius);
+}
+
 export function a2ClosedFormShell(radius) {
   if (!Number.isInteger(radius) || radius < 0) throw new Error('Radius requires integer >= 0.');
   return radius === 0 ? 1 : 6 * radius;
@@ -83,6 +110,7 @@ export function dimensionalGrowthTable({ maxDimension = 6, maxRadius = 5 } = {})
         shellCount: anShellCount(n, radius),
         shellCountKnownGeneratingFunction: anShellCountFromGeneratingFunction(n, radius),
         ballCount: anBallCount(n, radius),
+        frontierToFieldRatio: radius > 0 ? frontierToFieldRatio(n, radius) : null,
       });
     }
   }
@@ -92,8 +120,9 @@ export function dimensionalGrowthTable({ maxDimension = 6, maxRadius = 5 } = {})
 export const DIMENSIONAL_GROWTH_INTERPRETATION = {
   exact: 'A_n shell counts are the established coordination sequences of the A_n root lattices; they follow a degree-(n-1) growth polynomial in radius and A_n balls a degree-n growth polynomial.',
   knownGeneratingFunction: 'G_n(z) = [sum_{j=0}^n binomial(n,j)^2 z^j] / (1-z)^n.',
-  implication: 'Naively expanding every reachable adjacency becomes increasingly expensive as independent relational dimension rises; sparse activation, pruning, coordinate changes, and decision-equivalent compression become more valuable rather than less.',
-  epistemicBoundary: 'This is discrete lattice growth mathematics. It does not establish that physical, cognitive, economic, or spiritual systems literally have A_n geometry.',
+  frontierLaw: 'Using Vandermonde sum_j binomial(n,j)^2 = binomial(2n,n), shell_n(k) ~ binomial(2n,n) k^(n-1)/(n-1)! and ball_n(k) ~ binomial(2n,n) k^n/n!, so shell/ball ~ n/k.',
+  implication: 'Naively expanding every reachable adjacency becomes increasingly expensive as independent relational dimension rises; incremental frontier processing is one polynomial degree cheaper in radius than replaying the accumulated field, while sparse activation, pruning, coordinate changes, and decision-equivalent compression become more valuable rather than less.',
+  epistemicBoundary: 'This is discrete lattice growth mathematics. Its architectural analogy motivates tests but does not establish that physical, cognitive, economic, or spiritual systems literally have A_n geometry.',
   sources: [
     'Conway and Sloane, Low-Dimensional Lattices VII: Coordination Sequences, Proc. Royal Society A 453 (1997), 2369-2389.',
     'Bacher, de la Harpe and Venkov, Series de croissance et series d Ehrhart associees aux reseaux de racines, C. R. Acad. Sci. Paris 325 (1997), 1137-1142.',
