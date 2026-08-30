@@ -4,11 +4,13 @@ import { classifyPressure } from '../core/pressure.js';
 import { refreshGeometry } from '../core/geometry.js';
 import { reconcileCanonicalControlPlane } from '../core/state-reconcile.js';
 import { prepareRuntimeState } from '../core/runtime-preparation.js';
+import { archiveTraceHistory } from '../core/history-archive.js';
 import { EfficientOpenAIReasoner } from '../reasoners/efficient-openai.js';
 import seed from '../../garden/seed.json' with { type: 'json' };
 
 const STORE_NAME = 'flower-economic-kernel-v0-state';
 const STORE_KEY = 'FLOWER_GARDEN';
+const TRACE_ARCHIVE_PREFIX = 'TRACE_ARCHIVE_';
 
 function clampBreaths(value) {
   const parsed = Number(value ?? 64);
@@ -82,6 +84,22 @@ await Actor.main(async () => {
   const maxCostlyBreaths = 1;
 
   const stateStore = await Actor.openKeyValueStore(STORE_NAME);
+  const persistTraceArchiveBlock = async (block) => {
+    const key = `${TRACE_ARCHIVE_PREFIX}${block.blockHash}`;
+    const existingBlock = await stateStore.getValue(key);
+    if (existingBlock == null) {
+      await stateStore.setValue(key, block);
+      return;
+    }
+    if (JSON.stringify(existingBlock) !== JSON.stringify(block)) {
+      throw new Error(`Trace archive hash collision or corruption at ${key}`);
+    }
+  };
+  const archiveHotTraces = (garden) => archiveTraceHistory(garden, {
+    maxActiveTraces: 256,
+    persistBlock: persistTraceArchiveBlock,
+  });
+
   const existing = await stateStore.getValue(STORE_KEY);
   const persistedBefore = existing == null ? null : JSON.stringify(existing);
   const canonical = reconcileCanonicalControlPlane(existing, seed);
@@ -91,6 +109,7 @@ await Actor.main(async () => {
     observation: input.observation ?? null,
   });
   const { pressure: startingPressure, wake, observationIngest } = prepared;
+  const archiveBeforeWake = await archiveHotTraces(garden);
 
   const geometryBefore = geometrySnapshot(garden);
   const stateChangedBeforeWake = persistedBefore == null || persistedBefore !== JSON.stringify(garden);
@@ -99,6 +118,7 @@ await Actor.main(async () => {
     wake,
     pressure: startingPressure,
     stateChangedBeforeWake,
+    traceArchive: archiveBeforeWake,
     canonicalReconciliation: canonical.changes,
     legacyMigrations: prepared.legacy.stateMigrations,
     manifestChanges: prepared.manifestSync.changes,
@@ -123,6 +143,9 @@ await Actor.main(async () => {
       reasonerConstructed: false,
       stateChanged: stateChangedBeforeWake,
       statePersisted,
+      traceArchive: archiveBeforeWake,
+      activeTraceCount: garden.traces.length,
+      archivedTraceCount: Number(garden.historyArchive?.archivedTraceCount ?? 0),
       pulseCount: Number(garden.status.pulseCount ?? 0),
       persistentStore: STORE_NAME,
       canonicalReconciliation: canonical.changes,
@@ -163,6 +186,7 @@ await Actor.main(async () => {
       reasonerConstructed: true,
       stateChanged: stateChangedBeforeWake,
       statePersisted: false,
+      traceArchive: archiveBeforeWake,
       pulseCount: Number(garden.status.pulseCount ?? 0),
       persistentStore: STORE_NAME,
       canonicalReconciliation: canonical.changes,
@@ -183,6 +207,7 @@ await Actor.main(async () => {
   const geometryAfter = geometrySnapshot(garden);
   const yieldSnapshot = growthYield(geometryBefore, geometryAfter, result.runBudget.costlyBreathsUsed);
   garden.status.lastGrowthYield = yieldSnapshot;
+  const archiveAfterPulse = await archiveHotTraces(garden);
   await stateStore.setValue(STORE_KEY, garden);
 
   const output = {
@@ -192,6 +217,9 @@ await Actor.main(async () => {
     reasonerConstructed: true,
     stateChanged: true,
     statePersisted: true,
+    traceArchive: archiveAfterPulse.changed ? archiveAfterPulse : archiveBeforeWake,
+    activeTraceCount: garden.traces.length,
+    archivedTraceCount: Number(garden.historyArchive?.archivedTraceCount ?? 0),
     breaths: result.breaths.map((x) => ({
       pressure: x.pressure,
       costClass: x.costClass,
@@ -225,5 +253,6 @@ await Actor.main(async () => {
     stoppedBySafetyCeiling: output.stoppedBySafetyCeiling,
     nextPressure: output.nextPressure,
     growthYield: output.growthYield,
+    traceArchive: output.traceArchive,
   });
 });
