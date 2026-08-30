@@ -1,28 +1,34 @@
 const TERMINAL_PRESSURES = new Set(['HUMAN', 'STILLNESS']);
 
+export const MATERIAL_OBSERVATION_KEYS = [
+  'independentUser',
+  'chargedEvent',
+  'creatorRevenue',
+  'creatorRevenueUsd',
+  'settledValue',
+  'settledValueUsd',
+  'repeatDemand',
+  'agenticPaymentEligible',
+  'marketTruth',
+  'externalUsage',
+  'status',
+];
+
 function stableJson(value) {
   if (value === undefined) return 'undefined';
   return JSON.stringify(value, Object.keys(value ?? {}).sort());
 }
 
+function hasMaterialTruth(observation) {
+  return MATERIAL_OBSERVATION_KEYS.some((key) => observation?.[key] !== undefined);
+}
+
 export function materialObservationChanged(previous, current) {
   if (!previous && !current) return false;
-  if (!previous && current) return true;
+  if (!previous && current) return hasMaterialTruth(current);
   if (previous && !current) return false;
 
-  const materialKeys = [
-    'independentUser',
-    'chargedEvent',
-    'creatorRevenue',
-    'settledValue',
-    'repeatDemand',
-    'agenticPaymentEligible',
-    'marketTruth',
-    'externalUsage',
-    'status',
-  ];
-
-  return materialKeys.some((key) => stableJson(previous[key]) !== stableJson(current[key]));
+  return MATERIAL_OBSERVATION_KEYS.some((key) => stableJson(previous[key]) !== stableJson(current[key]));
 }
 
 export function classifyWake({
