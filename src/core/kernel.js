@@ -5,6 +5,7 @@ import { addTrace } from './transitions.js';
 import { nowIso } from './utils.js';
 import { refreshGeometry } from './geometry.js';
 import { syncFruitManifests, verifyPrivateFruit } from './fruit-forge.js';
+import { reconcileDistributionTruth } from './distribution-truth.js';
 
 function applyPostIntegrationSelectionPolicy(garden, pressure) {
   if (pressure.type !== 'INTEGRATE') return null;
@@ -111,7 +112,10 @@ export async function pulse({
   let costlyBreaths = 0;
   let stoppedByCostFrontier = false;
 
-  if (syncManifests) await syncFruitManifests(garden);
+  if (syncManifests) {
+    await syncFruitManifests(garden);
+    reconcileDistributionTruth(garden);
+  }
   refreshGeometry(garden);
 
   for (let i = 0; i < maxBreaths; i += 1) {
