@@ -6,8 +6,9 @@ function stableJson(value) {
 }
 
 export function materialObservationChanged(previous, current) {
-  if (!previous) return true;
-  if (!current) return false;
+  if (!previous && !current) return false;
+  if (!previous && current) return true;
+  if (previous && !current) return false;
 
   const materialKeys = [
     'independentUser',
