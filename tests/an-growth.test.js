@@ -1,0 +1,50 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  anBallCount,
+  anShellCount,
+  a2ClosedFormBall,
+  a2ClosedFormShell,
+  DIMENSIONAL_GROWTH_INTERPRETATION,
+} from '../research/dimensional/an-growth.js';
+
+test('A2 exact shell counts recover 1, 6, 12, 18, ...', () => {
+  const observed = Array.from({ length: 7 }, (_, radius) => anShellCount(2, radius));
+  assert.deepEqual(observed, [1, 6, 12, 18, 24, 30, 36]);
+  for (let radius = 0; radius <= 20; radius += 1) {
+    assert.equal(anShellCount(2, radius), a2ClosedFormShell(radius));
+  }
+});
+
+test('A2 radius-two ball contains 19 lattice centers', () => {
+  assert.equal(anBallCount(2, 2), 19);
+  assert.equal(a2ClosedFormBall(2), 19);
+  for (let radius = 0; radius <= 20; radius += 1) {
+    assert.equal(anBallCount(2, radius), a2ClosedFormBall(radius));
+  }
+});
+
+test('A1 is a line with two new lattice points per nonzero shell', () => {
+  assert.deepEqual(
+    Array.from({ length: 6 }, (_, radius) => anShellCount(1, radius)),
+    [1, 2, 2, 2, 2, 2],
+  );
+  assert.equal(anBallCount(1, 5), 11);
+});
+
+test('A3 growth begins with 12 nearest neighbors and 42 second-shell points', () => {
+  assert.equal(anShellCount(3, 1), 12);
+  assert.equal(anShellCount(3, 2), 42);
+  assert.equal(anBallCount(3, 2), 55);
+});
+
+test('first nonzero A_n shell matches n(n+1) roots', () => {
+  for (let n = 1; n <= 10; n += 1) {
+    assert.equal(anShellCount(n, 1), n * (n + 1));
+  }
+});
+
+test('growth interpretation keeps lattice math separate from claims about other domains', () => {
+  assert.match(DIMENSIONAL_GROWTH_INTERPRETATION.implication, /sparse activation/);
+  assert.match(DIMENSIONAL_GROWTH_INTERPRETATION.epistemicBoundary, /does not establish/);
+});
