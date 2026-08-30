@@ -40,5 +40,51 @@ jobs:
           token: ${{ secrets.APIFY_TOKEN }}
           actor-id: 7EskFvYOwxznhKYhj
           working-directory: actors/social-preview-drift-guard
+      - name: Sync public Store metadata
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          node <<'NODE' > /tmp/social-preview-store-metadata.json
+          const fs = require('node:fs');
+          const actor = JSON.parse(fs.readFileSync('actors/social-preview-drift-guard/.actor/actor.json', 'utf8'));
+          process.stdout.write(JSON.stringify({
+            title: actor.title,
+            description: actor.description,
+          }));
+          NODE
+
+          curl --fail-with-body --silent --show-error --location \
+            'https://api.apify.com/v2/actors/7EskFvYOwxznhKYhj' \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" \
+            > /tmp/social-preview-before.json
+
+          echo 'Store metadata before sync:'
+          node <<'NODE'
+          const fs = require('node:fs');
+          const actor = JSON.parse(fs.readFileSync('/tmp/social-preview-before.json', 'utf8')).data;
+          console.log(JSON.stringify({ title: actor.title, description: actor.description, isPublic: actor.isPublic, modifiedAt: actor.modifiedAt }));
+          NODE
+
+          curl --fail-with-body --silent --show-error --location --request PUT \
+            'https://api.apify.com/v2/actors/7EskFvYOwxznhKYhj' \
+            -H 'Content-Type: application/json' \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" \
+            --data-binary @/tmp/social-preview-store-metadata.json \
+            > /tmp/social-preview-after.json
+
+          echo 'Store metadata after sync:'
+          node <<'NODE'
+          const fs = require('node:fs');
+          const desired = JSON.parse(fs.readFileSync('/tmp/social-preview-store-metadata.json', 'utf8'));
+          const actor = JSON.parse(fs.readFileSync('/tmp/social-preview-after.json', 'utf8')).data;
+          const actual = { title: actor.title, description: actor.description };
+          console.log(JSON.stringify({ ...actual, isPublic: actor.isPublic, modifiedAt: actor.modifiedAt }));
+          if (actual.title !== desired.title || actual.description !== desired.description) {
+            console.error('Store metadata did not match actor.json after API update.');
+            process.exit(1);
+          }
+          NODE
       - name: Report build
-        run: echo "Apify build ${{ steps.push.outputs.build-id }} finished with status ${{ steps.push.outputs.build-status }}"
+        run: echo "Apify build ${{ steps.push.outputs.build-id }} finished with status ${{ steps.push.outputs.build-status }} and Store metadata was synchronized"
