@@ -1,10 +1,17 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { clone, nowIso } from './utils.js';
+import { reconcileCanonicalControlPlane } from './state-reconcile.js';
 
-export function validateGarden(garden) {
+const CURRENT_SCHEMA_VERSION = 2;
+const LEGACY_SCHEMA_VERSIONS = new Set([1, CURRENT_SCHEMA_VERSION]);
+
+export function validateGarden(garden, { allowLegacy = false } = {}) {
   if (!garden || typeof garden !== 'object') throw new Error('Garden must be an object.');
-  if (garden.schemaVersion !== 1) throw new Error('Unsupported Garden schemaVersion.');
+  const supported = allowLegacy
+    ? LEGACY_SCHEMA_VERSIONS.has(garden.schemaVersion)
+    : garden.schemaVersion === CURRENT_SCHEMA_VERSION;
+  if (!supported) throw new Error(`Unsupported Garden schemaVersion: ${garden.schemaVersion ?? 'missing'}.`);
   if (!garden.center?.rootGoal) throw new Error('Garden center.rootGoal is required.');
   for (const key of ['soil', 'fruits', 'opportunities', 'experiments', 'events', 'approvals', 'traces']) {
     if (!Array.isArray(garden[key])) throw new Error(`Garden ${key} must be an array.`);
@@ -24,12 +31,14 @@ export async function saveJson(file, value) {
 }
 
 export async function loadGarden({ stateFile, seedFile }) {
+  const canonical = validateGarden(await loadJson(seedFile));
+
   try {
-    return validateGarden(await loadJson(stateFile));
+    const existing = validateGarden(await loadJson(stateFile), { allowLegacy: true });
+    return reconcileCanonicalControlPlane(existing, canonical).garden;
   } catch (error) {
     if (error?.code !== 'ENOENT') throw error;
-    const seed = validateGarden(await loadJson(seedFile));
-    return clone(seed);
+    return clone(canonical);
   }
 }
 
