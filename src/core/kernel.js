@@ -6,6 +6,7 @@ import { nowIso } from './utils.js';
 import { refreshGeometry } from './geometry.js';
 import { syncFruitManifests, verifyPrivateFruit } from './fruit-forge.js';
 import { reconcileDistributionTruth } from './distribution-truth.js';
+import { captureMethodologyArtifactIds, stampNewMethodologyArtifactOrigins } from './methodology-lineage.js';
 
 function applyPostIntegrationSelectionPolicy(garden, pressure) {
   if (pressure.type !== 'INTEGRATE') return null;
@@ -68,6 +69,7 @@ async function verifyFruitBreath(garden, pressure) {
 
 export async function breathe({ garden, reasoner, pressure = classifyPressure(garden) }) {
   const before = JSON.stringify(garden);
+  const methodologyArtifactsBefore = captureMethodologyArtifactIds(garden);
   let result;
 
   if (pressure.type === 'VERIFY_FRUIT') {
@@ -77,6 +79,9 @@ export async function breathe({ garden, reasoner, pressure = classifyPressure(ga
   } else {
     result = await runEnzyme({ garden, pressure, reasoner });
   }
+
+  const lineageStamps = stampNewMethodologyArtifactOrigins(garden, methodologyArtifactsBefore);
+  if (lineageStamps.length > 0) result.methodologyOriginsStamped = lineageStamps;
 
   const cooled = applyPostIntegrationSelectionPolicy(garden, pressure);
   if (cooled) {
