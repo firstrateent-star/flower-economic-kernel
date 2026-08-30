@@ -1,0 +1,33 @@
+name: Sense Social Preview Discovery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/sense-social-preview-discovery.js'
+      - '.github/workflows/sense-social-preview-discovery.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '41 13 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  sense:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax-check discovery sensor
+        run: node --check scripts/sense-social-preview-discovery.js
+      - name: Sense public Store discovery
+        run: node scripts/sense-social-preview-discovery.js
+      - name: Upload discovery witness artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: social-preview-discovery-witness
+          path: artifacts/social-preview-discovery-witness.json
+          retention-days: 30
