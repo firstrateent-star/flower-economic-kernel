@@ -81,6 +81,24 @@ export function commitTraceArchivePlan(garden, plan) {
   };
 }
 
+export async function archiveTraceHistory(garden, {
+  maxActiveTraces = 256,
+  persistBlock,
+} = {}) {
+  if (typeof persistBlock !== 'function') {
+    throw new Error('archiveTraceHistory requires persistBlock(block).');
+  }
+
+  const previousArchiveHash = garden.historyArchive?.latestTraceBlockHash ?? null;
+  const plan = planTraceArchive(garden, { maxActiveTraces, previousArchiveHash });
+  if (!plan.needed) return { changed: false, archivedCount: 0, blockHash: null };
+
+  // Transaction boundary: no active-state mutation happens until the external archive
+  // sink has durably accepted the complete content-addressed block.
+  await persistBlock(plan.archiveBlock);
+  return commitTraceArchivePlan(garden, plan);
+}
+
 export function verifyTraceArchiveChain(blocks = []) {
   let previous = null;
   for (const block of blocks) {
