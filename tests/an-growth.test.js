@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   anBallCount,
+  anGrowthAsymptotic,
   anShellCount,
   anShellCountFromGeneratingFunction,
+  frontierToFieldRatio,
   a2ClosedFormBall,
   a2ClosedFormShell,
   DIMENSIONAL_GROWTH_INTERPRETATION,
@@ -57,10 +59,37 @@ test('independent composition derivation matches the known A_n coordination gene
   }
 });
 
+test('Vandermonde numerator determines shell and ball leading coefficients', () => {
+  const a2 = anGrowthAsymptotic(2);
+  assert.equal(a2.numeratorAtOne, 6);
+  assert.equal(a2.shellLeadingCoefficient, 6);
+  assert.equal(a2.ballLeadingCoefficient, 3);
+  assert.equal(a2.shellDegree, 1);
+  assert.equal(a2.ballDegree, 2);
+
+  const a3 = anGrowthAsymptotic(3);
+  assert.equal(a3.numeratorAtOne, 20);
+  assert.equal(a3.shellLeadingCoefficient, 10);
+  assert.equal(a3.ballLeadingCoefficient, 20 / 6);
+  assert.equal(a3.shellDegree, 2);
+  assert.equal(a3.ballDegree, 3);
+});
+
+test('exact frontier-to-field ratios converge toward n/radius', () => {
+  const radius = 200;
+  for (const n of [1, 2, 3, 4]) {
+    const exact = frontierToFieldRatio(n, radius);
+    const predicted = n / radius;
+    const relativeError = Math.abs(exact - predicted) / predicted;
+    assert.ok(relativeError < 0.03, `A_${n} relative error ${relativeError}`);
+  }
+});
+
 test('growth interpretation inherits known coordination-sequence mathematics and keeps domain claims bounded', () => {
   assert.match(DIMENSIONAL_GROWTH_INTERPRETATION.exact, /established coordination sequences/);
   assert.match(DIMENSIONAL_GROWTH_INTERPRETATION.knownGeneratingFunction, /binomial/);
-  assert.match(DIMENSIONAL_GROWTH_INTERPRETATION.implication, /sparse activation/);
+  assert.match(DIMENSIONAL_GROWTH_INTERPRETATION.frontierLaw, /shell\/ball ~ n\/k/);
+  assert.match(DIMENSIONAL_GROWTH_INTERPRETATION.implication, /incremental frontier processing/);
   assert.match(DIMENSIONAL_GROWTH_INTERPRETATION.epistemicBoundary, /does not establish/);
   assert.ok(DIMENSIONAL_GROWTH_INTERPRETATION.sources.some((source) => /Conway and Sloane/.test(source)));
 });
