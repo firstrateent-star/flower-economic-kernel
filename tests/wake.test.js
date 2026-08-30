@@ -9,6 +9,18 @@ test('material observation changes wake Flower', () => {
   assert.equal(classifyWake({ previousObservation: before, currentObservation: after }).wake, true);
 });
 
+test('first metric-only baseline does not wake Flower', () => {
+  const baseline = { totalRuns: 2, pageViews: 8 };
+  assert.equal(materialObservationChanged(null, baseline), false);
+  assert.equal(classifyWake({ currentObservation: baseline }).wake, false);
+});
+
+test('first material baseline does wake Flower', () => {
+  const baseline = { externalUsage: 'unresolved', totalRuns: 2 };
+  assert.equal(materialObservationChanged(null, baseline), true);
+  assert.equal(classifyWake({ currentObservation: baseline }).reason, 'material_observation_change');
+});
+
 test('non-material metric churn does not wake Flower', () => {
   const before = { status: 'live', totalRuns: 13, creatorRevenue: 0 };
   const after = { status: 'live', totalRuns: 14, creatorRevenue: 0 };
