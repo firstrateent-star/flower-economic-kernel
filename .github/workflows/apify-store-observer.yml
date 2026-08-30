@@ -1,0 +1,84 @@
+name: Apify Store Observer
+
+on:
+  push:
+    branches:
+      - experiment/apify-store-observer
+    paths:
+      - '.github/workflows/apify-store-observer.yml'
+      - 'experiments/apify-store-observer/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Query public Apify Store surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          base='https://api.apify.com/v2/store?username=firstrate&limit=1000&responseFormat=full'
+          curl --fail-with-body --location --retry 3 --silent --show-error "${base}&includeUnrunnableActors=true" > evidence/all.json
+          curl --fail-with-body --location --retry 3 --silent --show-error "${base}" > evidence/runnable-default.json
+          curl --fail-with-body --location --retry 3 --silent --show-error "${base}&includeUnrunnableActors=true&allowsAgenticUsers=true" > evidence/agentic.json
+          curl --fail-with-body --location --retry 3 --silent --show-error "${base}&includeUnrunnableActors=true&allowsAgenticUsers=false" > evidence/non-agentic.json
+
+      - name: Build evidence summary
+        shell: python
+        run: |
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          targets = ['social-preview-drift-guard-api', 'google-maps-exact-match-guard']
+
+          def load(name):
+              return json.loads(Path('evidence', name).read_text())['data']['items']
+
+          all_items = load('all.json')
+          runnable = load('runnable-default.json')
+          agentic = load('agentic.json')
+          non_agentic = load('non-agentic.json')
+
+          def by_name(items):
+              return {item.get('name'): item for item in items}
+
+          maps = {
+              'all': by_name(all_items),
+              'runnableDefault': by_name(runnable),
+              'agentic': by_name(agentic),
+              'nonAgentic': by_name(non_agentic),
+          }
+
+          summary = {
+              'observedAt': datetime.now(timezone.utc).isoformat(),
+              'source': 'Apify public GET /v2/store',
+              'username': 'firstrate',
+              'targets': {},
+          }
+
+          for target in targets:
+              item = maps['all'].get(target)
+              summary['targets'][target] = {
+                  'presentInStoreAll': item is not None,
+                  'presentInRunnableDefault': target in maps['runnableDefault'],
+                  'presentInAgenticFilter': target in maps['agentic'],
+                  'presentInNonAgenticFilter': target in maps['nonAgentic'],
+                  'item': item,
+              }
+
+          Path('evidence/summary.json').write_text(json.dumps(summary, indent=2, sort_keys=True))
+          print(json.dumps(summary, indent=2, sort_keys=True))
+
+      - name: Upload observation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: apify-store-observer
+          path: evidence/
+          retention-days: 30
