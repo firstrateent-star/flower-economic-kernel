@@ -168,9 +168,9 @@ async function main() {
         value: largest.medianLatencyMs,
         unit: 'milliseconds',
         direction: 'lower',
-        evidenceVerified: true,
+        evidenceVerified: false,
         proxy: false,
-        note: 'Single-runner microbenchmark; compare cautiously because CI hardware noise can dominate small differences.',
+        note: 'Observed on a shared CI runner. Retained for trend visibility but not promotion evidence until repeated or controlled measurements establish comparability.',
       },
       accuracy: {
         value: decisions.passRate,
@@ -206,7 +206,7 @@ async function main() {
     },
     caveats: [
       'Different workloads or workload versions must not be compared as self-improvement evidence.',
-      'CI timing is noisy; large or repeated speed changes are more trustworthy than tiny deltas.',
+      'CI timing is retained as an observation but is not promotion evidence until repeated or controlled measurements make it comparable enough.',
       'Payload bytes and synthetic portfolio capacity are explicit proxies, not energy or universal complexity truth.',
       'A benchmark improvement would prove only an internal gain on this fixture; external usefulness requires separate evidence.',
     ],
