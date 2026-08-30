@@ -32,7 +32,7 @@ function normalizeDecision(result = {}) {
     actionKind,
     targetId: result.targetId ?? action?.targetId ?? null,
     rationale: result.rationale ?? result.reason ?? result.summary ?? null,
-    evidenceIds: Array.isArray(result.evidenceIds) ? [...result.evidenceIds] : [],
+    evidenceIds: Array.isArray(result.evidenceIds) ? [...result.evidenceIds].sort() : [],
     metadata: result.metadata ?? null,
   };
 }
@@ -45,6 +45,35 @@ function assertShadowSafe(decision, label) {
   if (metadata.authorize === true || metadata.execute === true || metadata.persist === true || metadata.externalWrite === true) {
     throw new Error(`${label} shadow evaluator attempted side-effectful authority metadata.`);
   }
+}
+
+function sameSet(a = [], b = []) {
+  if (a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
+}
+
+export function classifyDecisionDelta({ canonicalDecision, candidateDecision } = {}) {
+  if (!canonicalDecision || !candidateDecision) {
+    throw new Error('Decision delta classification requires canonical and candidate decisions.');
+  }
+
+  const changedAction = canonicalDecision.actionKind !== candidateDecision.actionKind;
+  const changedTarget = canonicalDecision.targetId !== candidateDecision.targetId;
+  const changedEvidenceUse = !sameSet(canonicalDecision.evidenceIds ?? [], candidateDecision.evidenceIds ?? []);
+  const discriminating = changedAction || changedTarget || changedEvidenceUse;
+
+  return {
+    discriminating,
+    disposition: discriminating ? 'OUTCOME_COMPARISON_ELIGIBLE' : 'NO_DISCRIMINATING_REPLAY',
+    changedAction,
+    changedTarget,
+    changedEvidenceUse,
+    affectedDimensions: [
+      ...(changedAction ? ['action'] : []),
+      ...(changedTarget ? ['target'] : []),
+      ...(changedEvidenceUse ? ['evidence_use'] : []),
+    ],
+  };
 }
 
 export function validateHistoricalSnapshot(snapshot = {}) {
@@ -94,15 +123,20 @@ export async function compareMethodologiesInShadow({
     throw new Error('Shadow comparison mutated the source snapshot.');
   }
 
-  const sameDecision = stableHash(canonicalDecision) === stableHash(candidateDecision);
+  const exactSameDecision = stableHash(canonicalDecision) === stableHash(candidateDecision);
+  const decisionDelta = classifyDecisionDelta({ canonicalDecision, candidateDecision });
+
   return {
     asOf: snapshot.asOf,
     snapshotHash: sourceHashBefore,
     canonicalDecision,
     candidateDecision,
-    sameDecision,
-    changedAction: canonicalDecision.actionKind !== candidateDecision.actionKind,
-    changedTarget: canonicalDecision.targetId !== candidateDecision.targetId,
+    sameDecision: exactSameDecision,
+    decisionDelta,
+    changedAction: decisionDelta.changedAction,
+    changedTarget: decisionDelta.changedTarget,
+    changedEvidenceUse: decisionDelta.changedEvidenceUse,
+    outcomeComparisonEligible: decisionDelta.discriminating,
     authorityExecuted: false,
     liveStateMutated: false,
   };
