@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.flower"
-version = "0.0.2-preflight"
+version = "0.0.3-preflight"
 
 repositories {
     mavenCentral()
@@ -26,5 +26,10 @@ java {
 intellijPlatform {
     pluginConfiguration {
         ideaVersion { sinceBuild = "261" }
+    }
+    pluginVerification {
+        ides {
+            current()
+        }
     }
 }
