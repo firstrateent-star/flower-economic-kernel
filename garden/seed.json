@@ -2,16 +2,20 @@
   "schemaVersion": 1,
   "id": "garden_economic_root_v0",
   "createdAt": "2026-08-28T00:00:00.000Z",
-  "updatedAt": "2026-08-29T02:17:14.771Z",
+  "updatedAt": "2026-08-30T06:30:00.000Z",
   "center": {
-    "rootGoal": "Increase the human Center-holder's sovereign capacity by cultivating low-maintenance economic Fruit whose accumulated money, knowledge, infrastructure, and distribution lower the cost of producing subsequent Fruit.",
-    "direction": "Discover, cheaply falsify, and cultivate machine-mediated internet assets that can acquire, fulfill, and monetize with minimal continuing human labor.",
+    "rootGoal": "Increase the human Center-holder's sovereign capacity by cultivating low-maintenance economic Fruit whose accumulated money, knowledge, infrastructure, capability, and distribution lower the cost of producing subsequent Fruit.",
+    "direction": "Discover or reactivate, cheaply falsify, and cultivate machine-mediated internet capabilities that can acquire, fulfill, and monetize with minimal continuing human labor; search the existing corpus before inventing new organisms.",
     "invariants": [
       "Reality contact over persuasive narrative.",
       "No epistemic promotion without accountable evidence.",
       "The organism exists to nourish the human Center-holder; the human does not exist to nourish the organism.",
       "Prefer passive discoverability and automatic fulfillment.",
       "Kill weak branches cheaply before building.",
+      "Buyer-context demand evidence does not automatically transfer across humans, enterprises, developers, and autonomous agents.",
+      "Independent repeat use and settled value outrank raw transaction, listing, download, or claim counts.",
+      "Human identity, KYC, legal, publication, and relationship actions compete for scarce Center-holder attention rather than triggering automatically.",
+      "Concrete artifact truth outranks stale planning state.",
       "No debt, hidden obligations, human impersonation, or unauthorized public exposure."
     ],
     "autonomy": {
@@ -34,13 +38,18 @@
     {"id":"soil_structural_complementarity","principle":"Prefer problems a dominant upstream product is structurally unlikely to solve because the resolution sits outside its core job.","scope":"economic opportunity selection","status":"supported","derivedFrom":["historical_flower_av_watch"]},
     {"id":"soil_resolution_complexity_floor","principle":"Reject candidates whose resolution collapses to a trivial filter unless another moat such as distribution makes trivial implementation irrelevant.","scope":"economic opportunity selection","status":"supported","derivedFrom":["historical_flower_av_watch"]},
     {"id":"soil_passive_discoverability","principle":"A Fruit for this Garden should attach to an existing nutrient channel where buyers or machines already search; repeated human outreach is a passivity failure.","scope":"distribution","status":"supported","derivedFrom":["historical_flower_economic_root"]},
-    {"id":"soil_reproduction","principle":"Economic reproduction occurs only when later Fruit inherit money, knowledge, infrastructure, code, distribution, or market evidence that lowers the human/capital/uncertainty cost of the next generation.","scope":"portfolio reproduction","status":"supported","derivedFrom":["historical_flower_economic_root"]}
+    {"id":"soil_reproduction","principle":"Economic reproduction occurs only when later Fruit inherit money, knowledge, infrastructure, code, distribution, or market evidence that lowers the human/capital/uncertainty cost of the next generation.","scope":"portfolio reproduction","status":"supported","derivedFrom":["historical_flower_economic_root"]},
+    {"id":"soil_corpus_first","principle":"A newly discovered market, payment rail, or distribution habitat does not justify a new build until existing verified capabilities have been scanned for a fit. Prefer reactivation and reuse when they answer the same transformation.","scope":"opportunity generation and distribution","status":"supported","derivedFrom":["corpus_first_distribution_leverage_2026_08_30"]},
+    {"id":"soil_buyer_context","principle":"Problem reality can transfer across buyer types, but willingness-to-pay cannot. Human SaaS demand, developer marketplace demand, enterprise procurement, and autonomous-agent micropayments require separate demand evidence.","scope":"market validation","status":"supported","derivedFrom":["x402_vs_human_saas_reconciliation_2026_08_30"]},
+    {"id":"soil_independent_demand","principle":"Measure demand using independent payer/user breadth, repeat use, settled value, recency, and source-of-truth reconciliation. Raw calls, downloads, listings, or advertised money are insufficient alone.","scope":"market validation","status":"supported","derivedFrom":["x402_concentration_reconciliation_2026_08_30"]},
+    {"id":"soil_human_actuation_portfolio","principle":"Human-only boundary actions compete for scarce Center-holder attention. Reaching KYC, legal, public-release, identity, or outreach membranes does not automatically earn an interruption.","scope":"governance and activation","status":"supported","derivedFrom":["human_actuation_portfolio_2026_08_30"]},
+    {"id":"soil_artifact_truth","principle":"Executable artifacts, CI results, settlement receipts, and other concrete evidence outrank older manifests or planning narratives when state conflicts.","scope":"state reconciliation","status":"supported","derivedFrom":["social_preview_distribution_reconciliation_2026_08_30"]}
   ],
   "fruits": [
     {"id":"fruit_exact_match_guard","name":"Google Maps Exact Match Guard","status":"live","platform":"Apify","repository":"firstrateent-star/google-maps-exact-match-guard","monthlyRevenueUsd":null,"maintenanceBurden":"unknown","inheritance":["Fail-closed trust-adapter pattern","Apify Actor deployment familiarity","Google Maps identity-drift market evidence","Machine-to-machine metered-delivery pattern"],"notes":"Generation 0/1 reference Fruit. Leave untouched until external usage evidence warrants change."}
   ],
   "opportunities": [
-    {"id":"opp_maps_website_pointer_guard","name":"Google Maps Business → Website Identity Guard","status":"needs_test","thesis":"A correct Google Maps business entity can contain a stale, wrong, parent, or unrelated website pointer; downstream contact enrichment can then work perfectly on the wrong entity.","moneyFlow":"Google Maps scraping and contact enrichment workflows","buyer":"lead-data, enrichment, and automation users","nutrientChannel":"Apify / API workflows using Google Maps data","passivity":"Potentially high if metered machine-to-machine verification","autonomyCompatibility":"Potentially high","reproductivePotential":"Could branch into website/contact attribution trust adapters","evidence":[],"counterEvidence":[],"sources":[],"ancestry":["Trusted Pointer Drift","Exact Match Guard"],"lastRationale":"First live falsification concluded the thesis is plausible but not yet economically demonstrated; external evidence is still required.","epistemicNote":"Model reasoning only. Preserved as needs_test, not supported."}
+    {"id":"opp_maps_website_pointer_guard","name":"Google Maps Business → Website Identity Guard","status":"needs_test","thesis":"A correct Google Maps business entity can contain a stale, wrong, parent, or unrelated website pointer; downstream contact enrichment can then work perfectly on the wrong entity.","moneyFlow":"Google Maps scraping and contact enrichment workflows","buyer":"lead-data, enrichment, and automation users","buyerType":"automation_and_data_workflows","nutrientChannel":"Apify / API workflows using Google Maps data","passivity":"Potentially high if metered machine-to-machine verification","autonomyCompatibility":"Potentially high","reproductivePotential":"Could branch into website/contact attribution trust adapters","reusableCapability":"Maps-to-website identity comparison with fail-closed mismatch classification","buyerContextEvidence":"Place-detail and enrichment APIs show current machine-paid activity, but direct willingness-to-pay for a pointer-integrity guard remains unresolved.","independentPayerBreadth":"unresolved_for_guard","repeatPaidUse":"unresolved_for_guard","settledValueEvidence":"unresolved_for_guard","corpusMatch":"Direct deterministic Maps→website sampler already exists.","humanBoundaryRequired":false,"freeEvidenceSaturated":false,"evidence":[],"counterEvidence":[],"sources":[],"ancestry":["Trusted Pointer Drift","Exact Match Guard"],"lastRationale":"First live falsification concluded the thesis is plausible but not yet economically demonstrated; external evidence is still required.","epistemicNote":"Model reasoning only. Preserved as needs_test, not supported."}
   ],
   "experiments": [],
   "events": [],
