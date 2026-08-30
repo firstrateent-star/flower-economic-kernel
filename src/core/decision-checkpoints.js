@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { FLOWER_METHODOLOGY_VERSION } from './methodology-core.js';
+import { nowIso } from './utils.js';
 
 const CONSEQUENTIAL_PRESSURES = new Set([
   'HUMAN',
@@ -30,6 +31,10 @@ function clone(value) {
   return structuredClone(value);
 }
 
+function validTime(value) {
+  return typeof value === 'string' && Number.isFinite(Date.parse(value));
+}
+
 export function shouldCaptureDecisionCheckpoint({ pressure, costClass = 'free' } = {}) {
   if (!pressure?.type) return false;
   if (pressure.type === 'HUMAN') return true;
@@ -41,19 +46,30 @@ export function createDecisionCheckpoint({
   garden,
   pressure,
   costClass = 'free',
-  asOf,
+  asOf = null,
   methodologyVersion = FLOWER_METHODOLOGY_VERSION,
   reason = null,
+  clock = nowIso,
 } = {}) {
   if (!garden || typeof garden !== 'object') throw new Error('Decision checkpoint requires a Garden snapshot.');
   if (!pressure?.type) throw new Error('Decision checkpoint requires the pressure being decided.');
-  if (!asOf || Number.isNaN(Date.parse(asOf))) throw new Error('Decision checkpoint requires an explicit valid asOf timestamp.');
+  if (typeof clock !== 'function') throw new Error('Decision checkpoint clock must be a function.');
+
+  const capturedAt = clock();
+  if (!validTime(capturedAt)) throw new Error('Decision checkpoint clock returned an invalid timestamp.');
+  const evidenceCutoff = asOf ?? capturedAt;
+  if (!validTime(evidenceCutoff)) throw new Error('Decision checkpoint requires a valid asOf evidence cutoff.');
+  if (Date.parse(evidenceCutoff) > Date.parse(capturedAt)) {
+    throw new Error('Decision checkpoint asOf cannot be later than trusted capturedAt.');
+  }
 
   const snapshot = clone(garden);
   const snapshotHash = sha256(stableJson(snapshot));
   const identity = {
-    schemaVersion: 1,
-    asOf,
+    schemaVersion: 2,
+    capturedAt,
+    captureClock: 'runtime_wall_clock',
+    asOf: evidenceCutoff,
     methodologyVersion,
     pressure: clone(pressure),
     costClass,
@@ -72,11 +88,17 @@ export function createDecisionCheckpoint({
 
 export function verifyDecisionCheckpoint(checkpoint) {
   if (!checkpoint?.snapshot || !checkpoint?.checkpointHash) return { ok: false, reason: 'missing_checkpoint_material' };
+  if (!validTime(checkpoint.capturedAt)) return { ok: false, reason: 'missing_trusted_capture_time' };
+  if (!validTime(checkpoint.asOf)) return { ok: false, reason: 'invalid_evidence_cutoff' };
+  if (Date.parse(checkpoint.asOf) > Date.parse(checkpoint.capturedAt)) return { ok: false, reason: 'future_evidence_cutoff' };
+
   const snapshotHash = sha256(stableJson(checkpoint.snapshot));
   if (snapshotHash !== checkpoint.snapshotHash) return { ok: false, reason: 'snapshot_hash_mismatch' };
 
   const identity = {
     schemaVersion: checkpoint.schemaVersion,
+    capturedAt: checkpoint.capturedAt,
+    captureClock: checkpoint.captureClock,
     asOf: checkpoint.asOf,
     methodologyVersion: checkpoint.methodologyVersion,
     pressure: checkpoint.pressure,
