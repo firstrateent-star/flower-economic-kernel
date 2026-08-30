@@ -18,10 +18,8 @@ dependencies {
         intellijIdea("2026.1.4")
         bundledModule("com.intellij.modules.vcs")
         bundledPlugin("com.intellij.java")
-        testFrameworks(
-            TestFrameworkType.Platform,
-            TestFrameworkType.Plugin.Java,
-        )
+        testFramework(TestFrameworkType.Platform)
+        testFramework(TestFrameworkType.Plugin.Java)
     }
     testImplementation("junit:junit:4.13.2")
 }
