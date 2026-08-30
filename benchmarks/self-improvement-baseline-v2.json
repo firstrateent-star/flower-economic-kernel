@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "baselineName": "Flower self-improvement observatory v2 canonical baseline",
+  "sourceWorkflowRun": 33337659735,
+  "sourceRevision": "aa6daf00d780dd0e1e342679b2100f85f8750af1",
+  "workloadKey": "kernel_targeted_projection_and_pressure_fixture",
+  "workloadVersion": 2,
+  "implementationKey": "causal_9a1c84152303e595f5018057",
+  "measuredAt": "2026-08-30T21:54:01.606Z",
+  "dimensions": {
+    "computeInputProxy": {
+      "value": 23559,
+      "unit": "projected-json-bytes",
+      "direction": "lower",
+      "evidenceVerified": true,
+      "proxy": true,
+      "note": "Payload bytes are a compute/input proxy, not a physical-energy measurement."
+    },
+    "speed": {
+      "value": 29.380503999999746,
+      "unit": "milliseconds",
+      "direction": "lower",
+      "evidenceVerified": false,
+      "proxy": false,
+      "note": "Shared-CI timing baseline is retained for trend visibility but is not promotion evidence."
+    },
+    "accuracy": {
+      "value": 1,
+      "unit": "fixture-pass-rate",
+      "direction": "higher",
+      "evidenceVerified": true,
+      "proxy": false,
+      "note": "Task-specific deterministic pressure-routing fixture accuracy."
+    },
+    "complexityCapacity": {
+      "value": 5000,
+      "unit": "synthetic-portfolio-items-under-30kb-targeted-view",
+      "direction": "higher",
+      "evidenceVerified": true,
+      "proxy": true,
+      "note": "Synthetic sparse-activation capacity witness; not universal complexity truth."
+    }
+  },
+  "decisionWitness": {
+    "verified": true,
+    "taskKey": "pressure-routing-fixture-v2",
+    "resultFingerprint": "seed routes to FALSIFY:FALSIFY|unassessed verified internal gain routes to TRANSFER:TRANSFER",
+    "qualityScore": 1,
+    "qualityDirection": "higher"
+  },
+  "evidenceSources": [
+    "GitHub Actions Flower Self-Improvement Observatory run 33337659735"
+  ],
+  "caveats": [
+    "This baseline is valid only for the same workloadKey and workloadVersion.",
+    "Speed is observational and cannot by itself promote an improvement on shared CI runners.",
+    "Payload bytes and complexity capacity are declared proxies.",
+    "Internal improvement evidence does not establish external usefulness or economic value."
+  ]
+}
