@@ -152,6 +152,15 @@ function selfAudit(episodes, stats) {
   if (topMechanism && ratio(topMechanism.appliedEpisodeCount, episodes.length) > 0.8) risks.push('ontology_lock: one applied mechanism labels more than 80% of episodes and may be overfitting the history.');
   if (labels.length < 4) risks.push('ontology_underfit: mechanism vocabulary is too small to represent materially different learning moves.');
 
+  let metaLearningMaturity = 'historical_candidate_needs_better_counterpressure';
+  if (negativeControls.length >= 2 && explicitRoles.length === episodes.length) {
+    metaLearningMaturity = causalProof.length > 0
+      ? externallyVerified.length > 0
+        ? 'prospective_internal_and_external_evidence_requires_replication'
+        : 'prospective_internal_evidence_ready_for_cross_domain_transfer'
+      : 'counterpressured_historical_candidate_ready_for_prospective_test';
+  }
+
   return {
     episodeCount: episodes.length,
     negativeControlCount: negativeControls.length,
@@ -165,9 +174,32 @@ function selfAudit(episodes, stats) {
     externalValueVerifiedEpisodeCount: externallyVerified.length,
     mechanismLabelCount: labels.length,
     risks,
-    metaLearningMaturity: negativeControls.length >= 2 && explicitRoles.length === episodes.length
-      ? 'counterpressured_historical_candidate_ready_for_prospective_test'
-      : 'historical_candidate_needs_better_counterpressure',
+    metaLearningMaturity,
+  };
+}
+
+function nextMetaPressure(audit) {
+  if (audit.negativeControlCount < 2 || audit.explicitMechanismRoleCoverage < 1) {
+    return {
+      type: 'IMPROVE_META_EVIDENCE_MODEL',
+      why: 'Learning roles or counterexamples are still underspecified; improve the episode model before trusting recurrence rankings.',
+    };
+  }
+  if (audit.prospectiveCausalEpisodeCount === 0) {
+    return {
+      type: 'PROSPECTIVE_META_TEST',
+      why: 'Counterpressured history is sufficient for one bounded prospective test of a candidate meta-mechanism. Success may update the meta-model but cannot by itself prove broad flourishing.',
+    };
+  }
+  if (audit.externalValueVerifiedEpisodeCount === 0) {
+    return {
+      type: 'CROSS_DOMAIN_TRANSFER_TEST',
+      why: 'A prospective internal intervention has improved Flower on a comparable workload. The next uncertainty is transfer: test the bounded transformation in a structurally different external system with an independent value and flourishing witness before generalizing further.',
+    };
+  }
+  return {
+    type: 'REPLICATE_AND_GENERALIZE',
+    why: 'Internal and external evidence now exist, but broad flourishing requires replication across structurally different contexts, counterexamples, and displaced-cost checks before stronger generalization.',
   };
 }
 
@@ -192,10 +224,13 @@ export function analyzeMetaLearningEpisodes(episodes = []) {
   const violations = violationStats(episodes);
   const audit = selfAudit(episodes, stats);
   const rules = candidateRules(stats);
+  const prospective = audit.prospectiveCausalEpisodeCount > 0;
 
   return {
-    schemaVersion: 2,
-    epistemicStatus: 'counterpressured_historical_meta_learning_not_causal_proof',
+    schemaVersion: 3,
+    epistemicStatus: prospective
+      ? 'counterpressured_meta_learning_with_prospective_internal_evidence_not_external_proof'
+      : 'counterpressured_historical_meta_learning_not_causal_proof',
     episodeCount: episodes.length,
     coreHypothesis: 'Flower tends to improve when it first preserves the real contradiction or repeated waste, then differentiates only causal states that can change a decision while compressing semantically equivalent states, builds a decision-relevant witness, tests the intervention comparably, and reconciles the result into executable behavior. Differentiation or instrumentation alone is insufficient when evidence provenance, comparability, or complexity tax is missing.',
     operatingCandidate: [
@@ -214,14 +249,6 @@ export function analyzeMetaLearningEpisodes(episodes = []) {
     candidateRules: rules,
     flourishingVectorSummary: classifyFlourishing(episodes),
     selfAudit: audit,
-    nextPressure: audit.negativeControlCount < 2 || audit.explicitMechanismRoleCoverage < 1
-      ? {
-          type: 'IMPROVE_META_EVIDENCE_MODEL',
-          why: 'Historical learning roles or counterexamples are still underspecified; improve the episode model before trusting recurrence rankings.',
-        }
-      : {
-          type: 'PROSPECTIVE_META_TEST',
-          why: 'Counterpressured history is sufficient for one bounded prospective test of a candidate meta-mechanism. Success may update the meta-model but cannot by itself prove broad flourishing.',
-        },
+    nextPressure: nextMetaPressure(audit),
   };
 }
