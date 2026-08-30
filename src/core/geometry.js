@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 export const FRUIT_OF_LIFE_CENTERS = [
   'failure_reality',
   'resolution_accessibility',
@@ -147,7 +149,50 @@ function coverageMetrics(centers) {
   return { earnedEvidenceCenters, resolvedCenters };
 }
 
+function geometryInputSignature(garden) {
+  // Geometry is a derived projection. Hash only the fields that can affect that
+  // projection so trace/timestamp/telemetry churn does not force an O(n^2) rebuild.
+  const input = {
+    fruits: (garden.fruits ?? []).map((fruit) => ({
+      id: fruit.id,
+      name: fruit.name,
+      status: fruit.status,
+      failureArchetype: fruit.failureArchetype ?? null,
+      reusableCapability: fruit.reusableCapability ?? null,
+      inheritedInfrastructure: fruit.inheritedInfrastructure ?? null,
+      platform: fruit.platform ?? null,
+      monthlyRevenueUsd: fruit.monthlyRevenueUsd ?? null,
+      inheritance: fruit.inheritance ?? [],
+    })),
+    opportunities: (garden.opportunities ?? []).map((opp) => ({
+      id: opp.id,
+      name: opp.name,
+      status: opp.status,
+      thesis: opp.thesis ?? null,
+      failureArchetype: opp.failureArchetype ?? null,
+      reusableCapability: opp.reusableCapability ?? null,
+      inheritedInfrastructure: opp.inheritedInfrastructure ?? null,
+      nutrientChannel: opp.nutrientChannel ?? null,
+      passivity: opp.passivity ?? null,
+      autonomyCompatibility: opp.autonomyCompatibility ?? null,
+      realityAccess: opp.realityAccess ?? null,
+      reproductivePotential: opp.reproductivePotential ?? null,
+    })),
+    supportingExperiments: (garden.experiments ?? []).map((exp) => ({
+      opportunityId: exp.opportunityId ?? null,
+      status: exp.status ?? null,
+      verdict: exp.result?.verdict ?? null,
+      validationDimension: exp.validationDimension ?? null,
+    })),
+  };
+
+  return createHash('sha256').update(JSON.stringify(input)).digest('hex');
+}
+
 export function refreshGeometry(garden) {
+  const inputSignature = geometryInputSignature(garden);
+  if (garden.geometry?.inputSignature === inputSignature) return garden.geometry;
+
   const centers = [];
 
   for (const fruit of garden.fruits ?? []) {
@@ -227,7 +272,8 @@ export function refreshGeometry(garden) {
   if (edges.length > 0) stage = 'metatrons_cube';
 
   garden.geometry = {
-    version: 3,
+    version: 4,
+    inputSignature,
     stage,
     metaphorNote: 'Sacred-geometry language is used as a functional design metaphor: centers preserve evidence and agency; edges represent reusable relationships. It is not treated as empirical proof by itself.',
     fruitOfLifeCenters: FRUIT_OF_LIFE_CENTERS,
