@@ -3,8 +3,33 @@ import assert from 'node:assert/strict';
 import seed from './fixtures/test-seed.js';
 import { classifyPressure } from '../src/core/pressure.js';
 
-test('static rank wins when eligible human actions have no market-return difference', () => {
+function afterFreshChallenge(garden) {
+  garden.status ??= {};
+  garden.status.lastPressure = { type: 'EXPAND' };
+  return garden;
+}
+
+test('a fresh heterogeneous challenger pass precedes an unchosen human boundary', () => {
   const garden = structuredClone(seed);
+  garden.opportunities = [];
+  garden.experiments = [];
+  garden.events = [];
+  garden.approvals = [];
+  garden.status.lastPressure = { type: 'STILLNESS' };
+  garden.fruits = [
+    { id: 'fruit_rank_1', name: 'Rank One', status: 'market_ready_private', marketTruth: 'unresolved' },
+  ];
+  garden.humanActuationQueue = [
+    { rank: 1, organismId: 'fruit_rank_1', state: 'awaiting_explicit_authorization', why: 'Explore market truth.' },
+  ];
+
+  const pressure = classifyPressure(garden);
+  assert.equal(pressure.type, 'EXPAND');
+  assert.equal(pressure.targetId, null);
+});
+
+test('static rank wins after fresh challenger pressure is exhausted and market-return evidence is tied', () => {
+  const garden = afterFreshChallenge(structuredClone(seed));
   garden.opportunities = [];
   garden.experiments = [];
   garden.events = [];
@@ -21,8 +46,8 @@ test('static rank wins when eligible human actions have no market-return differe
   assert.equal(classifyPressure(garden).targetId, 'fruit_rank_1');
 });
 
-test('verified independent use can outrank an unproven lower-activation-distance branch', () => {
-  const garden = structuredClone(seed);
+test('verified independent use can outrank an unproven lower-activation-distance branch after challenger pressure is exhausted', () => {
+  const garden = afterFreshChallenge(structuredClone(seed));
   garden.opportunities = [];
   garden.experiments = [];
   garden.events = [];
@@ -40,7 +65,7 @@ test('verified independent use can outrank an unproven lower-activation-distance
 });
 
 test('actual revenue/repeat return outranks independent use while static rank breaks ties', () => {
-  const garden = structuredClone(seed);
+  const garden = afterFreshChallenge(structuredClone(seed));
   garden.opportunities = [];
   garden.experiments = [];
   garden.events = [];
@@ -58,7 +83,7 @@ test('actual revenue/repeat return outranks independent use while static rank br
 });
 
 test('agentic eligibility or raw platform readiness alone does not change the human ranking', () => {
-  const garden = structuredClone(seed);
+  const garden = afterFreshChallenge(structuredClone(seed));
   garden.opportunities = [];
   garden.experiments = [];
   garden.events = [];
