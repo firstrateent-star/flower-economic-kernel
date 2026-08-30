@@ -1,0 +1,49 @@
+name: X402 Market Gradient Shadow Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/x402-market-gradient-scan.mjs'
+      - '.github/workflows/x402-market-gradient-scan.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run zero-spend market gradient probe
+        run: node scripts/x402-market-gradient-scan.mjs | tee /tmp/x402-gradient-output.log
+      - name: Validate report invariants
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('reports/x402-market-gradient-latest.json', 'utf8'));
+          if (report.epistemicStatus !== 'observation_only') throw new Error('Shadow probe must remain observation_only.');
+          if (report.publicPromiseCreated !== false) throw new Error('Shadow probe may not create a public promise.');
+          if (Number(report.spendUsd) !== 0) throw new Error('Shadow probe must remain zero-spend.');
+          if (report.sources?.status?.leaderboard !== 'ok') throw new Error('Leaderboard measurement is required.');
+          if (!Array.isArray(report.topRows) || report.topRows.length === 0) throw new Error('Expected at least one normalized market row.');
+          console.log(JSON.stringify({
+            normalizedSellerRows: report.leaderboardSummary?.normalizedSellerRows,
+            top1RevenueShare: report.leaderboardSummary?.top1RevenueShare,
+            top5RevenueShare: report.leaderboardSummary?.top5RevenueShare,
+            observedStats: report.gradient?.observedStats,
+            currentDecision: report.gradient?.currentDecision,
+          }, null, 2));
+          NODE
+      - name: Upload gradient report
+        uses: actions/upload-artifact@v4
+        with:
+          name: x402-market-gradient-shadow
+          path: reports/x402-market-gradient-latest.json
+          if-no-files-found: error
+          retention-days: 7
