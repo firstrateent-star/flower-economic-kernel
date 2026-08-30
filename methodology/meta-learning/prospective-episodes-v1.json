@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "epistemicStatus": "prospective_comparable_internal_meta_learning_evidence",
+  "episodes": [
+    {
+      "id": "meta_prospective_indexed_activation_v1",
+      "observedTrigger": "The v3 Observatory measured 10,000 neighborhood-resolution record visits on a warmed repeated targeted-cognition workload despite a sparse 23,559-byte output view.",
+      "decisionRelevantMove": "Build one semantic family index over stable derived geometry and reuse it for repeated target-neighborhood activation instead of rescanning all centers twice.",
+      "mechanismsApplied": ["semantic_equivalence_compression", "sparse_activation_work", "instrument_before_claim"],
+      "mechanismsViolated": [],
+      "mechanismsInferred": ["causal_differentiation", "causal_identity"],
+      "domains": ["reasoner_activation", "compute_efficiency", "self_improvement"],
+      "evidenceStrength": "measured",
+      "causalEvidence": "prospective_comparable_intervention",
+      "evidence": [
+        "benchmarks/self-improvement-baseline-v3.json",
+        "observations/self-improvement-ledger/kernel_targeted_projection_and_pressure_fixture__causal_575b2b39e6c94a944ae07e7d.json",
+        "github-actions-run:33338940702",
+        "github-actions-run:33339076309"
+      ],
+      "observedOutcome": "On the same 5,000-center workload, warmed neighborhood-resolution record visits fell from 10,000 to 0; projected payload remained 23,559 bytes; declared routing accuracy remained 1.0; complexity-capacity witness remained 5,000; no verified regression was observed; the reconciled whole-kernel CI passed.",
+      "outcomeState": "measured_improvement",
+      "externalValueVerified": false,
+      "humanEpistemicCorrection": false,
+      "flourishingEffects": {
+        "agency": "preserved",
+        "truth": "positive",
+        "capability": "preserved",
+        "resourceEfficiency": "positive_internal_proxy",
+        "optionalities": "preserved",
+        "regeneration": "positive_internal",
+        "externalWellbeing": "unknown",
+        "displacedCosts": "cold_index_build_cost_preserved_once_per_geometry",
+        "harm": "no_known_change"
+      },
+      "boundaryConditions": [
+        "The verified gain is amortized on repeated lookups after a one-pass cold index build.",
+        "The metric covers neighborhood-resolution record visits, not total reasoner work or physical energy.",
+        "Normal runtime safety depends on derived geometry replacing its centers array when geometry-relevant truth changes; tests verify array replacement invalidates the cache.",
+        "External usefulness is unverified."
+      ],
+      "falsifier": "On the same workload, indexed activation loses a required semantic neighbor, fails cache invalidation, increases another verified dimension materially, or whole-kernel behavior regresses."
+    }
+  ]
+}
