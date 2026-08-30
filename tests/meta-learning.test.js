@@ -3,10 +3,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { analyzeMetaLearningEpisodes } from '../src/core/meta-learning.js';
 
-const source = JSON.parse(await fs.readFile(new URL('../methodology/meta-learning/episodes-v2.json', import.meta.url), 'utf8'));
+const historical = JSON.parse(await fs.readFile(new URL('../methodology/meta-learning/episodes-v2.json', import.meta.url), 'utf8'));
+const prospective = JSON.parse(await fs.readFile(new URL('../methodology/meta-learning/prospective-episodes-v1.json', import.meta.url), 'utf8'));
+const episodes = [...historical.episodes, ...prospective.episodes];
 
 function analysis() {
-  return analyzeMetaLearningEpisodes(source.episodes);
+  return analyzeMetaLearningEpisodes(episodes);
 }
 
 test('meta-learning distinguishes applied mechanisms from violated or inferred mechanisms', () => {
@@ -27,28 +29,41 @@ test('differentiation and equivalence remain complementary rather than universal
   assert.match(result.coreHypothesis, /semantically equivalent states/);
 });
 
-test('negative controls remove naive survivor-bias clearance but not causal caution', () => {
+test('prospective internal evidence removes the causality-gap pressure but preserves external-value caution', () => {
   const result = analysis();
   assert.ok(result.selfAudit.negativeControlCount >= 2);
   assert.equal(result.selfAudit.risks.some((risk) => risk.startsWith('survivor_bias')), false);
-  assert.ok(result.selfAudit.risks.some((risk) => risk.startsWith('causality_gap')));
-  assert.equal(result.nextPressure.type, 'PROSPECTIVE_META_TEST');
+  assert.equal(result.selfAudit.prospectiveCausalEpisodeCount, 1);
+  assert.equal(result.selfAudit.risks.some((risk) => risk.startsWith('causality_gap')), false);
+  assert.ok(result.selfAudit.risks.some((risk) => risk.startsWith('external_value_gap')));
+  assert.equal(result.selfAudit.externalValueVerifiedEpisodeCount, 0);
+  assert.equal(result.selfAudit.metaLearningMaturity, 'prospective_internal_evidence_ready_for_cross_domain_transfer');
+  assert.equal(result.nextPressure.type, 'CROSS_DOMAIN_TRANSFER_TEST');
 });
 
-test('historical recurrence may authorize one prospective test but never self-promotes canonically', () => {
+test('historical recurrence plus one prospective win still never self-promotes canonically', () => {
   const result = analysis();
   assert.ok(result.candidateRules.some((rule) => rule.eligibleForProspectiveTest));
   assert.ok(result.candidateRules.every((rule) => rule.eligibleForCanonicalPromotion === false));
 });
 
-test('direct negative evidence is preserved as a boundary condition for a recurring mechanism', () => {
+test('direct negative evidence remains a boundary condition after a prospective success', () => {
   const result = analysis();
   const differentiation = result.candidateRules.find((rule) => rule.mechanism === 'causal_differentiation');
   assert.ok(differentiation.directNegativeEpisodes.length > 0);
   assert.match(differentiation.interpretation, /boundary condition/);
 });
 
-test('flourishing remains vector-valued and cannot be manufactured from internal history', () => {
+test('prospective episode preserves the scope and boundary conditions of the measured improvement', () => {
+  const episode = prospective.episodes.find((item) => item.id === 'meta_prospective_indexed_activation_v1');
+  assert.equal(episode.causalEvidence, 'prospective_comparable_intervention');
+  assert.equal(episode.outcomeState, 'measured_improvement');
+  assert.equal(episode.externalValueVerified, false);
+  assert.ok(episode.boundaryConditions.some((item) => /amortized/i.test(item)));
+  assert.ok(episode.boundaryConditions.some((item) => /External usefulness is unverified/i.test(item)));
+});
+
+test('flourishing remains vector-valued and cannot be manufactured from internal success', () => {
   const result = analysis();
   assert.ok(result.flourishingVectorSummary.truth);
   assert.ok(result.flourishingVectorSummary.agency);
@@ -58,11 +73,11 @@ test('flourishing remains vector-valued and cannot be manufactured from internal
 });
 
 test('episodes require falsifiers and explicit causal-role evidence', () => {
-  const malformed = structuredClone(source.episodes);
+  const malformed = structuredClone(episodes);
   delete malformed[0].falsifier;
   assert.throws(() => analyzeMetaLearningEpisodes(malformed), /requires falsifier/);
 
-  const roleless = structuredClone(source.episodes);
+  const roleless = structuredClone(episodes);
   roleless[0].mechanismsApplied = [];
   roleless[0].mechanismsViolated = [];
   roleless[0].mechanismsInferred = [];
