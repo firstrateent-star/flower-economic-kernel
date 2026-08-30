@@ -1,0 +1,55 @@
+name: Flower Self-Improvement Observatory
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/core/**'
+      - 'src/reasoners/**'
+      - 'scripts/self-improvement-observatory.mjs'
+      - 'tests/**'
+      - '.github/workflows/self-improvement-observatory.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Measure Flower on stable workload
+        env:
+          FLOWER_IMPLEMENTATION_KEY: ${{ github.sha }}
+        run: node scripts/self-improvement-observatory.mjs | tee /tmp/flower-self-observatory.log
+      - name: Validate epistemic invariants
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('reports/self-improvement-observatory-latest.json', 'utf8'));
+          if (report.epistemicStatus !== 'observation_only') throw new Error('Observatory must remain observation_only.');
+          if (report.physicalEnergyMeasured !== false) throw new Error('Payload proxy may not masquerade as physical energy measurement.');
+          if (report.currentClaims?.selfImprovementObserved !== false) throw new Error('A single observation may not claim self-improvement.');
+          if (report.currentClaims?.externalValueObserved !== false) throw new Error('Internal benchmark may not claim external value.');
+          if (report.decisionFixtures?.passRate !== 1) throw new Error('Declared pressure-routing fixtures must pass.');
+          if (Number(report.dimensions?.complexityCapacity?.value ?? 0) < 5000) throw new Error('Targeted sparse activation failed the declared 5,000-item capacity witness.');
+          const largest = report.projections?.at(-1);
+          if (!largest || largest.projectedOpportunityCount !== 1 || !largest.targetPreserved) throw new Error('Targeted reasoner projection leaked unrelated opportunities or lost its target.');
+          console.log(JSON.stringify({
+            implementationKey: report.implementationKey,
+            workloadKey: report.workloadKey,
+            dimensions: report.dimensions,
+            decisionWitness: report.decisionWitness,
+          }, null, 2));
+          NODE
+      - name: Upload observatory report
+        uses: actions/upload-artifact@v4
+        with:
+          name: flower-self-improvement-observatory
+          path: reports/self-improvement-observatory-latest.json
+          if-no-files-found: error
+          retention-days: 14
