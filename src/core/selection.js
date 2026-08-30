@@ -77,7 +77,25 @@ export async function runSelection({ garden, reasoner }) {
     name: x.name,
     status: x.status,
     thesis: x.thesis,
+    economicHabitat: x.economicHabitat ?? null,
+    moneyFlow: x.moneyFlow ?? null,
+    buyer: x.buyer ?? null,
     nutrientChannel: x.nutrientChannel,
+
+    // integrated-v4 regenerative-loop hypotheses. These fields describe the proposed
+    // path but do not self-verify value, ownership, attribution, costs, or surplus.
+    externalValueHypothesis: x.externalValueHypothesis ?? null,
+    externalValueMeasure: x.externalValueMeasure ?? null,
+    valueCapturePath: x.valueCapturePath ?? null,
+    ownershipPath: x.ownershipPath ?? null,
+    lifecycleCostModel: x.lifecycleCostModel ?? null,
+    reinvestmentPath: x.reinvestmentPath ?? null,
+    timeToFirstTruth: x.timeToFirstTruth ?? null,
+    humanBoundary: x.humanBoundary ?? null,
+    downstreamObligation: x.downstreamObligation ?? null,
+    antiGoodhartRisk: x.antiGoodhartRisk ?? null,
+    alternativesConsidered: x.alternativesConsidered ?? [],
+
     passivity: x.passivity,
     autonomyCompatibility: x.autonomyCompatibility,
     reproductivePotential: x.reproductivePotential,
@@ -89,8 +107,6 @@ export async function runSelection({ garden, reasoner }) {
     lastExperimentFinding: x.lastExperimentFinding ?? null,
     validationGate: x.validationGate ?? null,
 
-    // integrated-v3 terminal-governance fields. Missing values remain unknown; they are
-    // not silently inferred from older passivity/autonomy prose.
     terminalEvidence: x.terminalEvidence ?? x.successSignal ?? null,
     demandEvidence: x.demandEvidence ?? null,
     demandAccess: x.demandAccess ?? null,
@@ -134,30 +150,34 @@ export async function runSelection({ garden, reasoner }) {
     operation: 'SELECT',
     garden,
     target,
-    prompt: `Allocate the next reality-test breath among these surviving siblings. The current champion has no ownership right over future attention; every selection is champion-versus-challenger allocation under the Center-holder's terminal objective. Choose the candidate whose next materially different executable probe has the highest expected terminal-value or decision-changing yield per scarce resource. Preserve longer-horizon exploration, but do not let novelty, passivity, automation purity, or prior sunk cost substitute for evidence.
+    prompt: `Allocate the next reality-test breath among these surviving siblings. The current champion has no ownership right over future attention; every selection is champion-versus-challenger allocation under the Center-holder's terminal objective. Choose the candidate whose next materially different executable probe has the highest expected terminal-value or decision-changing yield per scarce resource. Preserve longer-horizon exploration, but do not let novelty, passivity, automation purity, capture potential, or prior sunk cost substitute for evidence.
 
-TERMINAL-VALUE LAWS:
-1. TERMINAL OBJECTIVE LOCK. First identify what external evidence would actually count as success for this Garden. Code written, tests passed, deployment, listing, traffic, platform eligibility, and methodological sophistication are intermediate states unless the Center explicitly names them as the objective.
-2. DEMAND / ACCESS / FULFILLMENT ARE SEPARATE. Demand without reachable distribution is not a transaction path. Reach without truthful fulfillment is invalid. Unknown is not pass. Before heavy construction, prefer probes that establish or falsify these states.
-3. GROW BACKWARD FROM FRUIT. Reason from terminal outcome <- external action <- trust <- access/distribution <- need/demand <- fulfillment. Prefer the shortest truthful reachable chain rather than the most elegant organism.
-4. CHAMPION / CHALLENGER. Compare opportunity cost, not merely local improvability. A branch that can be improved may still deserve to rest if another sibling has a shorter or stronger path to terminal evidence.
-5. BRANCH METABOLISM. Attention, capital, compute, latency, and human actuation are budgets. Additional depth must be earned by terminal movement or decision-changing evidence. Penalize branches consuming repeated probes without materially changing probability or action.
-6. AUTONOMY LADDER. Validate need/value first, then repeat, compress, and automate. Low human burden remains valuable, especially for mature recurring operation, but it must not veto a much faster truthful first-Fruit path merely because that path initially requires bounded human work.
-7. ANTI-GOODHART. Explicitly ask how the metric currently favoring a branch could be gamed or could damage the actual objective. Do not optimize first-dollar speed into deceptive or non-repeatable transactions; do not optimize automation into zero-demand products.
-8. TWO-TEMPERATURE SEARCH. Exploit the strongest evidenced short path while preserving bounded exploratory value. Do not let short-horizon pressure permanently erase a materially different long-horizon branch, but do not use exploration as an excuse to avoid action.
-9. FUTURE-STATE INTEGRITY. If the probe succeeds, verify that the next state remains fulfillable without hidden obligation, deceptive promise, unauthorized identity use, debt, or unsustainable human burden.
-10. ACTION MEMBRANE. If a safe available action has higher expected value than another analysis pass, prefer action. Another recursive cycle must earn itself.
+TERMINAL + REGENERATIVE LAWS:
+1. TERMINAL OBJECTIVE LOCK. Identify what external evidence would actually count as success. Code, tests, deployment, listing, traffic, platform eligibility, gross usage, and methodological sophistication remain intermediate unless explicitly terminal.
+2. VALUE / RETURN SEPARATION. Ask what useful external state change the branch could create and how that change could later be measured. Separately ask how attributable return could come back. A payment does not by itself verify useful value; useful value does not by itself prove capture.
+3. DEMAND / ACCESS / FULFILLMENT / CAPTURE ARE SEPARATE. Demand without reachable distribution is not a transaction path. Reach without truthful fulfillment is invalid. A useful artifact without a legitimate return rail is not yet a self-nourishing economic organism. Unknown is not pass.
+4. GROW BACKWARD FROM REGENERATIVE FRUIT. Reason from repeat regenerative return <- positive full-cost surplus <- attributable return <- capture/settlement rail <- useful external value <- external action <- trust <- access/distribution <- need/demand <- truthful fulfillment.
+5. FULL-COST DISCIPLINE. Gross return is not surplus. Prefer branches whose compute, APIs, hosting, support, maintenance, settlement, human burden, and downstream obligations can be bounded and measured. Unknown material costs remain unknown.
+6. OWNERSHIP REALITY. A named ownershipPath is a hypothesis until independently grounded. Do not infer legal/economic entitlement merely because Flower or the Center-holder originated an idea or artifact.
+7. REGENERATION. Prefer returns that can nourish reusable capability, distribution, knowledge, reserve, compute, or another resource that makes later useful transformation cheaper/better. Owner nourishment is also a legitimate destination for realized surplus when ownership/settlement is real; no allocation percentage is autonomously assumed.
+8. ANTI-EXTRACTION / ANTI-GOODHART. Ask how optimizing price, capture ratio, first-dollar speed, usage, automation, or another metric could reduce useful value, trust, agency, fulfillment, adoption, or long-run regeneration. Capture without value is a warning, not a victory.
+9. CHAMPION / CHALLENGER. Compare opportunity cost, not merely local improvability. A branch may deserve to rest even if improvable when another sibling has a shorter or stronger loop to terminal evidence.
+10. BRANCH METABOLISM. Attention, capital, compute, latency, and human actuation are budgets. Additional depth must be earned by terminal movement or decision-changing evidence.
+11. AUTONOMY LADDER. Validate need/value first, then repeat, crystallize reusable structure, compress, and automate. Low ongoing human burden is valuable, but it must not veto a much faster truthful first-value path merely because bounded initial human work is required.
+12. TWO-TEMPERATURE SEARCH. Exploit the strongest evidenced short path while preserving bounded exploration. Do not let short-horizon pressure erase materially different long-horizon value, and do not use exploration to avoid action.
+13. FUTURE-STATE INTEGRITY. If the next probe succeeds, verify that the resulting state remains fulfillable without hidden obligation, deceptive promise, unauthorized identity use, debt, or unsustainable human burden.
+14. ACTION MEMBRANE. If a safe available action has higher expected value than another analysis pass, prefer action. Another recursive cycle must earn itself.
+15. CRYSTALLIZATION. When a useful transformation repeats, prefer converting it into a reusable artifact, rule, test, cache, skill, schema, or tool when that lowers future cost without erasing uncertainty.
 
 EXISTING FLOWER LAWS STILL APPLY:
-11. CORPUS-FIRST. A verified capability already present in the corpus that matches observed demand should normally outrank rebuilding equivalent capability. A new habitat or payment rail is not itself evidence that a new product should be built.
-12. BUYER-CONTEXT. Do not transfer willingness-to-pay across buyer types without evidence. Human SaaS demand, enterprise procurement, developer marketplace demand, and autonomous-agent micropayment demand are different economic contexts.
-13. DEMAND HEALTH. Raw transaction counts, advertised inventory, listings, downloads, or claims are weak alone. Prefer independent payer/user breadth, repeat paid use, real settled value, recent economic activity, and source-of-truth reconciliation.
-14. REGENERATION. Small monetary returns can be valuable if they validate a reusable settlement/distribution path, trust signal, capability, or information that materially lowers future cycle cost. Conversely, a symbolic first dollar that consumes disproportionate human attention and regenerates nothing is weak.
-15. HUMAN ACTUATION PORTFOLIO. Identity, KYC, legal terms, irreversible publication, outreach, and similar acts are scarce sovereignty actions. Reaching such a membrane does not automatically earn crossing it; compare it with the best challenger and fresh-search pressure first unless the Center-holder already chose the boundary.
-16. DISTRIBUTION RAILS ARE SEPARATE STATES. Public/listed, discoverable, runnable, payable, settled, and repeatedly used are not synonyms.
-17. ARTIFACT TRUTH OUTRANKS STALE PLANNING STATE. Executable code, CI, settlement receipts, and concrete observations outrank older manifests or narrative.
+16. CORPUS-FIRST. A verified capability already present in the corpus that matches observed demand should normally outrank rebuilding equivalent capability.
+17. BUYER-CONTEXT. Do not transfer willingness-to-pay across buyer types without evidence. Human SaaS, enterprise procurement, developer marketplaces, and agent micropayments are distinct contexts.
+18. DEMAND HEALTH. Raw transactions, inventory, listings, downloads, or claims are weak alone. Prefer independent payer/user breadth, repeat paid use, settled value, recent activity, and source-of-truth reconciliation.
+19. HUMAN ACTUATION PORTFOLIO. Identity, KYC, legal terms, irreversible publication, outreach, ownership allocation, and similar acts are scarce sovereignty actions. Reaching such a membrane does not automatically earn crossing it.
+20. DISTRIBUTION RAILS ARE SEPARATE STATES. Public/listed, discoverable, runnable, payable, settled, attributable, profitable, and repeatedly used are not synonyms.
+21. ARTIFACT TRUTH OUTRANKS STALE PLANNING STATE. Executable code, CI, settlement receipts, verified ownership records, and concrete observations outrank older narrative.
 
-CURRENT V0 EXECUTORS: generic experiments can autonomously execute only public web_search. A deterministic direct Maps→website sampler exists only for the Google Maps Website Identity Guard, and a deterministic SPF/DMARC DNS sampler exists only for the current Transactional Email Authentication Preflight branch. Candidate prose claiming unavailable DNS/GitHub/API/package sampling is cheap does not make it executable. Discount benefits that depend on an unavailable executor. Penalize repeating a method or validation dimension that already returned weak or inconclusive evidence unless a genuinely different executable measurement method exists.
+CURRENT V0 EXECUTORS: generic experiments can autonomously execute only public web_search. A deterministic direct Maps→website sampler exists only for the Google Maps Website Identity Guard, and a deterministic SPF/DMARC DNS sampler exists only for the current Transactional Email Authentication Preflight branch. Candidate prose claiming unavailable DNS/GitHub/API/package sampling is cheap does not make it executable. Discount benefits that depend on an unavailable executor. Penalize repeating a method or validation dimension that already returned weak or inconclusive evidence unless a genuinely different executable measurement exists.
 
 Return the exact chosen opportunity id.`,
   });
