@@ -66,7 +66,7 @@ if (command === 'pulse') {
 
   const reasoner = new OpenAIReasoner();
   const maxBreaths = Math.max(1, Math.min(12, Number(process.env.FLOWER_MAX_BREATHS_PER_PULSE ?? 12)));
-  const result = await pulse({ garden, reasoner, maxBreaths });
+  const result = await pulse({ garden, reasoner, maxBreaths, syncManifests: false });
   garden.status.lastWakeDecision = { ...wake, at: new Date().toISOString(), pressure };
   await saveGarden(stateFile, garden);
   console.log(JSON.stringify({
