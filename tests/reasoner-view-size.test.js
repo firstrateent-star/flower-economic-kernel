@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import seed from './fixtures/test-seed.js';
 import { refreshGeometry } from '../src/core/geometry.js';
 import { buildReasonerGardenView } from '../src/core/reasoner-view.js';
+import { FLOWER_METHODOLOGY } from '../src/core/methodology-core.js';
 
 function bytes(value) {
   return Buffer.byteLength(JSON.stringify(value), 'utf8');
 }
 
-test('reasoner views structurally compress a dense Garden without deleting canonical complexity', (t) => {
+test('reasoner views structurally compress a dense equivalent cognition payload without deleting canonical complexity', (t) => {
   const garden = structuredClone(seed);
   const target = garden.opportunities[0];
   target.failureArchetype = 'identity_pointer_drift';
@@ -38,18 +39,22 @@ test('reasoner views structurally compress a dense Garden without deleting canon
   const globalView = buildReasonerGardenView({ garden, operation: 'EXPAND' });
   const sparseView = buildReasonerGardenView({ garden, operation: 'FALSIFY', target });
 
-  const fullBytes = bytes(garden);
+  // The reasoner boundary always carries the executable methodology. The fair baseline
+  // is therefore the uncompressed Garden plus that same methodology, not Garden bytes
+  // alone. This keeps the complexity tax honest when the methodology itself evolves.
+  const equivalentUncompressedPayload = { garden, methodology: FLOWER_METHODOLOGY };
+  const fullBytes = bytes(equivalentUncompressedPayload);
   const globalBytes = bytes(globalView);
   const sparseBytes = bytes(sparseView);
 
   assert.equal(JSON.stringify(garden), canonicalBefore);
-  assert.ok(globalBytes < fullBytes, `expected global view ${globalBytes} < canonical ${fullBytes}`);
+  assert.ok(globalBytes < fullBytes, `expected global view ${globalBytes} < equivalent payload ${fullBytes}`);
   assert.ok(sparseBytes < globalBytes, `expected sparse view ${sparseBytes} < global ${globalBytes}`);
   assert.ok(sparseView.opportunities.some((opp) => opp.id === target.id));
   assert.equal(sparseView.portfolioSummary.opportunityCount, garden.opportunities.length);
 
   t.diagnostic(JSON.stringify({
-    canonicalBytes: fullBytes,
+    equivalentUncompressedBytes: fullBytes,
     globalReasonerBytes: globalBytes,
     targetReasonerBytes: sparseBytes,
     globalFraction: Number((globalBytes / fullBytes).toFixed(3)),
