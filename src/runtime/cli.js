@@ -7,6 +7,7 @@ import { pulse } from '../core/kernel.js';
 import { classifyWake } from '../core/wake.js';
 import { ingestFruitObservation } from '../core/observations.js';
 import { syncFruitManifests } from '../core/fruit-forge.js';
+import { reconcileDistributionTruth } from '../core/distribution-truth.js';
 import { OpenAIReasoner } from '../reasoners/openai.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -24,6 +25,8 @@ if (command === 'reset') {
 const garden = await loadGarden({ stateFile, seedFile });
 
 if (command === 'status') {
+  const manifestSync = await syncFruitManifests(garden, { rootDir: root });
+  const distributionTruth = reconcileDistributionTruth(garden);
   const pressure = classifyPressure(garden);
   console.log(JSON.stringify({
     rootGoal: garden.center.rootGoal,
@@ -31,7 +34,11 @@ if (command === 'status') {
     pressure,
     wake: classifyWake({ pressure }),
     opportunities: garden.opportunities.map(({ id, name, status }) => ({ id, name, status })),
-    fruits: garden.fruits.map(({ id, name, status, monthlyRevenueUsd }) => ({ id, name, status, monthlyRevenueUsd })),
+    fruits: garden.fruits.map(({ id, name, status, monthlyRevenueUsd, creatorRevenueUsd, agenticPaymentEligible, externalUsage }) => ({
+      id, name, status, monthlyRevenueUsd, creatorRevenueUsd, agenticPaymentEligible, externalUsage,
+    })),
+    manifestChanges: manifestSync.changes,
+    distributionTruthChanges: distributionTruth.changes,
     pendingApprovals: garden.approvals.filter((x) => x.status === 'pending').length,
     pulseCount: garden.status.pulseCount,
   }, null, 2));
@@ -40,6 +47,7 @@ if (command === 'status') {
 
 if (command === 'pulse') {
   const manifestSync = await syncFruitManifests(garden, { rootDir: root });
+  const distributionTruth = reconcileDistributionTruth(garden);
   let observationIngest = null;
   const observationJson = process.env.FLOWER_OBSERVATION_JSON;
   if (observationJson) {
@@ -58,6 +66,7 @@ if (command === 'pulse') {
       pressure,
       observationIngest: observationIngest ? { changed: observationIngest.changed, reason: observationIngest.reason } : null,
       manifestChanges: manifestSync.changes,
+      distributionTruthChanges: distributionTruth.changes,
       pulseCount: garden.status.pulseCount,
       stateFile,
     }, null, 2));
@@ -76,6 +85,7 @@ if (command === 'pulse') {
     breaths: result.breaths.map((x) => ({ pressure: x.pressure.type, summary: x.result.summary })),
     nextPressure: classifyPressure(garden),
     manifestChanges: manifestSync.changes,
+    distributionTruthChanges: distributionTruth.changes,
     pulseCount: garden.status.pulseCount,
     stateFile,
   }, null, 2));
