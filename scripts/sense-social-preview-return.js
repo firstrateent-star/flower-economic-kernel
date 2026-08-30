@@ -1,4 +1,4 @@
-const fs = require('node:fs');
+import fs from 'node:fs';
 
 const ACTOR_ID = '7EskFvYOwxznhKYhj';
 const token = process.env.APIFY_TOKEN;
