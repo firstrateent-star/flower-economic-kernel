@@ -1,3 +1,5 @@
+import { evaluateRegenerativeValue } from './regenerative-value.js';
+
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, Number(value) || 0));
 
 function optionalUnit(value) {
@@ -26,6 +28,7 @@ export function scoreTerminalCandidate(candidate = {}, {
   const fulfillment = optionalUnit(candidate.fulfillmentConfidence ?? candidate.fulfillment);
   const repeatability = prior(candidate.repeatability ?? candidate.reproductivePotential, 0.5);
   const distribution = optionalUnit(candidate.distributionReachability ?? candidate.distributionAccess ?? candidate.realityAccess);
+  const regenerativeValue = evaluateRegenerativeValue(candidate);
 
   // Unknown evidence receives a neutral prior for exploratory ordering, but never passes
   // a construction/transaction gate merely because the score function needs a number.
@@ -43,9 +46,12 @@ export function scoreTerminalCandidate(candidate = {}, {
   const regulatoryFriction = clamp(candidate.regulatoryFriction);
   const irreversibleRisk = clamp(candidate.irreversibleRisk);
   const proxyRisk = clamp(candidate.proxyRisk);
-  const friction = 1 + humanBurden + capitalBurden + latency + regulatoryFriction + irreversibleRisk + proxyRisk;
+  const extractionRisk = regenerativeValue.antiExtractionRisk ? 1 : 0;
+  const friction = 1 + humanBurden + capitalBurden + latency + regulatoryFriction + irreversibleRisk + proxyRisk + extractionRisk;
 
-  const regeneration = 0.5 + (0.5 * repeatability);
+  const captureReadiness = regenerativeValue.gates.capturePathNamed ? 1 : 0;
+  const reinvestmentReadiness = regenerativeValue.gates.reinvestmentPathNamed ? 1 : 0;
+  const regeneration = 0.35 + (0.35 * repeatability) + (0.15 * captureReadiness) + (0.15 * reinvestmentReadiness);
   const fruitVelocity = (probability * horizonValue * regeneration) / friction;
 
   const requiredEvidence = [demand, access, fulfillment, distribution];
@@ -57,14 +63,18 @@ export function scoreTerminalCandidate(candidate = {}, {
     accessWitnessed: access !== null && access >= 0.5,
     fulfillmentVerified: fulfillment !== null && fulfillment >= 0.5,
     distributionReachable: distribution !== null && distribution >= 0.5,
+    capturePathNamed: regenerativeValue.gates.capturePathNamed,
     offerIntegrity: candidate.offerIntegrity !== false,
     terminalEvidenceNamed: Boolean(candidate.terminalEvidence ?? candidate.successSignal ?? candidate.validationGate),
+    antiExtractionClear: !regenerativeValue.antiExtractionRisk,
   };
   gate.buildEligible = gate.demandWitnessed
     && gate.accessWitnessed
     && gate.fulfillmentVerified
     && gate.distributionReachable
-    && gate.offerIntegrity;
+    && gate.capturePathNamed
+    && gate.offerIntegrity
+    && gate.antiExtractionClear;
 
   return {
     fruitVelocity: Number(fruitVelocity.toFixed(6)),
@@ -73,12 +83,14 @@ export function scoreTerminalCandidate(candidate = {}, {
     regeneration: Number(regeneration.toFixed(6)),
     friction: Number(friction.toFixed(6)),
     evidenceCompleteness: Number(evidenceCompleteness.toFixed(3)),
+    regenerativeValue,
     gate,
     unknowns: {
       demand: demand === null,
       access: access === null,
       fulfillment: fulfillment === null,
       distribution: distribution === null,
+      capturePath: !regenerativeValue.gates.capturePathNamed,
     },
   };
 }
@@ -92,6 +104,7 @@ export function classifyTerminalCandidate(candidate = {}, options = {}) {
     };
   }
 
+  if (!scored.gate.antiExtractionClear) return { ...scored, state: 'reframe_capture_value_relationship' };
   const missingCriticalEvidence = Object.values(scored.unknowns).some(Boolean);
   if (missingCriticalEvidence) return { ...scored, state: 'probe_missing_evidence' };
   return { ...scored, state: 'prune_or_reframe' };
