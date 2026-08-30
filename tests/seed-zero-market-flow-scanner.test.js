@@ -77,6 +77,18 @@ test('single dominant incumbent remains a concentrated demand witness', () => {
   assert.equal(lead.buildEligible, false);
 });
 
+test('lexical family matching does not confuse substrings such as ads in leads or rent in different', () => {
+  const actors = [
+    actor({ id: 'lead-only', title: 'Local Leads Exporter', description: 'Generate leads and contacts for sales teams', users30: 10 }),
+    actor({ id: 'neutral', title: 'Different Threads Reader', description: 'Read different public threads quickly', users30: 10 }),
+  ];
+  const { probes } = rankSeedZeroProbes(actors);
+  const lead = probes.find((x) => x.id === 'lead-only');
+  const neutral = probes.find((x) => x.id === 'neutral');
+  assert.equal(lead.family, 'lead_generation');
+  assert.equal(neutral.family, 'other');
+});
+
 test('backward-compatible candidate API carries the same non-build evidence gate', () => {
   const actors = [
     actor({ id: 'jobs', title: 'Jobs Feed', description: 'job listings and hiring data', users30: 10, users7: 4, total: 50 }),
