@@ -4,7 +4,7 @@ import seed from '../garden/seed.json' with { type: 'json' };
 import { pulse } from '../src/core/kernel.js';
 import { MockReasoner } from '../src/reasoners/mock.js';
 
-test('pulse can falsify a seed and autonomously choose the required buyer-demand experiment dimension', async () => {
+test('pulse can falsify a seed and autonomously choose the required failure-reality experiment dimension first', async () => {
   const garden = structuredClone(seed);
   garden.opportunities[0].status = 'seed';
   const reasoner = new MockReasoner({
@@ -19,22 +19,6 @@ test('pulse can falsify a seed and autonomously choose the required buyer-demand
       },
       sources: [{ title: 'example', url: 'https://example.test/evidence' }],
       rawId: 'mock_falsify'
-    },
-    EXPERIMENT: {
-      data: {
-        experiment: {
-          name: 'Buyer-demand signal test',
-          tests: 'Measure whether buyers or workflows actively seek resolution of website identity drift.',
-          actionType: 'web_search',
-          oneTimeCostUsd: 0,
-          recurringUsd: 0,
-          successCondition: 'Concrete buyer/workflow demand evidence exists.',
-          killCondition: 'No credible demand signal can be found.',
-          validationDimension: 'buyer_demand'
-        }
-      },
-      sources: [],
-      rawId: 'mock_experiment'
     }
   });
 
@@ -43,7 +27,7 @@ test('pulse can falsify a seed and autonomously choose the required buyer-demand
   assert.equal(result.breaths[1].pressure.type, 'EXPERIMENT');
   assert.equal(garden.opportunities[0].status, 'supported');
   assert.equal(garden.experiments[0].status, 'authorized');
-  assert.equal(garden.experiments[0].validationDimension, 'buyer_demand');
+  assert.equal(garden.experiments[0].validationDimension, 'failure_reality');
 });
 
 test('an authorized web-search experiment routes to bounded execution instead of STILLNESS', async () => {
@@ -186,5 +170,6 @@ test('a direct failure-reality sample that meets its predeclared kill condition 
   assert.equal(garden.opportunities[0].experimentId, null);
   assert.match(garden.opportunities[0].failedBecause, /kill condition/i);
   assert.match(garden.opportunities[0].epistemicNote, /Dormant, not disproven/i);
-  assert.ok(garden.soil.some((x) => /Predeclared kill conditions outrank curiosity/.test(x.principle)));
+  assert.equal(garden.opportunities[0].selectionState, 'dormant');
+  assert.equal(garden.opportunities[0].validationGate.pass, false);
 });
