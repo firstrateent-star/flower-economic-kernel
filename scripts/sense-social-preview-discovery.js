@@ -6,6 +6,7 @@ const QUERIES = [
   'open graph',
   'twitter card',
   'social card',
+  'social metadata',
   'preview metadata',
   'crawler metadata',
   'cross crawler social preview drift guard',
