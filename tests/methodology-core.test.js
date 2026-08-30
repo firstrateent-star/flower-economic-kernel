@@ -19,8 +19,8 @@ test('integrated methodology contains reciprocal Flower-efficiency cultivation r
   assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('RECURSE:')));
 });
 
-test('integrated v4 makes terminal alignment, challenger search, and regenerative capture native governance', () => {
-  assert.equal(FLOWER_METHODOLOGY_VERSION, '2026-08-30.integrated-v4');
+test('integrated v5 makes terminal alignment, regenerative capture, and dual-dividend self-improvement native governance', () => {
+  assert.equal(FLOWER_METHODOLOGY_VERSION, '2026-08-30.integrated-v5');
   assert.match(FLOWER_METHODOLOGY.center.terminalValueAim, /true objective/);
   assert.match(FLOWER_METHODOLOGY.center.regenerativeAim, /surplus/);
   assert.match(FLOWER_METHODOLOGY.fieldGovernance.championChallenger, /current champion/);
@@ -28,13 +28,21 @@ test('integrated v4 makes terminal alignment, challenger search, and regenerativ
   assert.match(FLOWER_METHODOLOGY.terminalGovernance.principle, /terminal outcome/);
   assert.match(FLOWER_METHODOLOGY.regenerativeValueGovernance.principle, /closed and accountable loop/);
   assert.match(FLOWER_METHODOLOGY.regenerativeValueGovernance.ledgers.surplus, /attributable return/);
+  assert.match(FLOWER_METHODOLOGY.selfImprovementValueGovernance.principle, /two distinct dividends/);
+  assert.match(FLOWER_METHODOLOGY.selfImprovementValueGovernance.loop, /TRANSFER HYPOTHESIS/);
+  assert.match(FLOWER_METHODOLOGY.selfImprovementValueGovernance.antiGoodhartCheck, /transfer seeds/);
+  assert.ok(FLOWER_METHODOLOGY.selfImprovementValueGovernance.rules.some((x) => /Internal usefulness does not verify external/.test(x)));
+  assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('IMPROVE:')));
+  assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('TRANSFER:')));
   assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('ALLOCATE:')));
   assert.ok(FLOWER_METHODOLOGY.stopConditions.some((x) => /lower expected value than a safe available action/.test(x)));
 });
 
-test('integrated v4 retains cold methodology mutation memory', () => {
+test('integrated v5 retains cold methodology mutation memory and protected human authority', () => {
   assert.match(FLOWER_METHODOLOGY.mutationGovernance.memoryRule, /Same proposal plus same evidence reuses the prior assessment/);
   assert.match(FLOWER_METHODOLOGY.mutationGovernance.memoryRule, /materially new evidence may reopen/);
+  assert.ok(FLOWER_METHODOLOGY.mutationGovernance.protectedDomains.includes('ownership authority'));
+  assert.ok(FLOWER_METHODOLOGY.mutationGovernance.protectedDomains.includes('surplus allocation authority'));
 });
 
 test('canonical methodology document agrees with executable methodology version and precedence', async () => {
@@ -49,6 +57,10 @@ test('canonical methodology document agrees with executable methodology version 
   assert.match(doc, /regenerative value governance/i);
   assert.match(doc, /gross return is not surplus/i);
   assert.match(doc, /ownership/i);
+  assert.match(doc, /dual dividend/i);
+  assert.match(doc, /self-improvement observatory/i);
+  assert.match(doc, /internal improvement.*external value/is);
+  assert.match(doc, /TRANSFER/);
 });
 
 test('prior cold mutation ledger remains preserved as ancestry', async () => {
