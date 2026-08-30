@@ -14,11 +14,15 @@ function sha256(value) {
 
 export function planTraceArchive(garden, {
   maxActiveTraces = 256,
+  retainActiveTraces = 128,
   previousArchiveHash = null,
 } = {}) {
   if (!garden) throw new Error('planTraceArchive requires a Garden.');
   if (!Number.isInteger(maxActiveTraces) || maxActiveTraces < 1) {
     throw new Error('maxActiveTraces must be a positive integer.');
+  }
+  if (!Number.isInteger(retainActiveTraces) || retainActiveTraces < 1 || retainActiveTraces >= maxActiveTraces) {
+    throw new Error('retainActiveTraces must be a positive integer below maxActiveTraces.');
   }
 
   const traces = garden.traces ?? [];
@@ -32,8 +36,10 @@ export function planTraceArchive(garden, {
     };
   }
 
-  const archived = traces.slice(0, traces.length - maxActiveTraces);
-  const retained = traces.slice(-maxActiveTraces);
+  // Hysteresis: crossing the high-water mark compacts down to a lower hot-memory
+  // target. This prevents one tiny archive block per new trace after the threshold.
+  const archived = traces.slice(0, traces.length - retainActiveTraces);
+  const retained = traces.slice(-retainActiveTraces);
   const payload = {
     version: 1,
     gardenId: garden.id ?? null,
@@ -83,6 +89,7 @@ export function commitTraceArchivePlan(garden, plan) {
 
 export async function archiveTraceHistory(garden, {
   maxActiveTraces = 256,
+  retainActiveTraces = 128,
   persistBlock,
 } = {}) {
   if (typeof persistBlock !== 'function') {
@@ -90,7 +97,11 @@ export async function archiveTraceHistory(garden, {
   }
 
   const previousArchiveHash = garden.historyArchive?.latestTraceBlockHash ?? null;
-  const plan = planTraceArchive(garden, { maxActiveTraces, previousArchiveHash });
+  const plan = planTraceArchive(garden, {
+    maxActiveTraces,
+    retainActiveTraces,
+    previousArchiveHash,
+  });
   if (!plan.needed) return { changed: false, archivedCount: 0, blockHash: null };
 
   // Transaction boundary: no active-state mutation happens until the external archive
