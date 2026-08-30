@@ -63,8 +63,29 @@ function opportunityView(opportunities = []) {
   }));
 }
 
-function geometryView(geometry, allowedIds = null) {
-  if (!geometry) return null;
+function transferSeedView(transferSeeds = []) {
+  return transferSeeds.slice(-16).map((seed) => ({
+    id: seed.id ?? null,
+    improvementId: seed.improvementId ?? null,
+    name: seed.name ?? null,
+    status: seed.status ?? null,
+    transformation: seed.transformation ?? null,
+    beneficiaryClasses: clone(seed.beneficiaryClasses ?? []),
+    externalValueMeasure: seed.externalValueMeasure ?? null,
+    deliveryForms: clone(seed.deliveryForms ?? []),
+    externalProblemEvidence: clone(seed.externalProblemEvidence ?? []),
+    nextProbe: seed.nextProbe ?? null,
+    internalDividend: clone(seed.internalDividend ?? null),
+    antiGoodhartRisk: seed.antiGoodhartRisk ?? null,
+    outwardMaintenanceBounded: seed.outwardMaintenanceBounded ?? null,
+    epistemicNote: seed.epistemicNote ?? null,
+  }));
+}
+
+function geometryView(geometry, allowedIds = null, transferSeeds = []) {
+  if (!geometry) return {
+    transferSeeds: transferSeedView(transferSeeds),
+  };
 
   const allow = allowedIds ? new Set(allowedIds) : null;
   const centers = (geometry.centers ?? [])
@@ -99,6 +120,7 @@ function geometryView(geometry, allowedIds = null) {
     centers,
     archetypes: trimFamilies(geometry.archetypes ?? []),
     capabilities: trimFamilies(geometry.capabilities ?? []),
+    transferSeeds: transferSeedView(transferSeeds),
   };
 }
 
@@ -160,11 +182,15 @@ export function buildReasonerGardenView({ garden, operation = null, target = nul
     soil: soilView(garden.soil),
     fruits: fruitView(fruits),
     opportunities: opportunityView(opportunities),
+    transferSeeds: operation === 'EXPAND' || operation === 'SELECT'
+      ? transferSeedView(garden.transferSeeds ?? [])
+      : [],
     scoutMisses: operation === 'EXPAND' ? clone((garden.scoutMisses ?? []).slice(-20)) : [],
-    geometry: geometryView(garden.geometry, activation.ids),
+    geometry: geometryView(garden.geometry, activation.ids, operation === 'EXPAND' || operation === 'SELECT' ? garden.transferSeeds ?? [] : []),
     portfolioSummary: {
       fruitCount: (garden.fruits ?? []).length,
       opportunityCount: (garden.opportunities ?? []).length,
+      transferSeedCount: (garden.transferSeeds ?? []).length,
       liveFruitCount: (garden.fruits ?? []).filter((fruit) => fruit.status === 'live').length,
       unresolvedMarketTruthCount: (garden.fruits ?? []).filter((fruit) => fruit.marketTruth === 'unresolved').length,
     },
@@ -177,6 +203,7 @@ export function buildReasonerGardenView({ garden, operation = null, target = nul
         'events',
         'approvals',
         'runtime status timestamps',
+        'full internal-improvement records after transfer-seed crystallization',
         'pairwise geometry edges reconstructible from family membership',
         ...(activation.ids ? ['organisms outside the target geometry neighborhood; aggregate portfolio counts retained'] : []),
       ],
