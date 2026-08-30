@@ -7,6 +7,7 @@ import {
   shouldCaptureDecisionCheckpoint,
   verifyDecisionCheckpoint,
 } from '../src/core/decision-checkpoints.js';
+import { createStateAvailabilityWitness } from '../src/core/state-availability-witness.js';
 
 const FIXED_CAPTURE = '2026-08-30T18:30:00.000Z';
 const fixedClock = () => FIXED_CAPTURE;
@@ -58,6 +59,39 @@ test('omitted asOf defaults to trusted capturedAt rather than caller-authored ch
   });
   assert.equal(checkpoint.asOf, FIXED_CAPTURE);
   assert.equal(checkpoint.capturedAt, FIXED_CAPTURE);
+});
+
+test('verified state availability witness lets a checkpoint admit legacy evidence only from witness time forward', () => {
+  const garden = structuredClone(seed);
+  garden.events = [{ id: 'legacy', at: '2026-08-30T17:00:00.000Z', type: 'LEGACY_NOTE' }];
+  const witness = createStateAvailabilityWitness({
+    garden,
+    clock: () => '2026-08-30T18:20:00.000Z',
+  });
+  const checkpoint = createDecisionCheckpoint({
+    garden,
+    pressure: { type: 'HUMAN', targetId: 'fruit_changed_method_navigator' },
+    asOf: '2026-08-30T18:29:00.000Z',
+    availabilityWitness: witness,
+    clock: fixedClock,
+  });
+  assert.equal(checkpoint.availabilityWitnessHash, witness.witnessHash);
+  assert.deepEqual(checkpoint.evidenceManifest.admissibleIds, ['event:legacy']);
+  assert.equal(checkpoint.evidenceManifest.units[0].admissibility.reason, 'admissible_by_witnessed_availability');
+  assert.equal(checkpoint.evidenceManifest.units[0].admissibility.chronologyCertified, false);
+  assert.equal(verifyDecisionCheckpoint(checkpoint).ok, true);
+});
+
+test('checkpoint refuses a witness that occurs after the evidence cutoff', () => {
+  const garden = structuredClone(seed);
+  const witness = createStateAvailabilityWitness({ garden, clock: fixedClock });
+  assert.throws(() => createDecisionCheckpoint({
+    garden,
+    pressure: { type: 'HUMAN', targetId: 'fruit_changed_method_navigator' },
+    asOf: '2026-08-30T18:29:00.000Z',
+    availabilityWitness: witness,
+    clock: fixedClock,
+  }), /availability witness cannot be later than its evidence cutoff/);
 });
 
 test('tampering with a checkpoint snapshot is detected', () => {
