@@ -7,17 +7,28 @@ import { addTrace } from '../src/core/transitions.js';
 
 test('integrated methodology contains reciprocal Flower-efficiency cultivation rather than one-way optimization', () => {
   assert.equal(FLOWER_METHODOLOGY.version, FLOWER_METHODOLOGY_VERSION);
-  assert.ok(FLOWER_METHODOLOGY.invariants.length >= 10);
-  assert.ok(FLOWER_METHODOLOGY.efficiency.laws.length >= 8);
+  assert.ok(FLOWER_METHODOLOGY.invariants.length >= 15);
+  assert.ok(FLOWER_METHODOLOGY.efficiency.laws.length >= 10);
   assert.ok(FLOWER_METHODOLOGY.dualCultivation.methodologyToEfficiency.length >= 3);
   assert.ok(FLOWER_METHODOLOGY.dualCultivation.efficiencyToMethodology.length >= 3);
+  assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('LOCK:')));
+  assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('DIVERSIFY:')));
+  assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('ACT:')));
   assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('TEMPER:')));
   assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('REST:')));
   assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('RECURSE:')));
 });
 
-test('integrated v2 makes cold methodology mutation memory part of canonical governance', () => {
-  assert.equal(FLOWER_METHODOLOGY_VERSION, '2026-08-30.integrated-v2');
+test('integrated v3 makes terminal alignment and challenger search native governance', () => {
+  assert.equal(FLOWER_METHODOLOGY_VERSION, '2026-08-30.integrated-v3');
+  assert.match(FLOWER_METHODOLOGY.center.terminalValueAim, /true objective/);
+  assert.match(FLOWER_METHODOLOGY.fieldGovernance.championChallenger, /current champion/);
+  assert.match(FLOWER_METHODOLOGY.fieldGovernance.twoTemperatureSearch, /bounded exploration/);
+  assert.match(FLOWER_METHODOLOGY.terminalGovernance.principle, /terminal outcome/);
+  assert.ok(FLOWER_METHODOLOGY.stopConditions.some((x) => /lower expected value than a safe available action/.test(x)));
+});
+
+test('integrated v3 retains cold methodology mutation memory', () => {
   assert.match(FLOWER_METHODOLOGY.mutationGovernance.memoryRule, /Same proposal plus same evidence reuses the prior assessment/);
   assert.match(FLOWER_METHODOLOGY.mutationGovernance.memoryRule, /materially new evidence may reopen/);
 });
@@ -28,13 +39,14 @@ test('canonical methodology document agrees with executable methodology version 
   assert.match(doc, /src\/core\/methodology-core\.js/);
   assert.match(doc, /COMPLEXITY_PRESERVING_EFFICIENCY_2026-08-30\.md/);
   assert.match(doc, /FLOWER_ROOT_RECURSION_AND_ABUNDANCE_RESET_2026-08-29\.md/);
-  assert.match(doc, /Dual cultivation/);
-  assert.match(doc, /Methodology mutation memory/);
+  assert.match(doc, /terminal objective/i);
+  assert.match(doc, /champion/i);
+  assert.match(doc, /two-temperature/i);
 });
 
-test('cold mutation ledger preserves the evidence that earned the current methodology version', async () => {
+test('prior cold mutation ledger remains preserved as ancestry', async () => {
   const ledger = JSON.parse(await fs.readFile(new URL('../methodology/mutation-ledger/2026-08-30-integrated-v2.json', import.meta.url), 'utf8'));
-  assert.equal(ledger.promotedMethodologyVersion, FLOWER_METHODOLOGY_VERSION);
+  assert.equal(ledger.promotedMethodologyVersion, '2026-08-30.integrated-v2');
   assert.equal(ledger.assessment.eligibleForCanonical, true);
   assert.equal(ledger.evidence.measurement.rediscoveries, 100);
   assert.equal(ledger.evidence.measurement.freshEvaluationsRequired, 1);
