@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate_not_promoted",
+  "name": "Pareto Before Weighting",
+  "thesis": "When several candidates are comparable on decision-relevant evidenced dimensions, prune strictly dominated candidates before applying weighted local ranking. Do not let unknown dimensions or neutral priors manufacture dominance.",
+  "origin": {
+    "historicalPath": "Flower of Life dimensional inquiry -> local charts and hidden dimensions -> value field membrane -> optimization across multiple non-scalar dimensions",
+    "trigger": "Once local economic optimization was constrained by a non-scalar broader value field, forcing every candidate immediately into one weighted scalar became an avoidable source of preference assumptions."
+  },
+  "affectedDecisions": [
+    "candidate pruning",
+    "champion/challenger allocation",
+    "human attention allocation",
+    "when arbitrary weighting is actually necessary"
+  ],
+  "candidateRule": "First remove candidate B only when candidate A is no worse on every comparable evidenced decision dimension and strictly better on at least one, with no unresolved dimension capable of reversing the relation. Apply weighted ranking only inside the surviving nondominated frontier when the Center-holder's objective requires a tradeoff.",
+  "epistemicConstraints": [
+    "Unknown is not zero and cannot support dominance.",
+    "Neutral exploratory priors cannot support dominance.",
+    "Verified material value-field regression remains a separate veto rather than a compensable score term.",
+    "Different terminal objectives may require different local dimensions and directions.",
+    "A Pareto frontier can remain large; dominance pruning does not replace objective choice."
+  ],
+  "falsifier": "On a sufficiently diverse live candidate set, evidence-safe dominance pruning fails to reduce evaluation burden, prunes a later terminal winner, or creates more comparability bookkeeping than the cognition it saves.",
+  "promotionTest": "Replay a recorded multi-candidate allocation with and without evidence-safe Pareto pruning. Require identical surviving terminal winner/decision semantics, lower candidate evaluation work, and no protected-value regression.",
+  "rollbackPath": "Keep weighted FruitVelocity and champion/challenger behavior unchanged; leave this candidate cold.",
+  "stoppingCondition": "Do not add runtime Pareto pruning until a real or stable replay workload contains enough simultaneously comparable candidates to test the claimed efficiency gain.",
+  "canonicalPromotionAuthorized": false
+}
