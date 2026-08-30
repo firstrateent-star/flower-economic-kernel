@@ -4,6 +4,10 @@ import {
   assessEvidenceAdmissibility,
   buildDecisionEvidenceManifest,
 } from '../src/core/evidence-admissibility.js';
+import {
+  createStateAvailabilityWitness,
+  verifyStateAvailabilityWitness,
+} from '../src/core/state-availability-witness.js';
 
 test('trusted evidence at or before cutoff is admissible', () => {
   const result = assessEvidenceAdmissibility({
@@ -25,7 +29,7 @@ test('future evidence is not admissible even with trusted provenance', () => {
   assert.equal(result.reason, 'observed_after_cutoff');
 });
 
-test('legacy imported chronology remains operational context but is not replay-admissible', () => {
+test('legacy imported chronology remains operational context but is not replay-admissible before a trusted witness', () => {
   const result = assessEvidenceAdmissibility({
     observedAt: '2026-08-30T18:30:00.000Z',
     provenance: 'imported_unverified',
@@ -33,6 +37,55 @@ test('legacy imported chronology remains operational context but is not replay-a
   });
   assert.equal(result.admissible, false);
   assert.equal(result.reason, 'untrusted_time_provenance');
+});
+
+test('a trusted state witness makes legacy evidence available prospectively without certifying its claimed chronology', () => {
+  const garden = {
+    experiments: [],
+    events: [{ id: 'legacy', at: '2026-08-30T18:20:00.000Z', type: 'LEGACY_NOTE' }],
+    fruits: [],
+  };
+  const witness = createStateAvailabilityWitness({
+    garden,
+    clock: () => '2026-08-30T18:50:00.000Z',
+  });
+  assert.equal(verifyStateAvailabilityWitness({ witness, garden }).ok, true);
+
+  const before = buildDecisionEvidenceManifest({
+    garden,
+    asOf: '2026-08-30T18:49:59.000Z',
+    availabilityWitness: witness,
+  });
+  assert.equal(before.counts.admissible, 0);
+
+  const after = buildDecisionEvidenceManifest({
+    garden,
+    asOf: '2026-08-30T18:50:00.000Z',
+    availabilityWitness: witness,
+  });
+  assert.equal(after.counts.admissible, 1);
+  assert.equal(after.units[0].admissibility.reason, 'admissible_by_witnessed_availability');
+  assert.equal(after.units[0].admissibility.chronologyCertified, false);
+  assert.equal(after.units[0].admissibility.availabilityCertified, true);
+  assert.equal(after.units[0].observedAt, '2026-08-30T18:20:00.000Z');
+});
+
+test('availability witness is bound to the exact Garden snapshot', () => {
+  const garden = { experiments: [], events: [], fruits: [] };
+  const witness = createStateAvailabilityWitness({
+    garden,
+    clock: () => '2026-08-30T18:50:00.000Z',
+  });
+  garden.events.push({ id: 'later' });
+  assert.deepEqual(verifyStateAvailabilityWitness({ witness, garden }), {
+    ok: false,
+    reason: 'snapshot_hash_mismatch',
+  });
+  assert.throws(() => buildDecisionEvidenceManifest({
+    garden,
+    asOf: '2026-08-30T18:55:00.000Z',
+    availabilityWitness: witness,
+  }), /Invalid state availability witness/);
 });
 
 test('manifest preserves all evidence units while distinguishing the admissible causal subset', () => {
