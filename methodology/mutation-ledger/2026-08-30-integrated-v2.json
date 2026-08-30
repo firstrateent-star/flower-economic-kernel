@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "mutationId": "mut_methodology_mutation_memory",
+  "sourceMethodologyVersion": "2026-08-30.integrated-v1",
+  "promotedMethodologyVersion": "2026-08-30.integrated-v2",
+  "proposalFingerprint": "6d29422ad8f7f58e5f8bcf4f109fdb3662706966e80bfd37f72d19ffe7e140e2",
+  "proposal": {
+    "thesis": "Preserve methodology candidates and assessments in cold content-addressed memory so identical proposal/evidence pairs reuse prior assessments while materially new evidence can reopen them.",
+    "changeType": "execution_optimization",
+    "domains": ["execution", "methodology_memory"],
+    "affectedDecisions": ["methodology mutation reevaluation", "canonical promotion"],
+    "causalInputs": ["semantic proposal identity", "evidence identity", "prior mutation records"],
+    "preservedComplexity": ["full proposal semantics", "full evidence", "assessment ancestry", "reopening on new evidence"],
+    "falsifier": "Stored assessment differs from fresh assessment or unchanged proposal/evidence still requires fresh reevaluation.",
+    "rollback": "Ignore methodology mutation memory and assess each candidate fresh.",
+    "stoppingCondition": "Stop if reuse changes assessment semantics, blocks materially new evidence, or fails to reduce redundant reevaluation."
+  },
+  "assessment": {
+    "state": "supported",
+    "eligibleForCanonical": true,
+    "evidenceRoute": "equivalence_plus_efficiency",
+    "protectedDomain": false,
+    "humanAuthorizationRequired": false
+  },
+  "evidence": {
+    "formalEquivalence": true,
+    "measuredEfficiencyImprovement": true,
+    "protectedInvariantRegressions": [],
+    "decisionCapabilityRegressions": [],
+    "measurement": {
+      "rediscoveries": 100,
+      "freshEvaluationsRequired": 1,
+      "priorAssessmentsReused": 99,
+      "redundantEvaluationReduction": 0.99
+    },
+    "ci": {
+      "runId": 33326764822,
+      "headSha": "2d1d052c32035a34b804c95cd204865ccd12ea6f",
+      "conclusion": "success",
+      "tests": 128,
+      "failures": 0
+    }
+  },
+  "promotionCommits": {
+    "executableMethodology": "3e8e6148012ceb9ac0afa6014990390a7647366d",
+    "canonicalDocument": "4e0de51a6e4601b15cc88c88a6e6ce011bd022b5"
+  }
+}
