@@ -31,15 +31,19 @@ jobs:
         run: |
           node --check src/core/meta-learning.js
           node --check research/meta-learning/derivation-independence.js
+          node --check research/meta-learning/real-history-derivation-audit.mjs
           node --check scripts/meta-learning-observatory.mjs
           node --test tests/meta-learning.test.js tests/meta-learning-derivation-independence.test.js tests/origin-provenance.test.js
       - name: Run counterpressured historical origin-aware plus prospective meta-learning Observatory
         run: node scripts/meta-learning-observatory.mjs
+      - name: Run real-history derivation-independence audit
+        run: node research/meta-learning/real-history-derivation-audit.mjs
       - name: Validate epistemic boundaries
         run: |
           node - <<'NODE'
           const fs = require('fs');
           const report = JSON.parse(fs.readFileSync('reports/meta-learning-observatory-latest.json', 'utf8'));
+          const ancestry = JSON.parse(fs.readFileSync('reports/meta-learning-derivation-audit-latest.json', 'utf8'));
           if (report.epistemicStatus !== 'counterpressured_meta_learning_with_prospective_internal_evidence_not_external_proof') throw new Error('Meta-learning report has incorrect epistemic status.');
           if (report.externalFlourishingClaim !== false) throw new Error('Internal evidence may not claim external flourishing.');
           if (report.flourishingOrientation?.scalarized !== false) throw new Error('Flourishing may not collapse into one scalar objective.');
@@ -53,19 +57,20 @@ jobs:
           if (report.originEpisodeCount < 1 || report.originProvenance?.preserved !== true) throw new Error('Flower origin provenance was dropped from meta-learning.');
           if (!String(report.originProvenance?.historicalSeed ?? '').includes('Flower of Life')) throw new Error('Flower of Life origin seed is missing.');
           if (!String(report.originProvenance?.epistemicBoundary ?? '').includes('not established')) throw new Error('Dimensional origin must remain epistemically bounded.');
+          if (ancestry.epistemicStatus !== 'curated_real_history_ancestry_audit_not_independence_proof') throw new Error('Derivation audit overstated epistemic status.');
           console.log(JSON.stringify({
             nextPressure: report.nextPressure,
-            selfAudit: report.selfAudit,
-            originProvenance: report.originProvenance,
+            derivationAudit: ancestry,
             topMechanisms: report.mechanismStats.slice(0, 8),
-            violationStats: report.violationStats.slice(0, 8),
             candidateRules: report.candidateRules,
           }, null, 2));
           NODE
-      - name: Upload meta-learning report
+      - name: Upload meta-learning reports
         uses: actions/upload-artifact@v4
         with:
           name: flower-meta-learning-observatory
-          path: reports/meta-learning-observatory-latest.json
+          path: |
+            reports/meta-learning-observatory-latest.json
+            reports/meta-learning-derivation-audit-latest.json
           if-no-files-found: error
           retention-days: 14
