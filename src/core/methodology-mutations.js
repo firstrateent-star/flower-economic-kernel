@@ -7,6 +7,8 @@ const PROTECTED_DOMAINS = new Set([
   'legal_authority',
   'public_authority',
   'human_identity',
+  'ownership_authority',
+  'surplus_allocation_authority',
 ]);
 
 function list(value) {
