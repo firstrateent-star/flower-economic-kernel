@@ -14,12 +14,26 @@ function blankGarden() {
   return g;
 }
 
-test('canonical Garden surfaces the ranked Changed Method Navigator human membrane instead of speculative expansion', () => {
+function afterFreshChallenge(g) {
+  g.status ??= {};
+  g.status.lastPressure = { type: 'EXPAND' };
+  return g;
+}
+
+test('canonical Garden reopens heterogeneous search once before spending scarce human attention', () => {
   const g = structuredClone(seed);
+  const pressure = classifyPressure(g);
+  assert.equal(pressure.type, 'EXPAND');
+  assert.equal(pressure.targetId, null);
+  assert.match(pressure.why, /reopen the reachable field once/i);
+});
+
+test('after fresh challenger pressure, canonical Garden surfaces the ranked Changed Method Navigator human membrane', () => {
+  const g = afterFreshChallenge(structuredClone(seed));
   const pressure = classifyPressure(g);
   assert.equal(pressure.type, 'HUMAN');
   assert.equal(pressure.targetId, 'fruit_changed_method_navigator');
-  assert.match(pressure.why, /Autonomous work is exhausted/);
+  assert.match(pressure.why, /Fresh challenger pressure is exhausted/);
 });
 
 test('pending explicit approval still stops autonomous cognition', () => {
@@ -53,12 +67,12 @@ test('validated autonomous branch outranks an unrelated parked human membrane', 
   assert.deepEqual(classifyPressure(g), {
     type: 'BUILD_PLAN',
     targetId: 'opp_validated',
-    why: 'Evidence has earned a private build artifact; convert validated knowledge into Fruit before allocating more speculative experiments.',
+    why: 'This branch has earned construction evidence; convert only the smallest validated transformation into a fulfillable artifact.',
   });
 });
 
-test('ranked explicit human actuation outranks fallback Fruit status when autonomous work is exhausted', () => {
-  const g = blankGarden();
+test('ranked explicit human actuation wins after fresh challenger pressure is exhausted', () => {
+  const g = afterFreshChallenge(blankGarden());
   g.fruits.push(
     { id: 'fruit_verified', name: 'Verified', status: 'private_verified', sourcePath: 'actors/verified' },
     { id: 'fruit_market_ready', name: 'Market Ready', status: 'market_ready_private', sourcePath: 'actors/market-ready' },
@@ -76,8 +90,8 @@ test('ranked explicit human actuation outranks fallback Fruit status when autono
   assert.match(pressure.why, /portfolio ranking/);
 });
 
-test('market-ready private Fruit is recognized by legacy fallback when queue is absent', () => {
-  const g = blankGarden();
+test('market-ready private Fruit is recognized by fallback after fresh challenger pressure', () => {
+  const g = afterFreshChallenge(blankGarden());
   g.fruits = [{
     id: 'fruit_market_ready',
     name: 'Market Ready',
@@ -90,7 +104,7 @@ test('market-ready private Fruit is recognized by legacy fallback when queue is 
   assert.match(pressure.why, /market-ready private Fruit/);
 });
 
-test('live Fruit awaiting stranger usage is observation, not a human task', () => {
+test('live Fruit awaiting stranger usage remains observation while active search reopens', () => {
   const g = blankGarden();
   g.fruits = [{
     id: 'fruit_live_wait',
@@ -100,9 +114,8 @@ test('live Fruit awaiting stranger usage is observation, not a human task', () =
     publicMeasurement: { status: 'awaiting_external_usage' },
   }];
 
-  assert.deepEqual(classifyPressure(g), {
-    type: 'EXPAND',
-    targetId: null,
-    why: 'No currently actionable opportunity remains; preserve blocked history and expand the search space.',
-  });
+  const pressure = classifyPressure(g);
+  assert.equal(pressure.type, 'EXPAND');
+  assert.equal(pressure.targetId, null);
+  assert.match(pressure.why, /reopen the reachable field once/i);
 });
