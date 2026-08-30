@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "checkpointId": "checkpoint_cmn_human_2026_08_30",
+  "asOf": "2026-08-30T14:42:00-04:00",
+  "methodologyVersion": "2026-08-30.integrated-v2",
+  "pressure": {
+    "type": "HUMAN",
+    "targetId": "fruit_changed_method_navigator",
+    "why": "Autonomous work is exhausted; the highest-ranked remaining action is a human-authorized low-discovery JetBrains Marketplace probe."
+  },
+  "immutableRefs": {
+    "garden": {
+      "repository": "firstrateent-star/flower-economic-kernel",
+      "path": "garden/seed.json",
+      "blobSha": "cd19d2499dfb3edd52ec33cff32efa3fe4ecdf7b"
+    },
+    "methodology": {
+      "repository": "firstrateent-star/flower-economic-kernel",
+      "path": "src/core/methodology-core.js",
+      "blobSha": "3df41f858f286debc9a5c11a6fd70b715dab4bfa",
+      "version": "2026-08-30.integrated-v2"
+    },
+    "humanBoundary": {
+      "repository": "firstrateent-star/flower-economic-kernel",
+      "path": "experiments/changed-method-navigator/HUMAN_BOUNDARY_PACKET.json",
+      "blobSha": "9c650f9a07e6d2ca592585ece5ea5019af2f2957"
+    }
+  },
+  "replayRules": [
+    "Resolve every immutable reference by its exact blob SHA before replay.",
+    "Do not import evidence observed after asOf into canonical or candidate evaluation.",
+    "Candidate evaluation is read-only and may not spend, publish, accept legal terms, choose identity/legal status, contact humans, or mutate live Garden state.",
+    "If a required historical dependency cannot be recovered from immutable references, mark replay incomplete rather than reconstructing it from present-day state.",
+    "Compare decision vectors and protected invariants; do not collapse methodology quality to one score."
+  ],
+  "purpose": "First prospective, hindsight-safe replay envelope for comparing future Flower methodology versions against the current CMN sovereignty-boundary decision without duplicating the underlying Garden or methodology content."
+}
