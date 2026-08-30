@@ -22,7 +22,7 @@ test('metric-only baseline observation is stored without waking the Garden', () 
   assert.equal(garden.events.length, 0);
 });
 
-test('material Fruit truth creates a normal unprocessed Garden event', () => {
+test('material Fruit truth creates a causal Garden event and projects directly observed economic truth', () => {
   const garden = structuredClone(seed);
   const fruit = garden.fruits[0];
   ingestFruitObservation(garden, {
@@ -35,7 +35,7 @@ test('material Fruit truth creates a normal unprocessed Garden event', () => {
   const result = ingestFruitObservation(garden, {
     fruitId: fruit.id,
     source: 'test_sensor',
-    truth: { independentUser: true, creatorRevenueUsd: 0 },
+    truth: { independentUser: true, creatorRevenueUsd: 1.25 },
     metrics: { totalRuns: 3 },
   });
 
@@ -43,8 +43,32 @@ test('material Fruit truth creates a normal unprocessed Garden event', () => {
   assert.equal(result.stateChanged, true);
   assert.equal(result.event.status, 'new');
   assert.equal(result.event.type, 'FRUIT_MATERIAL_OBSERVATION');
+  assert.deepEqual(result.event.impact.domains, ['market_return']);
+  assert.deepEqual(result.event.impact.directlyAffectedOrganismIds, [fruit.id]);
+  assert.ok(result.event.projectedKeys.includes('independentUser'));
+  assert.ok(result.event.projectedKeys.includes('creatorRevenueUsd'));
   assert.equal(fruit.observedTruth.independentUser, true);
+  assert.equal(fruit.independentUser, true);
+  assert.equal(fruit.creatorRevenueUsd, 1.25);
   assert.equal(classifyPressure(garden).type, 'INTEGRATE');
+});
+
+test('sensor lifecycle status remains observed evidence rather than silently changing Fruit lifecycle authority', () => {
+  const garden = structuredClone(seed);
+  const fruit = garden.fruits[0];
+  const originalStatus = fruit.status;
+
+  const result = ingestFruitObservation(garden, {
+    fruitId: fruit.id,
+    source: 'test_sensor',
+    truth: { status: 'retired' },
+  });
+
+  assert.equal(result.changed, true);
+  assert.equal(fruit.status, originalStatus);
+  assert.equal(fruit.observedTruth.status, 'retired');
+  assert.equal(result.event.impact.domains.includes('lifecycle_observation'), true);
+  assert.equal(result.event.projectedKeys.includes('status'), false);
 });
 
 test('metric churn after an established truth baseline is a persistence no-op', () => {
