@@ -12,6 +12,23 @@ function list(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function buildInteractionBatches(humanChoices) {
+  const groups = new Map();
+  for (const decision of humanChoices) {
+    const groupId = decision.interactionGroup ?? decision.id;
+    const existing = groups.get(groupId) ?? {
+      id: groupId,
+      label: decision.interactionLabel ?? groupId,
+      decisionIds: [],
+      decisions: [],
+    };
+    existing.decisionIds.push(decision.id);
+    existing.decisions.push(decision);
+    groups.set(groupId, existing);
+  }
+  return [...groups.values()];
+}
+
 export function compileHumanBoundary(packet = {}, resolved = {}) {
   const decisions = list(packet.decisions);
   const machineActions = list(packet.machineActions);
@@ -28,6 +45,7 @@ export function compileHumanBoundary(packet = {}, resolved = {}) {
   });
 
   const humanChoices = normalized.filter((decision) => decision.required !== false && decision.authorityRequired && !decision.resolved);
+  const interactionBatches = buildInteractionBatches(humanChoices);
   const unresolvedDecisionIds = new Set(humanChoices.map((decision) => decision.id));
 
   const executableMachineActions = [];
@@ -39,18 +57,23 @@ export function compileHumanBoundary(packet = {}, resolved = {}) {
   }
 
   const downstreamCount = machineActions.length;
-  const humanCount = humanChoices.length;
+  const humanDecisionCount = humanChoices.length;
+  const humanInteractionCount = interactionBatches.length;
   return {
     id: packet.id ?? null,
     targetId: packet.targetId ?? null,
     goal: packet.goal ?? null,
     humanChoices,
+    interactionBatches,
     resolvedHumanChoices: normalized.filter((decision) => decision.authorityRequired && decision.resolved),
     executableMachineActions,
     blockedMachineActions,
-    minimumHumanDecisionCount: humanCount,
+    minimumHumanDecisionCount: humanDecisionCount,
+    minimumHumanInteractionCount: humanInteractionCount,
     downstreamMachineActionCount: downstreamCount,
-    activationGainProxy: humanCount === 0 ? downstreamCount : Number((downstreamCount / humanCount).toFixed(2)),
+    decisionActivationGainProxy: humanDecisionCount === 0 ? downstreamCount : Number((downstreamCount / humanDecisionCount).toFixed(2)),
+    interactionActivationGainProxy: humanInteractionCount === 0 ? downstreamCount : Number((downstreamCount / humanInteractionCount).toFixed(2)),
+    activationGainProxy: humanDecisionCount === 0 ? downstreamCount : Number((downstreamCount / humanDecisionCount).toFixed(2)),
     readyForMachineContinuation: humanChoices.length === 0,
   };
 }
