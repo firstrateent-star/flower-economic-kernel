@@ -4,6 +4,7 @@ import { ingestFruitObservation } from './observations.js';
 import { migrateLegacyRuntimeState } from './legacy-state-migrations.js';
 import { syncFruitManifests } from './fruit-forge.js';
 import { reconcileDistributionTruth } from './distribution-truth.js';
+import { reconcileHumanActuationGates } from './actuation-gates.js';
 
 export async function prepareRuntimeState({
   garden,
@@ -22,6 +23,7 @@ export async function prepareRuntimeState({
   const observationIngest = observation
     ? ingestFruitObservation(garden, observation)
     : null;
+  const actuationGates = reconcileHumanActuationGates(garden);
 
   const pressure = classifyPressure(garden);
   const wake = classifyWake({
@@ -37,5 +39,6 @@ export async function prepareRuntimeState({
     manifestSync,
     distributionTruth,
     observationIngest,
+    actuationGates,
   };
 }
