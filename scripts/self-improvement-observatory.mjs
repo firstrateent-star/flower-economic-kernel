@@ -2,14 +2,14 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
-import { buildReasonerGardenView } from '../src/core/reasoner-view.js';
+import { buildReasonerGardenView, diagnoseReasonerActivation } from '../src/core/reasoner-view.js';
 import { classifyPressure } from '../src/core/pressure.js';
 import { compareImprovementObservations } from '../src/core/improvement-observatory.js';
 
 const OUTPUT_PATH = process.env.FLOWER_IMPROVEMENT_REPORT
   || 'reports/self-improvement-observatory-latest.json';
 const BASELINE_PATH = process.env.FLOWER_IMPROVEMENT_BASELINE
-  || 'benchmarks/self-improvement-baseline-v2.json';
+  || 'benchmarks/self-improvement-baseline-v3.json';
 const REVISION_KEY = process.env.GITHUB_SHA
   || process.env.FLOWER_IMPLEMENTATION_KEY
   || 'working-tree';
@@ -51,14 +51,15 @@ function makeGarden(portfolioSize = 1) {
   const opportunities = [];
   const centers = [];
   for (let i = 0; i < portfolioSize; i += 1) {
-    const id = i === 0 ? 'target' : `cold_${i}`;
+    const isTarget = i === portfolioSize - 1;
+    const id = isTarget ? 'target' : `cold_${i}`;
     opportunities.push({
       id,
-      name: i === 0 ? 'Target' : `Cold ${i}`,
-      status: i === 0 ? 'seed' : 'dormant',
+      name: isTarget ? 'Target' : `Cold ${i}`,
+      status: isTarget ? 'seed' : 'dormant',
       thesis: 'Synthetic stable observatory fixture.',
-      failureArchetype: i === 0 ? 'target_family' : `archetype_${i}`,
-      reusableCapability: i === 0 ? 'target_capability' : `capability_${i}`,
+      failureArchetype: isTarget ? 'target_family' : `archetype_${i}`,
+      reusableCapability: isTarget ? 'target_capability' : `capability_${i}`,
       selectedForExperiment: false,
       experimentId: null,
       fruitId: null,
@@ -141,11 +142,12 @@ function decisionFixtures() {
 
 function measureTargetedProjection(portfolioSize, iterations = 150) {
   const garden = makeGarden(portfolioSize);
-  const target = garden.opportunities[0];
+  const target = garden.opportunities.at(-1);
   for (let i = 0; i < 20; i += 1) {
     buildReasonerGardenView({ garden, operation: 'FALSIFY', target });
   }
 
+  const activation = diagnoseReasonerActivation({ garden, operation: 'FALSIFY', target });
   const durations = [];
   let view = null;
   for (let i = 0; i < iterations; i += 1) {
@@ -159,6 +161,8 @@ function measureTargetedProjection(portfolioSize, iterations = 150) {
     projectedOpportunityCount: view.opportunities.length,
     projectedFruitCount: view.fruits.length,
     payloadBytes: bytes,
+    activationRecordsExamined: activation.recordsExamined,
+    activationLookupMode: activation.lookupMode,
     medianLatencyMs: percentile(durations, 0.5),
     p95LatencyMs: percentile(durations, 0.95),
     targetPreserved: view.opportunities.some((item) => item.id === 'target'),
@@ -201,7 +205,7 @@ function summarizeBaselineComparison(baseline, currentObservation) {
 
   const comparison = compareImprovementObservations(baseline, currentObservation, {
     name: 'Fixture-scoped Flower causal implementation comparison',
-    description: 'Compares the current causal implementation against the canonical v2 observatory baseline on the declared stable workload only.',
+    description: 'Compares the current causal implementation against the canonical observatory baseline on the declared stable workload only.',
     sourceArtifact: OUTPUT_PATH,
   });
 
@@ -240,8 +244,8 @@ async function main() {
     .reduce((max, value) => Math.max(max, value), 0);
 
   const report = {
-    schemaVersion: 3,
-    probe: 'flower_self_improvement_observatory_v2',
+    schemaVersion: 4,
+    probe: 'flower_self_improvement_observatory_v3',
     epistemicStatus: 'observation_only',
     startedAt,
     completedAt: new Date().toISOString(),
@@ -249,7 +253,7 @@ async function main() {
     implementationKey,
     causalImplementationFiles: CAUSAL_IMPLEMENTATION_FILES,
     workloadKey: 'kernel_targeted_projection_and_pressure_fixture',
-    workloadVersion: 2,
+    workloadVersion: 3,
     dimensions: {
       computeInputProxy: {
         value: largest.payloadBytes,
@@ -258,6 +262,14 @@ async function main() {
         evidenceVerified: true,
         proxy: true,
         note: 'Payload bytes are a compute/input proxy, not a physical-energy measurement.',
+      },
+      activationWorkProxy: {
+        value: largest.activationRecordsExamined,
+        unit: 'geometry-records-examined',
+        direction: 'lower',
+        evidenceVerified: true,
+        proxy: true,
+        note: 'Exact record-visit witness for the targeted neighborhood-resolution path on this workload; a compute-work proxy, not physical energy.',
       },
       speed: {
         value: largest.medianLatencyMs,
@@ -286,7 +298,7 @@ async function main() {
     },
     decisionWitness: {
       verified: decisions.passRate === 1,
-      taskKey: 'pressure-routing-fixture-v2',
+      taskKey: 'pressure-routing-fixture-v3',
       resultFingerprint: decisions.fingerprint,
       qualityScore: decisions.passRate,
       qualityDirection: 'higher',
@@ -302,6 +314,7 @@ async function main() {
     caveats: [
       'Different workloads or workload versions must not be compared as self-improvement evidence.',
       'Repository revisions that do not change the declared causal implementation files do not count as implementation changes for this workload.',
+      'Activation record visits are a deterministic compute-work proxy for this resolution path, not a universal compute or energy metric.',
       'CI timing is retained as an observation but is not promotion evidence until repeated or controlled measurements make it comparable enough.',
       'Payload bytes and synthetic portfolio capacity are explicit proxies, not energy or universal complexity truth.',
       'A benchmark improvement would prove only an internal gain on this fixture; external usefulness requires separate evidence.',
