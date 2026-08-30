@@ -32,6 +32,23 @@ Only after explicit Center-holder authorization:
 
 Do not provide source code unless separately authorized.
 
+## Current privacy / data-flow statement
+
+The reviewed v0 execution path is local-only:
+
+- it reads IntelliJ's current local VCS `ChangeListManager` state and local before/after revisions;
+- maps changed line ranges against IntelliJ's local Java PSI model;
+- renders a local Swing tool window;
+- navigates to local files with IntelliJ's `OpenFileDescriptor`.
+
+No external API call, telemetry client, remote model call, code upload, analytics SDK, or account/login dependency appears in the reviewed v0 path.
+
+Tester-facing claim should remain narrow and factual:
+
+> **This beta analyzes your current local IntelliJ/VCS state inside the IDE; it does not send your source code to an external service.**
+
+If any later mutation adds networking, telemetry, crash reporting, remote AI, licensing, or cloud persistence, this statement becomes stale and must be revalidated before reuse.
+
 ## Install instructions
 
 IntelliJ IDEA supports third-party plugin ZIP/JAR installation from disk:
