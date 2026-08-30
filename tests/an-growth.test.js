@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   anBallCount,
   anShellCount,
+  anShellCountFromGeneratingFunction,
   a2ClosedFormBall,
   a2ClosedFormShell,
   DIMENSIONAL_GROWTH_INTERPRETATION,
@@ -44,7 +45,22 @@ test('first nonzero A_n shell matches n(n+1) roots', () => {
   }
 });
 
-test('growth interpretation keeps lattice math separate from claims about other domains', () => {
+test('independent composition derivation matches the known A_n coordination generating function', () => {
+  for (let n = 1; n <= 8; n += 1) {
+    for (let radius = 0; radius <= 12; radius += 1) {
+      assert.equal(
+        anShellCount(n, radius),
+        anShellCountFromGeneratingFunction(n, radius),
+        `A_${n} shell ${radius}`,
+      );
+    }
+  }
+});
+
+test('growth interpretation inherits known coordination-sequence mathematics and keeps domain claims bounded', () => {
+  assert.match(DIMENSIONAL_GROWTH_INTERPRETATION.exact, /established coordination sequences/);
+  assert.match(DIMENSIONAL_GROWTH_INTERPRETATION.knownGeneratingFunction, /binomial/);
   assert.match(DIMENSIONAL_GROWTH_INTERPRETATION.implication, /sparse activation/);
   assert.match(DIMENSIONAL_GROWTH_INTERPRETATION.epistemicBoundary, /does not establish/);
+  assert.ok(DIMENSIONAL_GROWTH_INTERPRETATION.sources.some((source) => /Conway and Sloane/.test(source)));
 });
