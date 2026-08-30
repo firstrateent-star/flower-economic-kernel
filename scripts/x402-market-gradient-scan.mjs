@@ -26,49 +26,51 @@ function firstDefined(object, keys) {
 
 function firstArray(payload, preferredKeys = []) {
   if (Array.isArray(payload)) return payload;
-  for (const key of preferredKeys) {
-    if (Array.isArray(payload?.[key])) return payload[key];
-  }
-  for (const value of Object.values(payload ?? {})) {
-    if (Array.isArray(value)) return value;
-  }
+  for (const key of preferredKeys) if (Array.isArray(payload?.[key])) return payload[key];
+  for (const value of Object.values(payload ?? {})) if (Array.isArray(value)) return value;
   return [];
 }
 
 async function fetchJson(url) {
   const response = await fetch(url, {
-    headers: {
-      accept: 'application/json',
-      'user-agent': 'flower-economic-kernel/x402-gradient-shadow-probe',
-    },
+    headers: { accept: 'application/json', 'user-agent': 'flower-economic-kernel/x402-gradient-shadow-probe' },
   });
-  if (!response.ok) {
-    throw new Error(`${url} returned HTTP ${response.status}: ${(await response.text()).slice(0, 240)}`);
+  if (!response.ok) throw new Error(`${url} returned HTTP ${response.status}: ${(await response.text()).slice(0, 240)}`);
+  const body = await response.text();
+  try { return JSON.parse(body); } catch {
+    throw new Error(`${url} did not return JSON: ${body.slice(0, 240)}`);
   }
-  const contentType = response.headers.get('content-type') ?? '';
-  if (!contentType.toLowerCase().includes('json')) {
-    const body = await response.text();
-    try { return JSON.parse(body); } catch {
-      throw new Error(`${url} did not return JSON (${contentType}): ${body.slice(0, 240)}`);
-    }
-  }
-  return response.json();
+}
+
+function classifyFlow({ buyers, callsPerBuyer }) {
+  if (buyers === null || callsPerBuyer === null) return 'insufficient_measurement';
+  if (buyers >= 50 && callsPerBuyer >= 10) return 'broad_buyer_repeat';
+  if (buyers >= 50 && callsPerBuyer < 2) return 'broad_buyer_single_use';
+  if (buyers < 10 && callsPerBuyer >= 100) return 'narrow_buyer_high_repeat';
+  if (buyers >= 20 && callsPerBuyer >= 3) return 'moderate_breadth_repeat';
+  return 'emerging_or_sparse';
+}
+
+function evidencePriority({ buyers, callsPerBuyer, settledUsd }) {
+  if (buyers === null || callsPerBuyer === null || settledUsd === null) return null;
+  // Ordering heuristic only. Log transforms prevent one vanity metric from dominating.
+  // Buyer breadth receives the strongest exponent because repeated calls from one payer
+  // can be automation/self traffic and should not masquerade as broad demand.
+  const breadth = Math.log1p(buyers);
+  const repeat = Math.log1p(Math.min(callsPerBuyer, 500));
+  const returnSignal = Math.log1p(settledUsd);
+  return breadth ** 1.6 * repeat * returnSignal;
 }
 
 function normalizeLeaderboard(payload) {
   const rows = firstArray(payload, ['leaderboard', 'rows', 'sellers', 'results', 'data']);
   return rows.map((row, rank) => {
     const seller = firstDefined(row, ['seller', 'name', 'domain', 'host', 'origin', 'payTo', 'address']) ?? `seller_${rank + 1}`;
-    const settledUsd = numberFrom(firstDefined(row, [
-      'totalUsd', 'settledUsd', 'usdcSettled', 'volumeUsd', 'usd', 'revenueUsd', 'volume',
-    ]));
-    const calls = numberFrom(firstDefined(row, [
-      'callsSettled', 'calls', 'transactions', 'txns', 'transactionCount', 'settlements',
-    ]));
-    const buyers = numberFrom(firstDefined(row, [
-      'uniqueBuyers', 'buyers', 'buyerCount', 'distinctBuyers',
-    ]));
-    return {
+    const settledUsd = numberFrom(firstDefined(row, ['totalUsd', 'settledUsd', 'usdcSettled', 'volumeUsd', 'usd', 'revenueUsd', 'volume']));
+    const calls = numberFrom(firstDefined(row, ['callsSettled', 'calls', 'transactions', 'txns', 'transactionCount', 'settlements']));
+    const buyers = numberFrom(firstDefined(row, ['uniqueBuyers', 'buyers', 'buyerCount', 'distinctBuyers']));
+    const callsPerBuyer = calls !== null && buyers > 0 ? calls / buyers : null;
+    const rowBase = {
       rank: rank + 1,
       seller: String(seller),
       settledUsd,
@@ -76,10 +78,20 @@ function normalizeLeaderboard(payload) {
       buyers,
       usdPerCall: settledUsd !== null && calls > 0 ? settledUsd / calls : null,
       usdPerBuyer: settledUsd !== null && buyers > 0 ? settledUsd / buyers : null,
-      callsPerBuyer: calls !== null && buyers > 0 ? calls / buyers : null,
+      callsPerBuyer,
+    };
+    return {
+      ...rowBase,
+      flowClass: classifyFlow(rowBase),
+      evidencePriorityScore: evidencePriority(rowBase),
       raw: row,
     };
   });
+}
+
+function stripRaw(row) {
+  const { raw, ...rest } = row;
+  return rest;
 }
 
 function summarizeLeaderboard(rows) {
@@ -88,17 +100,20 @@ function summarizeLeaderboard(rows) {
   const totalCalls = rows.reduce((sum, row) => sum + (row.calls ?? 0), 0);
   const buyerSum = rows.reduce((sum, row) => sum + (row.buyers ?? 0), 0);
   const top = [...withUsd].sort((a, b) => b.settledUsd - a.settledUsd);
-  const share = (count) => totalUsd > 0
-    ? top.slice(0, count).reduce((sum, row) => sum + row.settledUsd, 0) / totalUsd
-    : null;
-  const broadest = [...rows]
-    .filter((row) => row.buyers !== null)
-    .sort((a, b) => b.buyers - a.buyers)
-    .slice(0, 15);
-  const highestRepeat = [...rows]
-    .filter((row) => row.callsPerBuyer !== null && row.buyers >= 2)
-    .sort((a, b) => b.callsPerBuyer - a.callsPerBuyer)
-    .slice(0, 15);
+  const share = (count) => totalUsd > 0 ? top.slice(0, count).reduce((sum, row) => sum + row.settledUsd, 0) / totalUsd : null;
+  const broadest = [...rows].filter((row) => row.buyers !== null).sort((a, b) => b.buyers - a.buyers).slice(0, 15);
+  const highestRepeat = [...rows].filter((row) => row.callsPerBuyer !== null && row.buyers >= 2).sort((a, b) => b.callsPerBuyer - a.callsPerBuyer).slice(0, 15);
+  const broadRepeat = [...rows]
+    .filter((row) => row.flowClass === 'broad_buyer_repeat')
+    .sort((a, b) => (b.evidencePriorityScore ?? 0) - (a.evidencePriorityScore ?? 0));
+  const priority = [...rows]
+    .filter((row) => row.evidencePriorityScore !== null)
+    .sort((a, b) => b.evidencePriorityScore - a.evidencePriorityScore)
+    .slice(0, 20);
+  const flowClassCounts = rows.reduce((acc, row) => {
+    acc[row.flowClass] = (acc[row.flowClass] ?? 0) + 1;
+    return acc;
+  }, {});
 
   return {
     normalizedSellerRows: rows.length,
@@ -108,73 +123,68 @@ function summarizeLeaderboard(rows) {
     top1RevenueShare: share(1),
     top5RevenueShare: share(5),
     top10RevenueShare: share(10),
-    broadestBuyerReach: broadest.map(({ raw, ...row }) => row),
-    highestCallsPerBuyer: highestRepeat.map(({ raw, ...row }) => row),
+    flowClassCounts,
+    broadBuyerRepeatLeaders: broadRepeat.slice(0, 15).map(stripRaw),
+    evidencePriorityLeaders: priority.map(stripRaw),
+    broadestBuyerReach: broadest.map(stripRaw),
+    highestCallsPerBuyer: highestRepeat.map(stripRaw),
   };
 }
 
 function summarizeIndex(payload) {
   const sellers = firstArray(payload, ['sellers', 'rows', 'results', 'data']);
+  const totals = payload?.totals ?? {};
   const direct = {
     sellerCount: numberFrom(firstDefined(payload, ['sellerCount', 'sellersCount', 'totalSellers'])),
-    toolCount: numberFrom(firstDefined(payload, ['toolCount', 'toolsCount', 'totalTools', 'advertisedTools'])),
-    endpointCount: numberFrom(firstDefined(payload, ['endpointCount', 'endpointsCount', 'totalEndpoints'])),
+    toolCount: numberFrom(firstDefined(payload, ['toolCount', 'toolsCount', 'totalTools', 'advertisedTools']))
+      ?? numberFrom(firstDefined(totals, ['tools', 'toolCount', 'totalTools'])),
+    endpointCount: numberFrom(firstDefined(payload, ['endpointCount', 'endpointsCount', 'totalEndpoints']))
+      ?? numberFrom(firstDefined(totals, ['endpoints', 'endpointCount', 'totalEndpoints'])),
   };
-
   if (direct.sellerCount === null && sellers.length > 0) direct.sellerCount = sellers.length;
-  if (direct.toolCount === null && sellers.length > 0) {
-    const toolCounts = sellers.map((seller) => numberFrom(firstDefined(seller, ['tools', 'toolCount', 'toolsCount']))).filter((x) => x !== null);
-    if (toolCounts.length > 0) direct.toolCount = toolCounts.reduce((sum, value) => sum + value, 0);
-  }
-
-  return {
-    ...direct,
-    indexedRowsObserved: sellers.length,
-    topLevelKeys: Object.keys(payload ?? {}),
-  };
+  return { ...direct, indexedRowsObserved: sellers.length, topLevelKeys: Object.keys(payload ?? {}) };
 }
 
 function gradientInterpretation({ leaderboard, indexSummary, stats }) {
-  const sellerSupply = indexSummary.sellerCount;
-  const buyerSignals = numberFrom(firstDefined(stats, ['buyers', 'uniqueBuyers', 'buyerCount', 'totalBuyers']));
-  const transactions = numberFrom(firstDefined(stats, ['transactions', 'txns', 'calls', 'settlements', 'totalTransactions']));
-  const volumeUsd = numberFrom(firstDefined(stats, ['volumeUsd', 'volume', 'settledUsd', 'totalUsd']));
+  const rawServiceCalls = numberFrom(stats?.toolCallsServed?.total);
+  const rawUsdcCalls = numberFrom(stats?.toolCallsServed?.viaUSDC);
+  const rawInternalUsdcCalls = numberFrom(stats?.toolCallsServed?.viaUSDCInternal);
+  const estimatedServiceRevenueUsd = numberFrom(stats?.estimatedRevenueUsd);
+  const internalUsdcFraction = rawUsdcCalls > 0 && rawInternalUsdcCalls !== null ? rawInternalUsdcCalls / rawUsdcCalls : null;
 
   return {
-    supplyDemandRatio: sellerSupply !== null && buyerSignals !== null && buyerSignals > 0
-      ? sellerSupply / buyerSignals
-      : null,
-    observedStats: { buyerSignals, transactions, volumeUsd },
+    observedServiceStats: {
+      toolCallsServed: rawServiceCalls,
+      usdcCalls: rawUsdcCalls,
+      internalUsdcCalls: rawInternalUsdcCalls,
+      internalUsdcFraction,
+      estimatedServiceRevenueUsd,
+    },
+    strongestMeasuredFlowClass: leaderboard.broadBuyerRepeatLeaders.length > 0 ? 'broad_buyer_repeat' : 'none_observed',
     hypothesesForNextProbe: [
-      'High advertised tool supply with concentrated settled value implies that adding generic supply is weak; identify transformations with real buyer breadth and repeat paid calls.',
-      'Buyer breadth is a stronger first-Fruit signal than raw transaction count when automated/canary traffic may dominate volume.',
-      'Calls-per-buyer can reveal recurring machine utility, but must be checked against self/canary traffic before promotion.',
-      'A reusable market-gradient sensor has internal value even before external monetization because it reduces Flower search cost; external value remains unverified until independent users consume or act on it.',
-      'Do not infer profitability from settled volume; provider costs, refunds, subsidies, wash/self activity, and ownership remain separate unknowns.',
+      'Broad buyer reach plus repeat paid calls is a stronger demand signal than raw calls alone.',
+      'Narrow-buyer high-repeat activity must be treated as automation/concentration risk until buyer independence is established.',
+      'Broad one-shot usage can signal acquisition or event-driven utility but is weaker evidence of recurring machine value than broad repeat use.',
+      'Provider settled value is not provider profit; full lifecycle costs and subsidies remain separate unknowns.',
+      'The sensor itself has internal regenerative value only if it changes Flower allocation and reduces future search cost; external value remains unverified until independent users act on it.',
     ],
-    currentDecision: leaderboard.normalizedSellerRows > 0
-      ? 'Use the market as an evidence field. Probe high-buyer-breadth and high-repeat transformations before building a paid tool.'
-      : 'Measurement blocked: do not build from this sensor until a reliable machine-readable market source is available.',
+    currentDecision: leaderboard.broadBuyerRepeatLeaders.length > 0
+      ? 'Inspect the functional transformations behind broad-buyer repeat leaders before building. Search for recurring utility common across independently used paid services.'
+      : 'Do not build. Expand measurement until a broad-buyer repeat pattern is visible or falsify this habitat.',
   };
 }
 
 async function main() {
   const startedAt = new Date().toISOString();
   const [leaderboardResult, indexResult, statsResult] = await Promise.allSettled([
-    fetchJson(LEADERBOARD_URL),
-    fetchJson(INDEX_URL),
-    fetchJson(STATS_URL),
+    fetchJson(LEADERBOARD_URL), fetchJson(INDEX_URL), fetchJson(STATS_URL),
   ]);
-
   const sourceStatus = {
     leaderboard: leaderboardResult.status === 'fulfilled' ? 'ok' : `error: ${leaderboardResult.reason?.message}`,
     index: indexResult.status === 'fulfilled' ? 'ok' : `error: ${indexResult.reason?.message}`,
     stats: statsResult.status === 'fulfilled' ? 'ok' : `error: ${statsResult.reason?.message}`,
   };
-
-  if (leaderboardResult.status !== 'fulfilled') {
-    throw new Error(`Decisive leaderboard measurement failed. ${sourceStatus.leaderboard}`);
-  }
+  if (leaderboardResult.status !== 'fulfilled') throw new Error(`Decisive leaderboard measurement failed. ${sourceStatus.leaderboard}`);
 
   const normalizedRows = normalizeLeaderboard(leaderboardResult.value);
   const leaderboardSummary = summarizeLeaderboard(normalizedRows);
@@ -184,28 +194,25 @@ async function main() {
   const stats = statsResult.status === 'fulfilled' ? statsResult.value : {};
 
   const report = {
-    schemaVersion: 1,
-    probe: 'x402_market_gradient_shadow_v1',
+    schemaVersion: 2,
+    probe: 'x402_market_gradient_shadow_v2',
     startedAt,
     completedAt: new Date().toISOString(),
     epistemicStatus: 'observation_only',
     publicPromiseCreated: false,
     spendUsd: 0,
-    sources: {
-      leaderboard: LEADERBOARD_URL,
-      index: INDEX_URL,
-      stats: STATS_URL,
-      status: sourceStatus,
-    },
+    sources: { leaderboard: LEADERBOARD_URL, index: INDEX_URL, stats: STATS_URL, status: sourceStatus },
     indexSummary,
     leaderboardSummary,
     gradient: gradientInterpretation({ leaderboard: leaderboardSummary, indexSummary, stats }),
     topRows: normalizedRows.slice(0, 30),
     rawStats: stats,
+    scoringNote: 'evidencePriorityScore is only a search-order heuristic. It cannot verify demand, independence, useful value, ownership, profit, or regenerative surplus.',
     caveats: [
       'Third-party index semantics can change; normalized fields are best-effort and raw rows are retained for audit.',
       'On-chain settlement does not automatically prove independent buyer intent, provider profit, or useful external value.',
       'Summed unique-buyer counts across sellers double-count buyers who use multiple sellers.',
+      'Internal, canary, heartbeat, subsidized, or self traffic can inflate raw activity; buyer breadth reduces but does not eliminate this uncertainty.',
       'This shadow probe informs allocation only; it creates no commercial commitment and no ownership claim over external market data.',
     ],
   };
