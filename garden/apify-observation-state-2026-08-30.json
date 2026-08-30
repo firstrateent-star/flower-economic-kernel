@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-08-30T14:50:06.530205Z",
+  "observer": {
+    "branch": "experiment/apify-store-observer",
+    "workflowRun": 33317943042,
+    "artifactId": 9734025314,
+    "artifactDigest": "sha256:0309c5b8f4df5a2ecd4ac6769c5b3c45e46e68a3ee8d398edea4dbdbad5f799b",
+    "credentialsUsed": false,
+    "sources": ["Apify public GET /v2/store", "Apify public Actor run-list endpoint"]
+  },
+  "platformConfound": {
+    "status": "confirmed_relevant",
+    "fact": "Apify documents automated daily Store testing of all Actors using default input.",
+    "consequence": "publicActorRunStats30Days owner-excluded successes cannot by themselves establish independent-user demand for newly published Actors."
+  },
+  "actors": {
+    "social-preview-drift-guard-api": {
+      "actorId": "7EskFvYOwxznhKYhj",
+      "listed": true,
+      "runnable": true,
+      "agenticPaymentEligible": true,
+      "presentInAllowsAgenticUsersTrue": true,
+      "presentInAllowsAgenticUsersFalse": false,
+      "pricing": {"model": "PAY_PER_EVENT", "primaryEvent": "url-checked", "usdPerPrimaryEvent": 0.005},
+      "storeStats": {
+        "totalRuns": 13,
+        "totalUsers": 2,
+        "totalUsers30Days": 1,
+        "totalUsers7Days": 1,
+        "ownerExcludedSuccessfulRuns30Days": 2,
+        "lastRunStartedAt": "2026-08-30T06:20:39.548Z"
+      },
+      "publicRunAttribution": "unavailable_via_unauthenticated_run_list",
+      "truth": {
+        "listed": true,
+        "eligibility": true,
+        "platformExecution": true,
+        "independentUser": "unresolved",
+        "chargedEvent": "unresolved",
+        "creatorRevenue": "0_confirmed",
+        "settledValue": "unresolved",
+        "repeatDemand": "unresolved"
+      }
+    },
+    "google-maps-exact-match-guard": {
+      "actorId": "27a1UlqkOaPB0UYxS",
+      "listed": true,
+      "runnable": true,
+      "agenticPaymentEligible": true,
+      "presentInAllowsAgenticUsersTrue": true,
+      "presentInAllowsAgenticUsersFalse": false,
+      "pricing": {"model": "PAY_PER_EVENT", "primaryEvent": "apify-default-dataset-item", "usdPerPrimaryEvent": 0.01, "actorStartUsd": 0.00005},
+      "storeStats": {
+        "totalRuns": 20,
+        "totalUsers": 2,
+        "totalUsers30Days": 1,
+        "totalUsers7Days": 1,
+        "ownerExcludedSuccessfulRuns30Days": 2,
+        "lastRunStartedAt": "2026-08-29T23:46:24.622Z"
+      },
+      "publicRunAttribution": "unavailable_via_unauthenticated_run_list",
+      "truth": {
+        "listed": true,
+        "eligibility": true,
+        "platformExecution": true,
+        "independentUser": "unresolved",
+        "chargedEvent": "unresolved",
+        "creatorRevenue": "0_confirmed",
+        "settledValue": "unresolved",
+        "repeatDemand": "unresolved"
+      }
+    }
+  },
+  "portfolioMutation": {
+    "removeHumanActuation": "Apify KYC/agentic eligibility investigation",
+    "reason": "Agentic-payment eligibility is now publicly verified for both live Actors.",
+    "doNotPromote": "The owner-excluded Store run counts are confounded by Apify's documented daily automated Store testing and therefore do not establish customer adoption or revenue.",
+    "highestRankedHumanActuation": "Changed Method Navigator hidden/low-discovery JetBrains market probe remains rank 1."
+  }
+}
