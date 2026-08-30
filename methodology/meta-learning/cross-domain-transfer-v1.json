@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "epistemicStatus": "external_code_inspection_and_deterministic_shadow_model_not_external_value",
+  "sourceImprovement": "meta_prospective_indexed_activation_v1",
+  "transformation": "When a large semantic structure remains stable across repeated local queries, build a reusable decision-preserving index so future queries need not rescan the whole structure.",
+  "boundaryHypothesis": "Indexing is useful only when query repetition and structure stability amortize index construction and invalidation; surface similarity such as an array .find() is insufficient.",
+  "cases": [
+    {
+      "id": "transfer_storybook_ai_tool_lookup",
+      "system": "storybookjs/storybook",
+      "pinnedCommit": "8256cee6c95cf35dc8113cf179c9b7bea487f327",
+      "sourcePaths": [
+        "code/core/src/cli/ai/mcp/run-tool.ts",
+        "code/core/src/cli/ai/mcp/local-metadata.ts",
+        "code/addons/mcp/src/storybook-ai-metadata.ts",
+        "code/addons/mcp/src/tools/tool-registry.ts"
+      ],
+      "observedStructure": [
+        "The AI CLI resolves a visible tool by scanning metadata.tools with Array.find in help and routing paths.",
+        "The MCP addon defines about nine built-in tool definitions across dev, test, and docs toolsets before any metadata contributed by other preset layers.",
+        "A top-level command loads Storybook AI metadata and then resolves one requested command name; localTools is already keyed by name.",
+        "Descriptor construction itself already uses a Map while merging tool groups, then returns an ordered array as public metadata."
+      ],
+      "shadowModel": {
+        "itemCount": 9,
+        "queriesPerLoadedMetadataLifecycle": 1,
+        "baselineWorstCaseRecordTouches": 9,
+        "coldIndexedRecordTouches": 10,
+        "minimumUniformSuccessfulQueriesForOneBuildToWin": 3
+      },
+      "transferState": "negative_boundary_case",
+      "why": "The observed command lifecycle does not provide enough repeated lookup reuse to pay back a fresh index build. Adding an index solely for this lookup would increase deterministic record-touch work in the modeled one-query lifecycle and add invalidation complexity.",
+      "externalValueVerified": false,
+      "recommendedAction": "Do not propose an indexing patch from current evidence. Preserve this as a counterexample to syntax-driven transfer.",
+      "falsifier": "Runtime evidence shows the same loaded metadata instance serves at least three successful name lookups frequently enough that lookup work is material relative to metadata/config loading."
+    },
+    {
+      "id": "transfer_n8n_mcp_tool_lookup",
+      "system": "n8n-io/n8n",
+      "pinnedCommit": "021cdf26dce3316d2bae6d077f7b8bd257ef765a",
+      "sourcePaths": [
+        "packages/@n8n/nodes-langchain/nodes/mcp/McpTrigger/McpServer.ts",
+        "packages/@n8n/nodes-langchain/nodes/mcp/McpTrigger/session/SessionManager.ts",
+        "packages/@n8n/nodes-langchain/nodes/mcp/McpTrigger/session/InMemorySessionStore.ts"
+      ],
+      "observedStructure": [
+        "McpServer is a long-lived singleton and sessions persist across requests.",
+        "handlePostMessage resolves a requested tool by scanning the provided tools array with Array.find.",
+        "The session store persists Tool[] by session id, but handlePostMessage also calls setTools(sessionId, tools) on active requests.",
+        "Therefore a reusable name index is plausible only if tool-set semantic stability can be witnessed cheaply enough to avoid rebuilding the index every request."
+      ],
+      "shadowModel": {
+        "exampleItemCount": 100,
+        "exampleRepeatedQueries": 100,
+        "oneStableBuildUniformRecordTouches": 200,
+        "linearUniformRecordTouches": 5050,
+        "rebuildEveryQueryRecordTouches": 10100,
+        "exampleIsEmpirical": false
+      },
+      "transferState": "conditional_candidate_requires_runtime_stability_witness",
+      "why": "The lifecycle has genuine persistence and repeated requests, but current source inspection does not prove that the same semantic tool set is reused long enough or that tool lookup is material. Rebuilding an index on every setTools call would be worse; reusing an index across stable sessions could be substantially better for large tool sets.",
+      "externalValueVerified": false,
+      "recommendedAction": "Before any patch, measure real tool-count distribution, calls per unchanged tool set, array/content identity stability, and lookup share of request cost. Only then test a cache keyed by a safe stability witness.",
+      "falsifier": "Real sessions have small tool sets, low repeated calls, frequently changing tools, or lookup cost is negligible relative to request execution; any of these would make the index complexity unjustified."
+    }
+  ],
+  "metaLearningUpdate": {
+    "oldTransferHeuristic": "Repeated linear lookup may benefit from indexing.",
+    "refinedTransferHeuristic": "A reusable semantic index is a candidate only when structure stability, repeated queries, safe invalidation, material lookup burden, and preserved decision semantics jointly make the amortized transformation positive.",
+    "newDistinction": "surface structural similarity != transferable causal opportunity",
+    "newEquivalence": "systems with different syntax can share the same optimization only when their reuse/invalidation economics are causally equivalent",
+    "externalValueGapClosed": false
+  },
+  "flourishingAudit": {
+    "agency": "preserved; no external patch or behavioral change made",
+    "truth": "positive; one tempting transfer was rejected and one retained conditionally",
+    "capability": "positive; transfer selection gained explicit amortization and invalidation criteria",
+    "wellbeing": "unknown",
+    "resilience": "positive_candidate; safe invalidation became explicit",
+    "optionality": "positive; n8n candidate preserved without commitment",
+    "regeneration": "positive_internal; future transfer searches can reject low-reuse cases cheaply",
+    "resourceEfficiency": "positive_internal; avoids unnecessary external implementation work",
+    "displacedCosts": "explicitly includes index build and invalidation burden",
+    "harm": "no external intervention performed"
+  }
+}
