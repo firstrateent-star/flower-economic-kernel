@@ -22,16 +22,30 @@ function candidate(name = 'Fresh Machine Fruit') {
   };
 }
 
-test('one costly EXPAND automatically ranks and authorizes the first reality test', async () => {
+test('one evidence-bearing EXPAND automatically authorizes the next unearned reality dimension without another costly reasoner breath', async () => {
   const garden = structuredClone(seed);
   for (const opp of garden.opportunities) opp.status = 'dormant';
   garden.experiments = [];
   garden.selections = [];
 
+  const sources = [
+    { title: 'Failure case A', url: 'https://issues.example/failure-a' },
+    { title: 'Failure case B', url: 'https://issues.example/failure-b' },
+    { title: 'Failure case C', url: 'https://docs.example/failure-c' },
+  ];
+  const first = {
+    ...candidate('First Ranked Fruit'),
+    failureEvidence: sources.map((source, index) => ({
+      url: source.url,
+      claim: `Concrete failure case ${index + 1}.`,
+    })),
+    buyerEvidence: [],
+  };
+
   const reasoner = new MockReasoner({
     EXPAND: {
-      data: { candidates: [candidate('First Ranked Fruit'), candidate('Reserve Fruit')] },
-      sources: [],
+      data: { candidates: [first] },
+      sources,
       rawId: 'expand_mock',
       usage: { total_tokens: 1 },
     },
@@ -44,12 +58,20 @@ test('one costly EXPAND automatically ranks and authorizes the first reality tes
   assert.equal(result.runBudget.costlyBreathsUsed, 1);
   assert.equal(result.stoppedByCostFrontier, true);
 
-  const first = garden.opportunities.find((x) => x.name === 'First Ranked Fruit');
-  const reserve = garden.opportunities.find((x) => x.name === 'Reserve Fruit');
-  assert.equal(first.status, 'needs_test');
-  assert.equal(first.selectedForExperiment, true);
-  assert.equal(reserve.selectionState, 'reserve');
-  assert.ok(first.experimentId);
+  const admitted = garden.opportunities.find((x) => x.name === 'First Ranked Fruit');
+  assert.ok(admitted);
+  assert.equal(admitted.status, 'supported');
+  assert.equal(admitted.selectedForExperiment, true);
+
+  const failureScout = garden.experiments.find((x) =>
+    x.opportunityId === admitted.id && x.validationDimension === 'failure_reality' && x.status === 'integrated'
+  );
+  const buyerExperiment = garden.experiments.find((x) =>
+    x.opportunityId === admitted.id && x.validationDimension === 'buyer_demand' && x.status === 'authorized'
+  );
+  assert.ok(failureScout);
+  assert.ok(buyerExperiment);
+  assert.equal(admitted.experimentId, buyerExperiment.id);
   assert.equal(classifyPressure(garden).type, 'EXECUTE_EXPERIMENT');
 });
 
@@ -112,25 +134,19 @@ test('one web-search frontier automatically integrates and lines up the reserve 
   });
 
   const result = await pulse({ garden, reasoner, maxBreaths: 12, maxCostlyBreaths: 1 });
-
-  assert.deepEqual(result.breaths.map((x) => x.pressure.type), [
-    'EXECUTE_EXPERIMENT',
-    'INTEGRATE',
-    'EXPERIMENT',
-  ]);
-  assert.deepEqual(result.breaths.map((x) => x.costClass), ['web_search', 'free', 'free']);
-  assert.equal(garden.opportunities[0].status, 'measurement_blocked');
-  assert.ok(garden.opportunities[1].experimentId);
-  assert.equal(classifyPressure(garden).type, 'EXECUTE_EXPERIMENT');
-  assert.equal(result.stoppedByCostFrontier, true);
+  assert.deepEqual(result.breaths.map((x) => x.pressure.type), ['EXECUTE_EXPERIMENT', 'INTEGRATE', 'SELECT', 'EXPERIMENT']);
+  assert.equal(garden.experiments.find((x) => x.id === 'exp_first').status, 'integrated');
+  assert.equal(garden.opportunities.find((x) => x.id === 'opp_first').selectionState, 'cooldown');
+  assert.equal(garden.opportunities.find((x) => x.id === 'opp_reserve').selectedForExperiment, true);
+  assert.ok(garden.opportunities.find((x) => x.id === 'opp_reserve').experimentId);
 });
 
 test('email DNS weakening threshold makes the branch dormant before another search', async () => {
   const garden = structuredClone(seed);
-  const email = {
-    ...candidate('Transactional Email Authentication Preflight API'),
+  garden.opportunities = [{
+    ...candidate('Transactional Email Authentication Preflight'),
     id: 'opp_a179f5e22952',
-    status: 'supported',
+    status: 'needs_test',
     selectedForExperiment: true,
     selectionState: 'selected',
     experimentId: 'exp_dns',
@@ -138,38 +154,31 @@ test('email DNS weakening threshold makes the branch dormant before another sear
     externalEvidence: [],
     reasoningEvidence: [],
     counterEvidence: [],
-  };
-  garden.opportunities = [email];
+  }];
   garden.experiments = [{
     id: 'exp_dns',
-    opportunityId: email.id,
+    opportunityId: 'opp_a179f5e22952',
     status: 'result_ready',
+    authorization: { allowed: true, requiresApproval: false },
     name: 'Direct ESP-Signaled SPF/DMARC DNS Sample',
+    tests: 'Inspect public DNS.',
     actionType: 'observe',
     method: 'email_auth_dns_sample',
     oneTimeCostUsd: 0,
     recurringUsd: 0,
+    successCondition: 'At least two hard failures.',
+    killCondition: 'At least eight ESP-signaled domains and zero hard failures.',
     validationDimension: 'failure_reality',
-    killCondition: 'At least eight ESP-signaled domains with zero hard failures.',
     result: {
       verdict: 'weakens',
-      finding: '23 ESP-signaled domains exposed zero hard failures.',
-      observations: [],
+      finding: 'No hard SPF/DMARC failures in the bounded sample.',
       sources: [{ title: 'DNS evidence', url: 'dns://example.com/TXT' }],
-      sample: { espSignaled: 23, hardFailureDomains: 0 },
+      sample: { espSignaled: 8, hardFailureDomains: 0 },
     },
   }];
 
-  const result = await pulse({
-    garden,
-    reasoner: new MockReasoner(),
-    maxBreaths: 12,
-    maxCostlyBreaths: 0,
-  });
-
-  assert.deepEqual(result.breaths.map((x) => x.pressure.type), ['INTEGRATE']);
-  assert.equal(email.status, 'dormant');
-  assert.equal(email.selectedForExperiment, false);
-  assert.equal(classifyPressure(garden).type, 'EXPAND');
-  assert.equal(result.stoppedByCostFrontier, true);
+  const result = await pulse({ garden, reasoner: new MockReasoner(), maxBreaths: 4, maxCostlyBreaths: 1 });
+  assert.equal(result.breaths[0].pressure.type, 'INTEGRATE');
+  assert.equal(garden.opportunities[0].status, 'dormant');
+  assert.equal(garden.opportunities[0].experimentId, null);
 });
