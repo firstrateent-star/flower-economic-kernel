@@ -1,0 +1,62 @@
+{
+  "status": "candidate_not_promoted",
+  "candidateName": "FLOW BEFORE FORM",
+  "discoveredUnderMethodologyVersion": "2026-08-30.integrated-v4",
+  "observedAt": "2026-08-30T21:29:42Z",
+  "thesis": "When entering an economic habitat with observable transaction flow, Flower should instrument the flow before creating new economic form: distinguish supply, gross activity, buyer breadth, repeat use, attributable return, and concentration so new construction begins from observed gradients rather than product ideas.",
+  "proposedCompactLaw": "FLOW BEFORE FORM: instrument existing value flow enough to distinguish supply, activity, buyer breadth, repeat use, and attributable return before allocating heavy construction.",
+  "whyNotPromotedYet": "The rule changed the decision in the x402 habitat, but one habitat is insufficient evidence that this wording should become universal canonical law. Integrated-v4 already contains broader distribution-before-build, tiny-probe, terminal-value, and anti-Goodhart laws that may subsume it.",
+  "evidence": {
+    "shadowProbe": {
+      "workflowRunId": 33336566757,
+      "probe": "x402_market_gradient_shadow_v2",
+      "spendUsd": 0,
+      "publicPromiseCreated": false,
+      "sellerCount": 3527,
+      "advertisedToolCount": 89285,
+      "normalizedSellerRows": 50,
+      "summedSettledUsdAcrossReturnedRows": 2021.49006,
+      "top5RevenueShare": 0.5676193396667011,
+      "top10RevenueShare": 0.7139633543387296,
+      "flowClasses": {
+        "broad_buyer_repeat": 7,
+        "moderate_breadth_repeat": 10,
+        "broad_buyer_single_use": 1,
+        "narrow_buyer_high_repeat": 3,
+        "emerging_or_sparse": 29
+      },
+      "contrast": [
+        "agents.chain.link: 13082 settled calls from 2 buyers, demonstrating that high activity can coexist with extreme buyer concentration.",
+        "api.onesource.io: 3753 settled calls from 432 buyers, demonstrating much broader buyer reach despite far fewer calls.",
+        "StableEnrich: 16129 settled calls from 138 buyers and BlockRun.AI: 16453 calls from 190 buyers, showing broad-repeat patterns worth functional inspection before new supply is created."
+      ]
+    },
+    "functionalInspection": [
+      {
+        "source": "https://stableenrich.dev/",
+        "observation": "StableEnrich exposes reusable paid research, enrichment, search, and scraping capabilities for agents."
+      },
+      {
+        "source": "https://www.onesource.io/products/agent-skill",
+        "observation": "OneSource exposes deterministic on-chain data and interpretation directly to agents via paid skill/API surfaces."
+      },
+      {
+        "source": "https://blockrun.ai/",
+        "observation": "BlockRun exposes unified model/data routing with per-request x402 payment and no provider API keys."
+      },
+      {
+        "source": "https://twit.sh/",
+        "observation": "twit.sh exposes real-time X data to agents through per-request x402 payment without account setup."
+      },
+      {
+        "source": "https://x402node.dev/",
+        "observation": "x402node exposes deterministic developer/data utilities and explicitly includes paid x402 market-intelligence endpoints, suggesting both demand for reusable transformation and competition in simple gradient intelligence."
+      }
+    ]
+  },
+  "decisionChange": "Do not build another generic paid API merely because x402 offers a settlement rail. Continue measuring functional transformations behind broad-buyer repeat flows and search for a reusable transformation or infrastructure gap whose demand/access/capture path is already evidenced.",
+  "internalRegenerativeValue": "The gradient sensor already reduced Flower's search error by separating raw activity from buyer breadth and by preventing immediate blind supply creation. This is internal value evidence, not external market value or economic Fruit.",
+  "externalValueStatus": "unverified",
+  "falsifier": "If broader economic habitats repeatedly produce better decisions without pre-construction flow instrumentation, or if buyer breadth/repeat measurements fail to predict later independent use/value better than simpler evidence, do not promote this candidate as a canonical law.",
+  "nextProbe": "Classify the functions behind broad-buyer repeat services and determine whether recurring paid demand clusters around a small set of transformation primitives that Flower can reuse, improve, route, or measure without duplicating commoditized supply."
+}
