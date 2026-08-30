@@ -1,28 +1,31 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "fruitId": "fruit_social_preview_drift_guard",
-  "observedAt": "2026-08-30",
-  "reason": "Reconcile distribution artifacts that advanced beyond the older fruit.manifest.json snapshot.",
-  "sourceOfTruthRule": "Concrete verified artifacts outrank stale planning fields. Do not silently rewrite unresolved external platform/account state.",
+  "observedAt": "2026-08-30T14:50:06.530205Z",
+  "reason": "Reconcile distribution artifacts and first-party public Store observations beyond the older fruit.manifest.json snapshot.",
+  "sourceOfTruthRule": "Concrete verified artifacts and first-party platform state outrank stale planning fields. Aggregate platform activity must not be promoted to user demand when platform-generated traffic is a documented confound.",
   "rails": {
     "apifyStore": {
       "state": "live",
-      "evidence": "fruit.manifest.json records live public release on 2026-08-29",
-      "externalUsage": "unresolved"
+      "actorId": "7EskFvYOwxznhKYhj",
+      "runnable": true,
+      "externalMarketUsage": "unresolved",
+      "ownerExcludedSuccessfulRuns30Days": 2,
+      "runInterpretation": "confounded_by_documented_daily_store_health_testing"
     },
     "apifyAgenticPayments": {
-      "state": "eligibility_unresolved",
+      "state": "eligible",
+      "isWhiteListedForAgenticPayments": true,
+      "presentInAllowsAgenticUsersTrueFilter": true,
+      "presentInAllowsAgenticUsersFalseFilter": false,
       "structuralFit": {
         "payPerEvent": true,
         "eventOnlyCharging": true,
         "limitedPermissions": true,
         "standby": false
       },
-      "unresolvedAccountPlatformTruth": [
-        "developer KYC status",
-        "current allowsAgenticUsers flag"
-      ],
-      "mutationGate": "Do not build x402 middleware or duplicate the Actor before the explicit current platform eligibility state is reconciled."
+      "resolvedWithoutHumanActuation": true,
+      "mutationGate": "Do not build x402 middleware or duplicate the Actor; agentic eligibility already exists. Wait for attributable independent use or paid-return evidence before product mutation."
     },
     "githubAction": {
       "state": "private_staged_ci_passed",
@@ -35,17 +38,41 @@
       "nextBoundary": "human-authorized creation of an appropriate public repository and release"
     }
   },
-  "stalenessDetected": {
-    "field": "fruit.manifest.json -> distributionProgress.recurringDistributionWrapper.status",
-    "olderValue": "not_built",
-    "currentEvidence": "wrapper exists and deterministic private CI passed",
-    "lesson": "Planning manifests can lag artifact reality. Distribution state should be reconciled from executable evidence before choosing the next build."
+  "truthLadder": {
+    "listedTruth": true,
+    "eligibilityTruth": true,
+    "platformExecutionTruth": true,
+    "independentUserTruth": "unresolved",
+    "chargedEventTruth": "unresolved",
+    "creatorRevenueTruth": "0_confirmed",
+    "settledValueTruth": "unresolved",
+    "repeatDemandTruth": "unresolved"
   },
+  "sensorState": {
+    "observerBranch": "experiment/apify-store-observer",
+    "workflowRunId": 33317943042,
+    "artifactId": 9734025314,
+    "artifactDigest": "sha256:0309c5b8f4df5a2ecd4ac6769c5b3c45e46e68a3ee8d398edea4dbdbad5f799b",
+    "credentialsUsed": false,
+    "individualPublicRunAttribution": "unavailable_via_unauthenticated_actor_run_list"
+  },
+  "stalenessDetected": [
+    {
+      "field": "fruit.manifest.json -> distributionProgress.recurringDistributionWrapper.status",
+      "olderValue": "not_built",
+      "currentEvidence": "wrapper exists and deterministic private CI passed"
+    },
+    {
+      "field": "distribution-state -> apifyAgenticPayments.state",
+      "olderValue": "eligibility_unresolved",
+      "currentEvidence": "public Store API places Actor in allowsAgenticUsers=true and reports isWhiteListedForAgenticPayments=true"
+    }
+  ],
   "nextEconomicEvidence": [
-    "explicit Apify agentic eligibility truth",
-    "first independent external Actor run",
-    "first paid url-checked event",
-    "first repeat independent user",
-    "public GitHub Action release only after Center-holder authorization"
+    "attributable independent external Actor use distinct from platform health testing",
+    "first attributable charged url-checked event",
+    "first creator-revenue ledger evidence",
+    "first repeat independent user or multiple independent users",
+    "public GitHub Action release only after Center-holder authorization and portfolio re-ranking"
   ]
 }
