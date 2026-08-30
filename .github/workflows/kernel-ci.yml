@@ -8,6 +8,8 @@ on:
       - 'tests/**'
       - 'garden/**'
       - 'actors/**'
+      - '.actor/**'
+      - 'Dockerfile'
       - 'package.json'
       - '.github/workflows/kernel-ci.yml'
   pull_request:
@@ -16,6 +18,8 @@ on:
       - 'tests/**'
       - 'garden/**'
       - 'actors/**'
+      - '.actor/**'
+      - 'Dockerfile'
       - 'package.json'
       - '.github/workflows/kernel-ci.yml'
   workflow_dispatch:
@@ -35,5 +39,7 @@ jobs:
         run: npm install --ignore-scripts
       - name: Syntax checks
         run: npm run check
+      - name: Validate Actor JSON configuration
+        run: node -e "JSON.parse(require('fs').readFileSync('.actor/input_schema.json','utf8')); JSON.parse(require('fs').readFileSync('.actor/actor.json','utf8'));"
       - name: Kernel tests
         run: npm test
