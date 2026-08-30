@@ -178,12 +178,15 @@ function geometryInputSignature(garden) {
       realityAccess: opp.realityAccess ?? null,
       reproductivePotential: opp.reproductivePotential ?? null,
     })),
-    supportingExperiments: (garden.experiments ?? []).map((exp) => ({
-      opportunityId: exp.opportunityId ?? null,
-      status: exp.status ?? null,
-      verdict: exp.result?.verdict ?? null,
-      validationDimension: exp.validationDimension ?? null,
-    })),
+    // centerCoverage only consumes integrated supporting dimensions. Authorized,
+    // running, result-ready, weak, or inconclusive experiments cannot affect geometry
+    // yet and therefore must not invalidate the dense derived graph.
+    supportingExperiments: (garden.experiments ?? [])
+      .filter((exp) => exp.status === 'integrated' && exp.result?.verdict === 'supports')
+      .map((exp) => ({
+        opportunityId: exp.opportunityId ?? null,
+        validationDimension: exp.validationDimension ?? null,
+      })),
   };
 
   return createHash('sha256').update(JSON.stringify(input)).digest('hex');
