@@ -4,10 +4,7 @@ import fs from 'node:fs/promises';
 import { loadGarden, saveGarden, loadJson } from '../core/garden.js';
 import { classifyPressure } from '../core/pressure.js';
 import { pulse } from '../core/kernel.js';
-import { classifyWake } from '../core/wake.js';
-import { ingestFruitObservation } from '../core/observations.js';
-import { syncFruitManifests } from '../core/fruit-forge.js';
-import { reconcileDistributionTruth } from '../core/distribution-truth.js';
+import { prepareRuntimeState } from '../core/runtime-preparation.js';
 import { OpenAIReasoner } from '../reasoners/openai.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -32,20 +29,20 @@ try {
 const garden = await loadGarden({ stateFile, seedFile });
 
 if (command === 'status') {
-  const manifestSync = await syncFruitManifests(garden, { rootDir: root });
-  const distributionTruth = reconcileDistributionTruth(garden);
-  const pressure = classifyPressure(garden);
+  const prepared = await prepareRuntimeState({ garden, rootDir: root });
   console.log(JSON.stringify({
     rootGoal: garden.center.rootGoal,
     generation: garden.status.generation,
-    pressure,
-    wake: classifyWake({ pressure }),
+    pressure: prepared.pressure,
+    wake: prepared.wake,
     opportunities: garden.opportunities.map(({ id, name, status }) => ({ id, name, status })),
     fruits: garden.fruits.map(({ id, name, status, monthlyRevenueUsd, creatorRevenueUsd, agenticPaymentEligible, externalUsage }) => ({
       id, name, status, monthlyRevenueUsd, creatorRevenueUsd, agenticPaymentEligible, externalUsage,
     })),
-    manifestChanges: manifestSync.changes,
-    distributionTruthChanges: distributionTruth.changes,
+    legacyMigrations: prepared.legacy.stateMigrations,
+    epistemicRepairs: prepared.legacy.repaired,
+    manifestChanges: prepared.manifestSync.changes,
+    distributionTruthChanges: prepared.distributionTruth.changes,
     pendingApprovals: garden.approvals.filter((x) => x.status === 'pending').length,
     pulseCount: garden.status.pulseCount,
   }, null, 2));
@@ -53,16 +50,13 @@ if (command === 'status') {
 }
 
 if (command === 'pulse') {
-  const manifestSync = await syncFruitManifests(garden, { rootDir: root });
-  const distributionTruth = reconcileDistributionTruth(garden);
-  let observationIngest = null;
   const observationJson = process.env.FLOWER_OBSERVATION_JSON;
-  if (observationJson) {
-    observationIngest = ingestFruitObservation(garden, JSON.parse(observationJson));
-  }
-
-  const pressure = classifyPressure(garden);
-  const wake = classifyWake({ pressure, event: observationIngest?.event ?? null });
+  const prepared = await prepareRuntimeState({
+    garden,
+    rootDir: root,
+    observation: observationJson ? JSON.parse(observationJson) : null,
+  });
+  const { pressure, wake, observationIngest } = prepared;
   const stateChangedBeforeWake = persistedBefore == null || persistedBefore !== JSON.stringify(garden);
 
   if (!wake.wake) {
@@ -82,8 +76,10 @@ if (command === 'pulse') {
         stateChanged: observationIngest.stateChanged,
         reason: observationIngest.reason,
       } : null,
-      manifestChanges: manifestSync.changes,
-      distributionTruthChanges: distributionTruth.changes,
+      legacyMigrations: prepared.legacy.stateMigrations,
+      epistemicRepairs: prepared.legacy.repaired,
+      manifestChanges: prepared.manifestSync.changes,
+      distributionTruthChanges: prepared.distributionTruth.changes,
       pulseCount: garden.status.pulseCount,
       stateFile,
     }, null, 2));
@@ -106,8 +102,10 @@ if (command === 'pulse') {
     } : null,
     breaths: result.breaths.map((x) => ({ pressure: x.pressure.type, summary: x.result.summary })),
     nextPressure: classifyPressure(garden),
-    manifestChanges: manifestSync.changes,
-    distributionTruthChanges: distributionTruth.changes,
+    legacyMigrations: prepared.legacy.stateMigrations,
+    epistemicRepairs: prepared.legacy.repaired,
+    manifestChanges: prepared.manifestSync.changes,
+    distributionTruthChanges: prepared.distributionTruth.changes,
     pulseCount: garden.status.pulseCount,
     stateFile,
   }, null, 2));
