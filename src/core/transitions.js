@@ -1,4 +1,5 @@
 import { id, nowIso } from './utils.js';
+import { FLOWER_METHODOLOGY_VERSION } from './methodology-core.js';
 
 const STATUS_RANK = {
   seed: 0,
@@ -22,5 +23,6 @@ export function addTrace(garden, trace) {
     id: id('trace'),
     at: nowIso(),
     ...trace,
+    methodologyVersion: FLOWER_METHODOLOGY_VERSION,
   });
 }
