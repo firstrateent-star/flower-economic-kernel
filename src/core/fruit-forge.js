@@ -18,6 +18,39 @@ function moreAdvancedStage(a, b) {
   return (STAGE_RANK[a] ?? 0) >= (STAGE_RANK[b] ?? 0) ? a : b;
 }
 
+async function readLatestDistributionState(actorDir, rootDir) {
+  let entries = [];
+  try {
+    entries = await fs.readdir(actorDir, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+
+  // Dated sidecars intentionally sort lexically (YYYY-MM-DD) so the newest explicit
+  // reconciliation outranks older planning state without mutating the historical manifest.
+  const candidates = entries
+    .filter((entry) => entry.isFile() && /^distribution-state(?:-\d{4}-\d{2}-\d{2})?\.json$/i.test(entry.name))
+    .map((entry) => entry.name)
+    .sort()
+    .reverse();
+
+  for (const name of candidates) {
+    const file = path.join(actorDir, name);
+    try {
+      const raw = await fs.readFile(file, 'utf8');
+      return {
+        ...JSON.parse(raw),
+        statePath: path.relative(rootDir, file),
+      };
+    } catch {
+      // A malformed sidecar must not prevent the Fruit itself from loading. Continue
+      // to an older valid reconciliation file if one exists.
+    }
+  }
+
+  return null;
+}
+
 async function readFruitManifests(rootDir) {
   const actorsDir = path.join(rootDir, 'actors');
   let entries = [];
@@ -30,11 +63,17 @@ async function readFruitManifests(rootDir) {
   const manifests = [];
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    const file = path.join(actorsDir, entry.name, 'fruit.manifest.json');
+    const actorDir = path.join(actorsDir, entry.name);
+    const file = path.join(actorDir, 'fruit.manifest.json');
     try {
       const raw = await fs.readFile(file, 'utf8');
       const manifest = JSON.parse(raw);
-      manifests.push({ ...manifest, manifestPath: path.relative(rootDir, file) });
+      const distributionState = await readLatestDistributionState(actorDir, rootDir);
+      manifests.push({
+        ...manifest,
+        manifestPath: path.relative(rootDir, file),
+        distributionState,
+      });
     } catch {
       // An actor directory is not required to be a Flower Fruit.
     }
@@ -68,6 +107,7 @@ export async function syncFruitManifests(garden, { rootDir = process.cwd() } = {
         passiveDistribution: manifest.passiveDistribution ?? null,
         publicRelease: manifest.publicRelease ?? null,
         publicMeasurement: manifest.publicMeasurement ?? null,
+        distributionState: manifest.distributionState ?? null,
         growthLoop: manifest.growthLoop ?? null,
         manifestPath: manifest.manifestPath,
         createdAt: new Date().toISOString(),
@@ -87,6 +127,7 @@ export async function syncFruitManifests(garden, { rootDir = process.cwd() } = {
       fruit.passiveDistribution = manifest.passiveDistribution ?? fruit.passiveDistribution;
       fruit.publicRelease = manifest.publicRelease ?? fruit.publicRelease;
       fruit.publicMeasurement = manifest.publicMeasurement ?? fruit.publicMeasurement;
+      fruit.distributionState = manifest.distributionState ?? fruit.distributionState ?? null;
       fruit.growthLoop = manifest.growthLoop ?? fruit.growthLoop;
       fruit.manifestPath = manifest.manifestPath;
       fruit.status = moreAdvancedStage(fruit.status, manifest.stage ?? 'private_source_ready');
