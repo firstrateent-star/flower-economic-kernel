@@ -28,21 +28,23 @@ jobs:
           node --check src/core/meta-learning.js
           node --check scripts/meta-learning-observatory.mjs
           node --test tests/meta-learning.test.js
-      - name: Run counterpressured historical meta-learning Observatory
+      - name: Run counterpressured historical plus prospective meta-learning Observatory
         run: node scripts/meta-learning-observatory.mjs
       - name: Validate epistemic boundaries
         run: |
           node - <<'NODE'
           const fs = require('fs');
           const report = JSON.parse(fs.readFileSync('reports/meta-learning-observatory-latest.json', 'utf8'));
-          if (report.epistemicStatus !== 'counterpressured_historical_meta_learning_not_causal_proof') throw new Error('Meta-learning report overstated epistemic status.');
-          if (report.externalFlourishingClaim !== false) throw new Error('Internal lineage may not claim external flourishing.');
+          if (report.epistemicStatus !== 'counterpressured_meta_learning_with_prospective_internal_evidence_not_external_proof') throw new Error('Meta-learning report has incorrect epistemic status.');
+          if (report.externalFlourishingClaim !== false) throw new Error('Internal evidence may not claim external flourishing.');
           if (report.flourishingOrientation?.scalarized !== false) throw new Error('Flourishing may not collapse into one scalar objective.');
-          if (report.candidateRules.some((rule) => rule.eligibleForCanonicalPromotion === true)) throw new Error('Historical recurrence may not self-promote a canonical rule.');
-          if (report.selfAudit?.negativeControlCount < 2) throw new Error('v2 requires represented negative controls.');
-          if (report.selfAudit?.explicitMechanismRoleCoverage !== 1) throw new Error('v2 requires applied/violated/inferred mechanism roles for every episode.');
-          if (!report.selfAudit?.risks?.some((risk) => risk.startsWith('causality_gap'))) throw new Error('Historical v2 must retain the need for a prospective meta-test.');
-          if (report.nextPressure?.type !== 'PROSPECTIVE_META_TEST') throw new Error('Counterpressured v2 should request one bounded prospective meta-test.');
+          if (report.candidateRules.some((rule) => rule.eligibleForCanonicalPromotion === true)) throw new Error('Historical/prospective recurrence may not self-promote a canonical rule.');
+          if (report.selfAudit?.negativeControlCount < 2) throw new Error('Counterpressured meta-learning requires represented negative controls.');
+          if (report.selfAudit?.explicitMechanismRoleCoverage !== 1) throw new Error('Every episode must preserve applied/violated/inferred mechanism roles.');
+          if (Number(report.selfAudit?.prospectiveCausalEpisodeCount ?? 0) < 1) throw new Error('The indexed-activation prospective intervention must be represented.');
+          if (report.selfAudit?.risks?.some((risk) => risk.startsWith('causality_gap'))) throw new Error('Prospective causal evidence should clear the historical causality-gap flag for this bounded internal mechanism.');
+          if (!report.selfAudit?.risks?.some((risk) => risk.startsWith('external_value_gap'))) throw new Error('External-value gap must remain until another system independently benefits.');
+          if (report.nextPressure?.type !== 'CROSS_DOMAIN_TRANSFER_TEST') throw new Error('Prospective internal evidence should advance pressure to bounded cross-domain transfer.');
           console.log(JSON.stringify({
             nextPressure: report.nextPressure,
             selfAudit: report.selfAudit,
