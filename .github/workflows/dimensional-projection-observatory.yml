@@ -8,7 +8,6 @@ on:
       - 'garden/**'
       - 'src/core/geometry.js'
       - 'src/core/reasoner-view.js'
-      - 'src/core/activation-projection-audit.js'
       - 'scripts/dimensional-projection-observatory.mjs'
       - 'research/dimensional/**'
       - 'tests/activation-projection-audit.test.js'
@@ -32,7 +31,7 @@ jobs:
           node-version: 22
       - name: Validate projection audit and dimensional research math
         run: |
-          node --check src/core/activation-projection-audit.js
+          node --check research/dimensional/activation-projection-audit.js
           node --check research/dimensional/projection-ambiguity.js
           node --check research/dimensional/an-flower-shell.js
           node --check research/dimensional/an-growth.js
