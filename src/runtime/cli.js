@@ -28,6 +28,17 @@ try {
 
 const garden = await loadGarden({ stateFile, seedFile });
 
+function observationSummary(observationIngest) {
+  if (!observationIngest) return null;
+  return {
+    changed: observationIngest.changed,
+    stateChanged: observationIngest.stateChanged,
+    reason: observationIngest.reason,
+    projectedKeys: observationIngest.projectedKeys ?? [],
+    impact: observationIngest.impact ?? null,
+  };
+}
+
 if (command === 'status') {
   const prepared = await prepareRuntimeState({ garden, rootDir: root });
   console.log(JSON.stringify({
@@ -43,6 +54,7 @@ if (command === 'status') {
     epistemicRepairs: prepared.legacy.repaired,
     manifestChanges: prepared.manifestSync.changes,
     distributionTruthChanges: prepared.distributionTruth.changes,
+    actuationGateChanges: prepared.actuationGates.changes,
     pendingApprovals: garden.approvals.filter((x) => x.status === 'pending').length,
     pulseCount: garden.status.pulseCount,
   }, null, 2));
@@ -71,15 +83,12 @@ if (command === 'pulse') {
       pressure,
       stateChanged: stateChangedBeforeWake,
       statePersisted,
-      observationIngest: observationIngest ? {
-        changed: observationIngest.changed,
-        stateChanged: observationIngest.stateChanged,
-        reason: observationIngest.reason,
-      } : null,
+      observationIngest: observationSummary(observationIngest),
       legacyMigrations: prepared.legacy.stateMigrations,
       epistemicRepairs: prepared.legacy.repaired,
       manifestChanges: prepared.manifestSync.changes,
       distributionTruthChanges: prepared.distributionTruth.changes,
+      actuationGateChanges: prepared.actuationGates.changes,
       pulseCount: garden.status.pulseCount,
       stateFile,
     }, null, 2));
@@ -95,11 +104,7 @@ if (command === 'pulse') {
     wake,
     stateChanged: true,
     statePersisted: true,
-    observationIngest: observationIngest ? {
-      changed: observationIngest.changed,
-      stateChanged: observationIngest.stateChanged,
-      reason: observationIngest.reason,
-    } : null,
+    observationIngest: observationSummary(observationIngest),
     breaths: result.breaths.map((x) => ({ pressure: x.pressure.type, summary: x.result.summary })),
     stoppedByCostFrontier: result.stoppedByCostFrontier,
     stoppedBySafetyCeiling: result.stoppedBySafetyCeiling,
@@ -108,6 +113,7 @@ if (command === 'pulse') {
     epistemicRepairs: prepared.legacy.repaired,
     manifestChanges: prepared.manifestSync.changes,
     distributionTruthChanges: prepared.distributionTruth.changes,
+    actuationGateChanges: prepared.actuationGates.changes,
     pulseCount: garden.status.pulseCount,
     stateFile,
   }, null, 2));
