@@ -1,3 +1,5 @@
+import { opportunityEvidenceMemory } from './evidence-memory.js';
+
 function clone(value) {
   return value == null ? value : structuredClone(value);
 }
@@ -35,7 +37,26 @@ function fruitView(fruits = []) {
   }));
 }
 
-function opportunityView(opportunities = []) {
+function decisionClassForOperation(operation) {
+  if (['PUBLIC_DEPLOY', 'SPEND', 'MARKET_COMMITMENT'].includes(operation)) return 'public_or_spend';
+  if (operation === 'HUMAN') return 'human_sovereignty';
+  if (operation === 'BUILD_PLAN') return 'private_reversible';
+  return 'exploration';
+}
+
+function compactEvidenceMemory(garden, opportunityId, { asOf, decisionClass }) {
+  return opportunityEvidenceMemory(garden, opportunityId, { asOf, decisionClass }).map((item) => ({
+    dimension: item.dimension,
+    sourceCount: item.sourceCount,
+    latestObservedAt: item.latestObservedAt,
+    volatility: item.freshness.profile.volatility,
+    freshnessStatus: item.freshness.status,
+    freshnessAction: item.freshness.action,
+  }));
+}
+
+function opportunityView(garden, opportunities = [], { operation, asOf }) {
+  const decisionClass = decisionClassForOperation(operation);
   return opportunities.map((opp) => ({
     id: opp.id,
     name: opp.name,
@@ -55,6 +76,7 @@ function opportunityView(opportunities = []) {
     whyNow: opp.whyNow ?? null,
     externalEvidence: clone(opp.externalEvidence ?? []),
     validationGate: clone(opp.validationGate ?? null),
+    evidenceMemory: compactEvidenceMemory(garden, opp.id, { asOf, decisionClass }),
     failedBecause: opp.failedBecause ?? null,
     measurementBlockedReason: opp.measurementBlockedReason ?? null,
     epistemicNote: opp.epistemicNote ?? null,
@@ -89,9 +111,6 @@ function geometryView(geometry, allowedIds = null) {
     .filter((family) => family.centerIds.length > 0)
     .map((family) => ({ ...family, reuseCount: family.centerIds.length }));
 
-  // Pairwise edges are reconstructible from family membership and can grow O(n^2).
-  // Preserve the centers/families/coverage that determine those edges instead of
-  // transmitting every redundant pair across the costly cognition boundary.
   return {
     version: geometry.version ?? null,
     stage: geometry.stage ?? null,
@@ -130,9 +149,6 @@ function targetNeighborhoodIds(garden, targetId) {
 }
 
 function operationActivation({ garden, operation, target }) {
-  // Global comparison/search operations need the whole compressed field. Targeted
-  // operations wake only the target neighborhood. This keeps the knowledge topology
-  // global while making costly execution sparse.
   if (!operation || ['EXPAND', 'SELECT'].includes(operation)) {
     return { mode: 'global', ids: null, targetId: targetIdFromArgs(target) };
   }
@@ -146,7 +162,12 @@ function operationActivation({ garden, operation, target }) {
   };
 }
 
-export function buildReasonerGardenView({ garden, operation = null, target = null } = {}) {
+export function buildReasonerGardenView({
+  garden,
+  operation = null,
+  target = null,
+  asOf = new Date().toISOString(),
+} = {}) {
   if (!garden) throw new Error('buildReasonerGardenView requires a Garden.');
 
   const activation = operationActivation({ garden, operation, target });
@@ -162,7 +183,7 @@ export function buildReasonerGardenView({ garden, operation = null, target = nul
     center: clone(garden.center),
     soil: soilView(garden.soil),
     fruits: fruitView(fruits),
-    opportunities: opportunityView(opportunities),
+    opportunities: opportunityView(garden, opportunities, { operation, asOf }),
     scoutMisses: operation === 'EXPAND' ? clone((garden.scoutMisses ?? []).slice(-20)) : [],
     geometry: geometryView(garden.geometry, activation.ids),
     portfolioSummary: {
@@ -174,6 +195,8 @@ export function buildReasonerGardenView({ garden, operation = null, target = nul
     reasonerView: {
       operation,
       activation,
+      evidenceDecisionClass: decisionClassForOperation(operation),
+      asOf,
       omittedAsExecutionNoise: [
         'traces',
         'events',
