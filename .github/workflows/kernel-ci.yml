@@ -43,3 +43,15 @@ jobs:
         run: node -e "JSON.parse(require('fs').readFileSync('.actor/input_schema.json','utf8')); JSON.parse(require('fs').readFileSync('.actor/actor.json','utf8'));"
       - name: Kernel tests
         run: npm test
+      - name: CLI status smoke test
+        run: |
+          rm -f garden/state.json
+          node src/runtime/cli.js status > /tmp/flower-status.json
+          node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/flower-status.json','utf8')); if(x.pressure?.type!=='HUMAN') throw new Error('Expected canonical HUMAN membrane, got '+JSON.stringify(x.pressure)); if(x.wake?.wake!==false) throw new Error('HUMAN membrane should not wake');"
+      - name: CLI no-op pulse smoke test without OpenAI credentials
+        env:
+          OPENAI_API_KEY: ''
+        run: |
+          rm -f garden/state.json
+          node src/runtime/cli.js pulse > /tmp/flower-pulse.json
+          node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/flower-pulse.json','utf8')); if(x.skipped!==true) throw new Error('Expected skipped pulse: '+JSON.stringify(x)); if(x.wake?.reason!=='human_membrane') throw new Error('Expected human_membrane wake decision'); if(Number(x.pulseCount??0)!==0) throw new Error('No-op pulse must not increment pulseCount');"
