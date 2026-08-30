@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "fruitId": "fruit_social_preview_drift_guard",
+  "observedAt": "2026-08-30",
+  "reason": "Reconcile distribution artifacts that advanced beyond the older fruit.manifest.json snapshot.",
+  "sourceOfTruthRule": "Concrete verified artifacts outrank stale planning fields. Do not silently rewrite unresolved external platform/account state.",
+  "rails": {
+    "apifyStore": {
+      "state": "live",
+      "evidence": "fruit.manifest.json records live public release on 2026-08-29",
+      "externalUsage": "unresolved"
+    },
+    "apifyAgenticPayments": {
+      "state": "eligibility_unresolved",
+      "structuralFit": {
+        "payPerEvent": true,
+        "eventOnlyCharging": true,
+        "limitedPermissions": true,
+        "standby": false
+      },
+      "unresolvedAccountPlatformTruth": [
+        "developer KYC status",
+        "current allowsAgenticUsers flag"
+      ],
+      "mutationGate": "Do not build x402 middleware or duplicate the Actor before the explicit current platform eligibility state is reconciled."
+    },
+    "githubAction": {
+      "state": "private_staged_ci_passed",
+      "sourcePath": "distribution/social-preview-drift-guard-action",
+      "workflow": "Social Preview Action CI",
+      "workflowRunId": 33239955923,
+      "verifiedCommit": "656b304cf84dd72e358571df9be317baace8af1e",
+      "ciConclusion": "success",
+      "publicRelease": "not_performed",
+      "nextBoundary": "human-authorized creation of an appropriate public repository and release"
+    }
+  },
+  "stalenessDetected": {
+    "field": "fruit.manifest.json -> distributionProgress.recurringDistributionWrapper.status",
+    "olderValue": "not_built",
+    "currentEvidence": "wrapper exists and deterministic private CI passed",
+    "lesson": "Planning manifests can lag artifact reality. Distribution state should be reconciled from executable evidence before choosing the next build."
+  },
+  "nextEconomicEvidence": [
+    "explicit Apify agentic eligibility truth",
+    "first independent external Actor run",
+    "first paid url-checked event",
+    "first repeat independent user",
+    "public GitHub Action release only after Center-holder authorization"
+  ]
+}
