@@ -14,31 +14,36 @@ function selectionIsStale(garden, opportunity) {
   return Number.isFinite(integratedAt) && integratedAt >= selectedAt;
 }
 
-function liveFruitAwaitingDistributionEvidence(garden) {
+function hasAutonomousWork(garden) {
+  if ((garden.experiments ?? []).some((x) => x.status === 'authorized')) return true;
+  if ((garden.opportunities ?? []).some((x) => x.status === 'validated' && !x.fruitId)) return true;
+  if ((garden.opportunities ?? []).some((x) => x.status === 'seed')) return true;
+  if ((garden.opportunities ?? []).some((x) => ['needs_test', 'supported'].includes(x.status) && !x.experimentId)) return true;
+  return false;
+}
+
+function highestLeverageHumanFruit(garden) {
+  // Human-boundary stages compete for attention instead of blocking the Garden merely
+  // because they exist. When autonomous work is exhausted, prefer the organism closest
+  // to an external decision-changing return.
+  const rank = {
+    publish_ready: 3,
+    private_deployed: 2,
+    private_verified: 1,
+  };
+
   return (garden.fruits ?? [])
-    .filter((fruit) =>
-      ['live', 'public_live'].includes(fruit.status)
-      && (!fruit.publicMeasurement || fruit.publicMeasurement.status === 'awaiting_external_usage')
-    )
+    .filter((x) => rank[x.status])
     .sort((a, b) => {
-      // Explicitly launched Fruit outranks legacy/live records that do not yet carry
-      // a public-release contract. This prevents an older Fruit from monopolizing
-      // the Live Fruit Lock after a newly generated Fruit crosses the economic boundary.
-      const aExplicit = Number(Boolean(a.publicRelease?.economicBoundaryCrossed || a.publicRelease?.storeUrl));
-      const bExplicit = Number(Boolean(b.publicRelease?.economicBoundaryCrossed || b.publicRelease?.storeUrl));
-      if (aExplicit !== bExplicit) return bExplicit - aExplicit;
-
-      const aPublished = Date.parse(a.publicRelease?.publishedAt ?? a.liveAt ?? a.createdAt ?? 0);
-      const bPublished = Date.parse(b.publicRelease?.publishedAt ?? b.liveAt ?? b.createdAt ?? 0);
-      if (Number.isFinite(aPublished) && Number.isFinite(bPublished) && aPublished !== bPublished) {
-        return bPublished - aPublished;
-      }
-
+      const stageDelta = rank[b.status] - rank[a.status];
+      if (stageDelta !== 0) return stageDelta;
       return String(a.id ?? '').localeCompare(String(b.id ?? ''));
     })[0] ?? null;
 }
 
 export function classifyPressure(garden) {
+  // An explicit pending approval is different from merely reaching a human membrane:
+  // the Center-holder has already been asked for a consequential decision, so preserve it.
   const pendingApproval = garden.approvals.find((x) => x.status === 'pending');
   if (pendingApproval) return { type: 'HUMAN', targetId: pendingApproval.id, why: 'A consequential action awaits the Center-holder.' };
 
@@ -48,9 +53,9 @@ export function classifyPressure(garden) {
   const readyExperiment = garden.experiments.find((x) => x.status === 'result_ready');
   if (readyExperiment) return { type: 'INTEGRATE', targetId: readyExperiment.id, why: 'An experiment result is ready.' };
 
-  // FRUIT LOCK: once validated evidence has become private source, shipping outranks
-  // speculative research. Keep the organism focused until the Fruit reaches a real
-  // deployment/measurement boundary or is explicitly abandoned.
+  // FRUIT LOCK remains valid while the next step is machine-carried verification.
+  // A private source artifact has already consumed build uncertainty, so verify it before
+  // allocating another speculative build/research breath.
   const privateSourceFruit = (garden.fruits ?? []).find((x) => x.status === 'private_source_ready');
   if (privateSourceFruit) return {
     type: 'VERIFY_FRUIT',
@@ -58,38 +63,32 @@ export function classifyPressure(garden) {
     why: 'Validated evidence already has private source. Verify the Fruit before spending another breath on discovery.',
   };
 
-  const privateVerifiedFruit = (garden.fruits ?? []).find((x) => x.status === 'private_verified');
-  if (privateVerifiedFruit) return {
-    type: 'HUMAN',
-    targetId: privateVerifiedFruit.id,
-    why: `Private Fruit source is verified. The next irreducible boundary is a private Apify deployment from ${privateVerifiedFruit.sourcePath ?? 'its source path'} and one real platform run; public release remains gated.`,
-  };
+  // HUMAN ACTUATION PORTFOLIO:
+  // Reaching KYC/deployment/publication/legal/identity boundaries does not automatically
+  // make the human the next executor. Keep autonomous siblings growing around parked human
+  // membranes. Only surface one mature human-boundary Fruit when no machine-carried work
+  // remains. Live Fruits awaiting stranger usage are observations, not human tasks, and
+  // therefore never block expansion on their own.
+  if (!hasAutonomousWork(garden)) {
+    const humanFruit = highestLeverageHumanFruit(garden);
+    if (humanFruit?.status === 'publish_ready') return {
+      type: 'HUMAN',
+      targetId: humanFruit.id,
+      why: 'Autonomous work is exhausted and this Fruit is technically ready for external market exposure. Pricing, legal terms, and public release require explicit Center-holder authority.',
+    };
 
-  const privateDeployedFruit = (garden.fruits ?? []).find((x) => x.status === 'private_deployed');
-  if (privateDeployedFruit) return {
-    type: 'HUMAN',
-    targetId: privateDeployedFruit.id,
-    why: 'Private Actor deployment exists. Run the acceptance sample and record real runtime cost/output before monetization or publication.',
-  };
+    if (humanFruit?.status === 'private_deployed') return {
+      type: 'HUMAN',
+      targetId: humanFruit.id,
+      why: 'Autonomous work is exhausted and a private deployment is closest to decision-changing runtime evidence. The remaining acceptance/platform action requires Center-holder authority or access.',
+    };
 
-  const publishReadyFruit = (garden.fruits ?? []).find((x) => x.status === 'publish_ready');
-  if (publishReadyFruit) return {
-    type: 'HUMAN',
-    targetId: publishReadyFruit.id,
-    why: 'Fruit is technically ready for Store publication. Pricing and public exposure require explicit Center-holder approval.',
-  };
-
-  // LIVE FRUIT LOCK: publication opens the distribution experiment; it does not end it.
-  // Until the live Fruit receives outside usage/revenue/feedback evidence, learning from
-  // the existing asset outranks spending cognition on a new speculative branch.
-  // When multiple Fruits are live, prioritize an explicitly launched/newly launched Fruit
-  // rather than whichever legacy record happens to appear first in the Garden array.
-  const liveFruitAwaitingEvidence = liveFruitAwaitingDistributionEvidence(garden);
-  if (liveFruitAwaitingEvidence) return {
-    type: 'HUMAN',
-    targetId: liveFruitAwaitingEvidence.id,
-    why: `Fruit is live at ${liveFruitAwaitingEvidence.publicRelease?.storeUrl ?? liveFruitAwaitingEvidence.platform ?? 'its public channel'}. The next reality frontier is stranger usage, paid events, repeat use, and public feedback; distribution evidence outranks speculative expansion until this Fruit has real outside contact.`,
-  };
+    if (humanFruit?.status === 'private_verified') return {
+      type: 'HUMAN',
+      targetId: humanFruit.id,
+      why: `Autonomous work is exhausted and this private Fruit is verified. The next irreducible deployment boundary from ${humanFruit.sourcePath ?? 'its source path'} requires Center-holder authority or access.`,
+    };
+  }
 
   const authorizedExperiment = garden.experiments.find((x) => x.status === 'authorized');
   if (authorizedExperiment) return {
