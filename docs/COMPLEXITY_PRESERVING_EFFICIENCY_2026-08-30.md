@@ -101,12 +101,58 @@ Conceptually:
 
 This preserves the whole field while preventing complexity from becoming mandatory global recomputation.
 
+Implemented refinement:
+
+- EXPAND and SELECT remain global because their decision is inherently comparative across the field.
+- Targeted cognition such as FALSIFY, EXPERIMENT, EXECUTE_EXPERIMENT, and BUILD_PLAN receives the target plus centers sharing its failure-archetype or reusable-capability family.
+- Aggregate portfolio counts survive even when unrelated organism detail is omitted.
+- Missing/ambiguous target identity falls back to the global compressed view rather than risking information loss.
+
+Therefore sparse activation is an optimization with a safety fallback, not a license to forget unrelated knowledge.
+
 ## Law 6 — Efficiency includes human interrupts
 Human attention is part of execution cost. A system that makes ten correct micro-decisions but asks the Center-holder to restart it after each one is less efficient than a system that autonomously closes the safe chain and interrupts once at the genuine sovereignty boundary.
 
 Therefore:
 
 `HumanInterrupts should scale with SovereigntyTransitions, not InternalTransitionCount.`
+
+## Law 7 — Wake must have causal reach
+A sensor event that wakes Flower but cannot alter the decision state is false responsiveness.
+
+Decision-relevant observation truth must be allowed to project into the Fruit fields it directly observes, while governance remains protected. For example, independently observed usage, charged events, creator revenue, settled value, repeat demand, agentic eligibility, market truth, and external usage may update operational Fruit truth. An externally observed lifecycle `status` does not silently replace Flower lifecycle authority.
+
+Each material observation therefore carries an impact description:
+
+`Observation -> Changed Truth Keys -> Impact Domains -> Directly Affected Organism(s)`
+
+This enables later sparse activation while preserving provenance between observed fact and governance decision.
+
+## Law 8 — Human priority may change when reality changes
+A static human-actuation rank is a prior, not an eternal truth.
+
+When eligible sovereignty actions compete, verified economic return or repeat demand should outrank merely independent use, which should outrank an organism with no market return. Static rank remains the tie-breaker inside the same evidence tier.
+
+`EconomicReturn/Repeat > IndependentUse > NoMarketReturn`
+
+Platform readiness, agentic eligibility, health traffic, raw counters, and other non-market signals do not receive this priority boost.
+
+Likewise, a human action explicitly staged as “not yet earned” may become eligible when independent return arrives, but evidence does not authorize the action. It only changes eligibility/priority; the sovereignty membrane remains intact.
+
+## Law 9 — Cache invalidation must follow true dependencies
+Caching is only efficient when invalidation is causally precise.
+
+The Flower geometry uses integrated supporting experiment dimensions to compute earned coverage. Therefore an experiment moving from authorized to result-ready, or returning weak/inconclusive evidence, cannot change geometry and must not invalidate the graph. Only experiment state that can actually change coverage participates in the geometry signature.
+
+General law:
+
+`DerivedStateInvalidation <- ActualSemanticDependencies`
+
+not:
+
+`DerivedStateInvalidation <- AnyNearbyStateMutation`.
+
+This is the computational analogue of epistemic discipline: do not update a belief or structure from evidence that cannot logically bear on it.
 
 ## Mathematical analogy
 The desired Flower resembles a sparse dynamical system more than a simplified tree.
@@ -119,6 +165,10 @@ Efficiency does not require reducing `n` arbitrarily. It requires that a perturb
 
 `dS/dt` may be sparse even when `S` is complex.
 
+A more precise local form is a sparse Jacobian intuition. If decision state `y_i` cannot depend on state variable `x_j`, then a perturbation to `x_j` should not force recomputation of `y_i`:
+
+`∂y_i / ∂x_j = 0 -> no activation edge required`.
+
 Likewise, a graph may contain many nodes and edges while incremental computation touches only the neighborhood affected by new evidence.
 
 ## New operating question
@@ -129,5 +179,9 @@ Do not ask:
 Ask:
 
 > How can Flower preserve everything that could change the decision while doing less work on everything that cannot?
+
+And after a perturbation ask:
+
+> What can this evidence actually change, and what is mathematically/causally independent of it?
 
 That is complexity-preserving efficiency.
