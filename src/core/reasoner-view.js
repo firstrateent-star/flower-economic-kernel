@@ -133,13 +133,28 @@ function targetIdFromArgs(target) {
   return null;
 }
 
-function targetNeighborhoodIds(garden, targetId) {
-  if (!targetId || !garden.geometry) return null;
-  const targetCenter = (garden.geometry.centers ?? []).find((center) => center.id === targetId);
-  if (!targetCenter) return [targetId];
+function targetNeighborhoodResolution(garden, targetId) {
+  if (!targetId || !garden.geometry) {
+    return { ids: null, recordsExamined: 0, lookupMode: 'no_geometry' };
+  }
+
+  const centers = garden.geometry.centers ?? [];
+  let targetCenter = null;
+  let recordsExamined = 0;
+  for (const center of centers) {
+    recordsExamined += 1;
+    if (center.id === targetId) {
+      targetCenter = center;
+      break;
+    }
+  }
+  if (!targetCenter) {
+    return { ids: [targetId], recordsExamined, lookupMode: 'scan_target_missing' };
+  }
 
   const ids = new Set([targetId]);
-  for (const center of garden.geometry.centers ?? []) {
+  for (const center of centers) {
+    recordsExamined += 1;
     if (center.id === targetId) continue;
     const sharedArchetype = targetCenter.archetypeFamily
       && center.archetypeFamily === targetCenter.archetypeFamily;
@@ -147,7 +162,11 @@ function targetNeighborhoodIds(garden, targetId) {
       && center.capabilityFamily === targetCenter.capabilityFamily;
     if (sharedArchetype || sharedCapability) ids.add(center.id);
   }
-  return [...ids];
+  return { ids: [...ids], recordsExamined, lookupMode: 'full_center_scan' };
+}
+
+function targetNeighborhoodIds(garden, targetId) {
+  return targetNeighborhoodResolution(garden, targetId).ids;
 }
 
 function operationActivation({ garden, operation, target }) {
@@ -161,6 +180,40 @@ function operationActivation({ garden, operation, target }) {
     mode: 'target_neighborhood',
     ids: targetNeighborhoodIds(garden, targetId),
     targetId,
+  };
+}
+
+export function diagnoseReasonerActivation({ garden, operation = null, target = null } = {}) {
+  if (!garden) throw new Error('diagnoseReasonerActivation requires a Garden.');
+  if (!operation || ['EXPAND', 'SELECT'].includes(operation)) {
+    return {
+      mode: 'global',
+      targetId: targetIdFromArgs(target),
+      recordsExamined: 0,
+      centerCount: garden.geometry?.centers?.length ?? 0,
+      lookupMode: 'global_no_neighborhood_lookup',
+    };
+  }
+
+  const targetId = targetIdFromArgs(target);
+  if (!targetId) {
+    return {
+      mode: 'global_fallback',
+      targetId: null,
+      recordsExamined: 0,
+      centerCount: garden.geometry?.centers?.length ?? 0,
+      lookupMode: 'missing_target',
+    };
+  }
+
+  const resolution = targetNeighborhoodResolution(garden, targetId);
+  return {
+    mode: 'target_neighborhood',
+    targetId,
+    recordsExamined: resolution.recordsExamined,
+    centerCount: garden.geometry?.centers?.length ?? 0,
+    lookupMode: resolution.lookupMode,
+    resolvedIdCount: resolution.ids?.length ?? 0,
   };
 }
 
