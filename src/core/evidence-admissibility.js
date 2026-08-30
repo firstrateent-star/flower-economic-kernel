@@ -1,3 +1,5 @@
+import { verifyStateAvailabilityWitness } from './state-availability-witness.js';
+
 const TRUSTED_PROVENANCE = new Set(['observed_external', 'runtime_written']);
 
 function parseTime(value) {
@@ -11,6 +13,7 @@ export function assessEvidenceAdmissibility({
   provenance = 'imported_unverified',
   asOf,
   decisionRelevant = true,
+  witnessedAvailableAt = null,
 } = {}) {
   const cutoffMs = parseTime(asOf);
   if (cutoffMs == null) throw new Error('Evidence admissibility requires a valid asOf cutoff.');
@@ -22,37 +25,57 @@ export function assessEvidenceAdmissibility({
       reason: 'not_decision_relevant',
       observedAt,
       provenance,
+      witnessedAvailableAt,
     };
   }
-  if (!TRUSTED_PROVENANCE.has(provenance)) {
+
+  if (TRUSTED_PROVENANCE.has(provenance)) {
+    if (observedMs == null) {
+      return {
+        admissible: false,
+        reason: 'observation_time_unknown',
+        observedAt,
+        provenance,
+        witnessedAvailableAt,
+      };
+    }
+    if (observedMs > cutoffMs) {
+      return {
+        admissible: false,
+        reason: 'observed_after_cutoff',
+        observedAt,
+        provenance,
+        witnessedAvailableAt,
+      };
+    }
     return {
-      admissible: false,
-      reason: 'untrusted_time_provenance',
+      admissible: true,
+      reason: 'admissible_at_cutoff',
       observedAt,
       provenance,
+      witnessedAvailableAt,
     };
   }
-  if (observedMs == null) {
+
+  const witnessMs = parseTime(witnessedAvailableAt);
+  if (witnessMs != null && witnessMs <= cutoffMs) {
     return {
-      admissible: false,
-      reason: 'observation_time_unknown',
+      admissible: true,
+      reason: 'admissible_by_witnessed_availability',
       observedAt,
       provenance,
+      witnessedAvailableAt,
+      chronologyCertified: false,
+      availabilityCertified: true,
     };
   }
-  if (observedMs > cutoffMs) {
-    return {
-      admissible: false,
-      reason: 'observed_after_cutoff',
-      observedAt,
-      provenance,
-    };
-  }
+
   return {
-    admissible: true,
-    reason: 'admissible_at_cutoff',
+    admissible: false,
+    reason: 'untrusted_time_provenance',
     observedAt,
     provenance,
+    witnessedAvailableAt,
   };
 }
 
@@ -104,9 +127,16 @@ function fruitObservationEvidence(garden) {
     }));
 }
 
-export function buildDecisionEvidenceManifest({ garden, asOf } = {}) {
+export function buildDecisionEvidenceManifest({ garden, asOf, availabilityWitness = null } = {}) {
   if (!garden || typeof garden !== 'object') throw new Error('Decision evidence manifest requires a Garden.');
   if (parseTime(asOf) == null) throw new Error('Decision evidence manifest requires a valid asOf cutoff.');
+
+  let witnessedAvailableAt = null;
+  if (availabilityWitness) {
+    const verified = verifyStateAvailabilityWitness({ witness: availabilityWitness, garden });
+    if (!verified.ok) throw new Error(`Invalid state availability witness: ${verified.reason}`);
+    witnessedAvailableAt = availabilityWitness.witnessedAt;
+  }
 
   const units = [
     ...experimentEvidence(garden),
@@ -119,11 +149,14 @@ export function buildDecisionEvidenceManifest({ garden, asOf } = {}) {
       provenance: unit.provenance,
       asOf,
       decisionRelevant: unit.decisionRelevant,
+      witnessedAvailableAt,
     }),
   }));
 
   return {
     asOf,
+    availabilityWitnessId: availabilityWitness?.id ?? null,
+    availabilityWitnessedAt: witnessedAvailableAt,
     units,
     admissibleIds: units.filter((unit) => unit.admissibility.admissible).map((unit) => unit.id),
     inadmissibleIds: units.filter((unit) => !unit.admissibility.admissible).map((unit) => unit.id),
