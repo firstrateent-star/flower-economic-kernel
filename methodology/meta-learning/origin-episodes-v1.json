@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 1,
-  "epistemicStatus": "direct_human_origin_correction_reconciled_as_generative_provenance",
-  "purpose": "Preserve the difference between Flower's historical/generative origin and its later executable abstractions so compression does not rewrite ancestry or close unexplored possibility.",
+  "schemaVersion": 2,
+  "epistemicStatus": "direct_human_origin_correction_plus_scope_projection_candidates",
+  "purpose": "Preserve the difference between Flower's historical/generative origin and its later executable abstractions so compression does not rewrite ancestry, close unexplored possibility, or let a measurable specialization silently become the whole ontology.",
   "episodes": [
     {
       "id": "meta_origin_flower_of_life_dimensional_inquiry",
@@ -28,6 +28,32 @@
         "externalWellbeing": "unknown"
       },
       "falsifier": "Preserving generative provenance as cold memory repeatedly adds material execution burden, creates unfalsifiable privilege for origin stories, or fails to recover any decision-relevant alternative that would otherwise have been lost."
+    },
+    {
+      "id": "meta_candidate_local_chart_not_global_ontology",
+      "observedTrigger": "The Center-holder restated the broader goal as providing value and increasing abundance/flourishing in all forms for all things while emphasizing Flower's pre-economic geometric/dimensional origin. The executable repository is intentionally an economic specialization with a locally measurable terminal objective.",
+      "decisionRelevantMove": "Preserve the economic kernel as a specialized local chart while creating an explicit broader Field Charter so revenue, return, passivity, autonomy, or any other locally legible coordinate cannot silently redefine universal flourishing.",
+      "mechanismsApplied": ["scope_projection_boundary", "provenance_preserving_abstraction", "anti_goodhart", "multi_objective_preservation"],
+      "mechanismsViolated": [],
+      "mechanismsInferred": ["local_chart_global_field_separation", "metric_kernel_search", "representation_escalation"],
+      "domains": ["scope_governance", "flourishing", "economic_specialization", "dimensional_inquiry", "methodology_memory"],
+      "evidenceStrength": "observed",
+      "causalEvidence": "charter_level_scope_reconciliation_not_outcome_evidence",
+      "evidence": ["README.md", "docs/FLOWER_FIELD_CHARTER.md", "docs/FLOWER_ORIGIN_PROVENANCE.md"],
+      "observedOutcome": "The repository now makes the broader provenance/orientation discoverable while retaining the existing economic terminal objective and runtime unchanged.",
+      "outcomeState": "candidate_not_promoted",
+      "externalValueVerified": false,
+      "humanEpistemicCorrection": true,
+      "flourishingEffects": {
+        "agency": "positive_candidate",
+        "truth": "positive_candidate",
+        "capability": "candidate",
+        "resourceEfficiency": "unknown",
+        "optionalities": "positive_candidate",
+        "regeneration": "candidate",
+        "externalWellbeing": "unknown"
+      },
+      "falsifier": "The broader/local chart distinction adds governance complexity without preventing measurable scope errors, or later evidence shows one common objective can preserve all relevant cross-domain decisions with lower burden and no displaced harm."
     }
   ]
 }
