@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "epistemicStatus": "curated_ancestry_overlay_not_causal_independence_proof",
+  "purpose": "Test whether raw recurrence is currently overstating meta-learning confidence without rewriting source episodes.",
+  "families": {
+    "meta_v2_mutation_memory": "mutation_memory_equivalence_benchmark",
+    "meta_v3_terminal_parallel_field": "first_fruit_failure_correction",
+    "meta_v4_regenerative_verified_state": "regenerative_accounting_regression_tests",
+    "meta_v4_cognition_alignment": "reasoner_methodology_alignment",
+    "meta_v5_dual_dividend": "internal_external_transfer_boundary",
+    "meta_prospective_indexed_activation_v1": "activation_work_comparable_benchmark",
+    "meta_origin_flower_of_life_dimensional_inquiry": "human_origin_provenance_correction"
+  },
+  "boundary": "Different family labels are a defended ancestry hypothesis, not statistical independence. Shared code, methodology, authorship, or upstream assumptions can still correlate them."
+}
