@@ -11,9 +11,9 @@ const STORE_NAME = 'flower-economic-kernel-v0-state';
 const STORE_KEY = 'FLOWER_GARDEN';
 
 function clampBreaths(value) {
-  const parsed = Number(value ?? 12);
-  if (!Number.isFinite(parsed)) return 12;
-  return Math.max(1, Math.min(12, Math.trunc(parsed)));
+  const parsed = Number(value ?? 64);
+  if (!Number.isFinite(parsed)) return 64;
+  return Math.max(1, Math.min(64, Math.trunc(parsed)));
 }
 
 function activeOpportunitySnapshot(garden) {
@@ -190,6 +190,7 @@ await Actor.main(async () => {
     microBreaths: result.breaths.length,
     runBudget: result.runBudget,
     stoppedByCostFrontier: result.stoppedByCostFrontier,
+    stoppedBySafetyCeiling: result.stoppedBySafetyCeiling,
     nextPressure: classifyPressure(garden),
     activeOpportunities: activeOpportunitySnapshot(garden),
     geometry: geometryAfter,
@@ -216,6 +217,7 @@ await Actor.main(async () => {
   log.info('Flower pulse complete', {
     microBreaths: output.microBreaths,
     runBudget: output.runBudget,
+    stoppedBySafetyCeiling: output.stoppedBySafetyCeiling,
     nextPressure: output.nextPressure,
     growthYield: output.growthYield,
   });
