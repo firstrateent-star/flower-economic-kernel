@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.flower"
-version = "0.0.5-preflight"
+version = "0.0.6-preflight"
 
 repositories {
     mavenCentral()
@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        intellijIdea("2026.2")
+        intellijIdea("2026.2.1")
         bundledModule("com.intellij.modules.vcs")
         bundledPlugin("com.intellij.java")
         testFramework(TestFrameworkType.Platform)
