@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import seed from '../garden/seed.json' with { type: 'json' };
+import seed from './fixtures/test-seed.js';
 import { pulse } from '../src/core/kernel.js';
 import { classifyPressure } from '../src/core/pressure.js';
 import { MockReasoner } from '../src/reasoners/mock.js';
