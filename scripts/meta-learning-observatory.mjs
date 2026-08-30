@@ -3,7 +3,7 @@ import path from 'node:path';
 import { analyzeMetaLearningEpisodes } from '../src/core/meta-learning.js';
 
 const INPUT_PATH = process.env.FLOWER_META_LEARNING_EPISODES
-  || 'methodology/meta-learning/episodes-v1.json';
+  || 'methodology/meta-learning/episodes-v2.json';
 const OUTPUT_PATH = process.env.FLOWER_META_LEARNING_REPORT
   || 'reports/meta-learning-observatory-latest.json';
 
@@ -12,12 +12,18 @@ async function main() {
   const analysis = analyzeMetaLearningEpisodes(source.episodes ?? []);
   const report = {
     ...analysis,
-    probe: 'flower_meta_learning_observatory_v1',
+    probe: 'flower_meta_learning_observatory_v2',
     sourcePath: INPUT_PATH,
     generatedAt: new Date().toISOString(),
     sourceEpistemicStatus: source.epistemicStatus ?? null,
     externalFlourishingClaim: false,
-    note: 'This report can identify recurring internal learning mechanisms and prospective tests. It cannot claim that Flower improves all systems, people, or forms of life without independent external evidence and conflict-aware evaluation.',
+    flourishingOrientation: {
+      principle: 'Seek transformations that increase reachable flourishing while preserving truth, agency, sustainability, non-extraction, and the capacity for future good growth.',
+      dimensions: ['agency', 'truth', 'capability', 'wellbeing', 'resilience', 'optionality', 'regeneration', 'resource_efficiency', 'displaced_costs', 'harm'],
+      scalarized: false,
+      conflictRule: 'Benefits to one organism do not count as broad flourishing when material costs or harms are merely displaced onto another without being represented.',
+    },
+    note: 'Historical meta-learning can generate bounded prospective experiments. It cannot establish universal causality or claim flourishing for all systems, people, or living things without independent external and conflict-aware evidence.',
   };
 
   await fs.mkdir(path.dirname(OUTPUT_PATH), { recursive: true });
