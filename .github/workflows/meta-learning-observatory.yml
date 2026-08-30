@@ -7,9 +7,11 @@ on:
     paths:
       - 'methodology/meta-learning/**'
       - 'methodology/mutation-ledger/**'
+      - 'docs/FLOWER_ORIGIN_PROVENANCE.md'
       - 'src/core/meta-learning.js'
       - 'scripts/meta-learning-observatory.mjs'
       - 'tests/meta-learning.test.js'
+      - 'tests/origin-provenance.test.js'
       - '.github/workflows/meta-learning-observatory.yml'
 
 permissions:
@@ -23,12 +25,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate meta-learning code
+      - name: Validate meta-learning code and origin provenance
         run: |
           node --check src/core/meta-learning.js
           node --check scripts/meta-learning-observatory.mjs
-          node --test tests/meta-learning.test.js
-      - name: Run counterpressured historical plus prospective meta-learning Observatory
+          node --test tests/meta-learning.test.js tests/origin-provenance.test.js
+      - name: Run counterpressured historical origin-aware plus prospective meta-learning Observatory
         run: node scripts/meta-learning-observatory.mjs
       - name: Validate epistemic boundaries
         run: |
@@ -45,9 +47,13 @@ jobs:
           if (report.selfAudit?.risks?.some((risk) => risk.startsWith('causality_gap'))) throw new Error('Prospective causal evidence should clear the historical causality-gap flag for this bounded internal mechanism.');
           if (!report.selfAudit?.risks?.some((risk) => risk.startsWith('external_value_gap'))) throw new Error('External-value gap must remain until another system independently benefits.');
           if (report.nextPressure?.type !== 'CROSS_DOMAIN_TRANSFER_TEST') throw new Error('Prospective internal evidence should advance pressure to bounded cross-domain transfer.');
+          if (report.originEpisodeCount < 1 || report.originProvenance?.preserved !== true) throw new Error('Flower origin provenance was dropped from meta-learning.');
+          if (!String(report.originProvenance?.historicalSeed ?? '').includes('Flower of Life')) throw new Error('Flower of Life origin seed is missing.');
+          if (!String(report.originProvenance?.epistemicBoundary ?? '').includes('not established')) throw new Error('Dimensional origin must remain epistemically bounded.');
           console.log(JSON.stringify({
             nextPressure: report.nextPressure,
             selfAudit: report.selfAudit,
+            originProvenance: report.originProvenance,
             topMechanisms: report.mechanismStats.slice(0, 8),
             violationStats: report.violationStats.slice(0, 8),
             candidateRules: report.candidateRules,
