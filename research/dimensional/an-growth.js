@@ -37,6 +37,25 @@ export function anShellCount(n, m) {
   return count;
 }
 
+/**
+ * Independent coefficient extraction from the established A_n coordination
+ * generating function (Conway-Sloane / Bacher-de la Harpe-Venkov):
+ *
+ *   G_n(z) = [sum_{j=0}^n C(n,j)^2 z^j] / (1-z)^n.
+ *
+ * Coefficient of z^m in (1-z)^(-n) is C(n+m-1,n-1).
+ */
+export function anShellCountFromGeneratingFunction(n, m) {
+  if (!Number.isInteger(n) || n < 1) throw new Error('A_n requires integer n >= 1.');
+  if (!Number.isInteger(m) || m < 0) throw new Error('Shell radius requires integer m >= 0.');
+
+  let coefficient = 0;
+  for (let j = 0; j <= Math.min(n, m); j += 1) {
+    coefficient += (binomial(n, j) ** 2) * binomial(n + (m - j) - 1, n - 1);
+  }
+  return coefficient;
+}
+
 export function anBallCount(n, radius) {
   if (!Number.isInteger(radius) || radius < 0) throw new Error('Ball radius requires integer radius >= 0.');
   let count = 0;
@@ -62,6 +81,7 @@ export function dimensionalGrowthTable({ maxDimension = 6, maxRadius = 5 } = {})
         n,
         radius,
         shellCount: anShellCount(n, radius),
+        shellCountKnownGeneratingFunction: anShellCountFromGeneratingFunction(n, radius),
         ballCount: anBallCount(n, radius),
       });
     }
@@ -70,7 +90,13 @@ export function dimensionalGrowthTable({ maxDimension = 6, maxRadius = 5 } = {})
 }
 
 export const DIMENSIONAL_GROWTH_INTERPRETATION = {
-  exact: 'A_n shell counts follow a degree-(n-1) growth polynomial in radius and A_n balls a degree-n growth polynomial.',
+  exact: 'A_n shell counts are the established coordination sequences of the A_n root lattices; they follow a degree-(n-1) growth polynomial in radius and A_n balls a degree-n growth polynomial.',
+  knownGeneratingFunction: 'G_n(z) = [sum_{j=0}^n binomial(n,j)^2 z^j] / (1-z)^n.',
   implication: 'Naively expanding every reachable adjacency becomes increasingly expensive as independent relational dimension rises; sparse activation, pruning, coordinate changes, and decision-equivalent compression become more valuable rather than less.',
   epistemicBoundary: 'This is discrete lattice growth mathematics. It does not establish that physical, cognitive, economic, or spiritual systems literally have A_n geometry.',
+  sources: [
+    'Conway and Sloane, Low-Dimensional Lattices VII: Coordination Sequences, Proc. Royal Society A 453 (1997), 2369-2389.',
+    'Bacher, de la Harpe and Venkov, Series de croissance et series d Ehrhart associees aux reseaux de racines, C. R. Acad. Sci. Paris 325 (1997), 1137-1142.',
+    'OEIS A103881: coordination sequence table for root lattice A_n.',
+  ],
 };
