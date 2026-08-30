@@ -6,7 +6,12 @@ function clone(value) {
 }
 
 export function ingestFruitObservation(garden, observation) {
-  if (!observation) return { changed: false, event: null, reason: 'no_observation' };
+  if (!observation) return {
+    changed: false,
+    stateChanged: false,
+    event: null,
+    reason: 'no_observation',
+  };
   if (!observation.fruitId) throw new Error('Fruit observation requires fruitId.');
 
   const fruit = (garden.fruits ?? []).find((x) => x.id === observation.fruitId);
@@ -22,6 +27,10 @@ export function ingestFruitObservation(garden, observation) {
   const previousTruth = previousRecord?.truth ?? null;
   const material = materialObservationChanged(previousTruth, truth);
 
+  // Establish exactly one baseline even when it contains only non-material metrics.
+  // After that, unchanged truth must not churn Garden timestamps/metrics merely because
+  // a sensor polled again. Wake-relevant truth changes create a fresh stored record.
+  const shouldStoreRecord = previousRecord == null || material;
   const record = {
     fruitId: observation.fruitId,
     source,
@@ -29,14 +38,18 @@ export function ingestFruitObservation(garden, observation) {
     truth,
     metrics,
   };
-  garden.observations[observation.fruitId] = record;
 
-  fruit.lastObservation = record;
+  if (shouldStoreRecord) {
+    garden.observations[observation.fruitId] = record;
+    fruit.lastObservation = record;
+  }
+
   if (!material) {
     return {
       changed: false,
+      stateChanged: shouldStoreRecord,
       event: null,
-      reason: 'non_material_observation',
+      reason: previousRecord == null ? 'baseline_observation' : 'non_material_observation',
       previousTruth: clone(previousTruth),
       currentTruth: clone(truth),
     };
@@ -70,6 +83,7 @@ export function ingestFruitObservation(garden, observation) {
 
   return {
     changed: true,
+    stateChanged: true,
     event,
     reason: 'material_observation',
     previousTruth: clone(previousTruth),
