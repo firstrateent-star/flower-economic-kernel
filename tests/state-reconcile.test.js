@@ -44,13 +44,31 @@ test('canonical reconciliation adds missing mature Fruit without erasing measure
   assert.equal(reconciledPreview.externalUsage, 'independent_confirmed');
 });
 
-test('resolved human actuation state is not resurrected by canonical pending state', () => {
+test('resolved human actuation state and resolution provenance are not resurrected or erased', () => {
   const existing = structuredClone(seed);
   existing.humanActuationQueue = seed.humanActuationQueue.map((item) => ({ ...item }));
   existing.humanActuationQueue[0].state = 'authorized';
+  existing.humanActuationQueue[0].resolvedBecause = 'Center-holder explicitly authorized this boundary.';
+  existing.humanActuationQueue[0].resolvedAt = '2026-08-30T16:30:00.000Z';
 
   const { garden } = reconcileCanonicalControlPlane(existing, seed);
   assert.equal(garden.humanActuationQueue[0].state, 'authorized');
+  assert.equal(garden.humanActuationQueue[0].resolvedBecause, existing.humanActuationQueue[0].resolvedBecause);
+  assert.equal(garden.humanActuationQueue[0].resolvedAt, existing.humanActuationQueue[0].resolvedAt);
+});
+
+test('human queue reconciliation reaches a fixed point after terminal resolution', () => {
+  const existing = structuredClone(seed);
+  existing.humanActuationQueue = seed.humanActuationQueue.map((item) => ({ ...item }));
+  const kyc = existing.humanActuationQueue.find((item) => item.organismId === 'fruit_social_preview_drift_guard' && item.action.toLowerCase().includes('kyc'));
+  kyc.state = 'resolved_by_platform_truth';
+  kyc.resolvedBecause = 'Verified platform truth resolved eligibility without Center-holder action.';
+
+  const first = reconcileCanonicalControlPlane(existing, seed);
+  const second = reconcileCanonicalControlPlane(first.garden, seed);
+
+  assert.deepEqual(second.garden, first.garden);
+  assert.deepEqual(second.changes, []);
 });
 
 test('canonical reconciliation preserves runtime updatedAt instead of fabricating seed-time churn', () => {
