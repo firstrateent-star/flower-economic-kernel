@@ -5,7 +5,7 @@ import { loadGarden, saveGarden, loadJson } from '../core/garden.js';
 import { classifyPressure } from '../core/pressure.js';
 import { pulse } from '../core/kernel.js';
 import { prepareRuntimeState } from '../core/runtime-preparation.js';
-import { OpenAIReasoner } from '../reasoners/openai.js';
+import { EfficientOpenAIReasoner } from '../reasoners/efficient-openai.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../..');
@@ -86,7 +86,7 @@ if (command === 'pulse') {
     process.exit(0);
   }
 
-  const reasoner = new OpenAIReasoner();
+  const reasoner = new EfficientOpenAIReasoner();
   const maxBreaths = Math.max(1, Math.min(64, Number(process.env.FLOWER_MAX_BREATHS_PER_PULSE ?? 64)));
   const result = await pulse({ garden, reasoner, maxBreaths, syncManifests: false });
   await saveGarden(stateFile, garden);
