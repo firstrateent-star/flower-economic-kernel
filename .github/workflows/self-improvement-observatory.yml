@@ -8,12 +8,13 @@ on:
       - 'src/core/**'
       - 'src/reasoners/**'
       - 'scripts/self-improvement-observatory.mjs'
+      - 'scripts/persist-self-improvement-candidate.mjs'
       - 'benchmarks/self-improvement-baseline-v2.json'
       - 'tests/**'
       - '.github/workflows/self-improvement-observatory.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   observe:
@@ -55,6 +56,18 @@ jobs:
             currentClaims: report.currentClaims,
           }, null, 2));
           NODE
+      - name: Persist verified internal improvement candidate
+        run: |
+          node scripts/persist-self-improvement-candidate.mjs
+          if [ -n "$(git status --porcelain -- observations/self-improvement-ledger)" ]; then
+            git config user.name "flower-self-improvement-bot"
+            git config user.email "flower-self-improvement-bot@users.noreply.github.com"
+            git add observations/self-improvement-ledger
+            git commit -m "Record verified Flower self-improvement evidence"
+            git push
+          else
+            echo "No new verified internal improvement candidate to persist."
+          fi
       - name: Upload observatory report
         uses: actions/upload-artifact@v4
         with:
