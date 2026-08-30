@@ -14,17 +14,16 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: actors/social-preview-drift-guard
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Install Actor dependencies
+        working-directory: actors/social-preview-drift-guard
         run: npm install --ignore-scripts
       - name: Verify Actor
+        working-directory: actors/social-preview-drift-guard
         run: npm run check && npm test
       - name: Require Apify token
         env:
@@ -35,6 +34,11 @@ jobs:
             exit 1
           fi
       - name: Push existing Actor to Apify
-        env:
-          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
-        run: npx --yes apify-cli@latest actors push 7EskFvYOwxznhKYhj --force
+        id: push
+        uses: apify/push-actor-action@v1
+        with:
+          token: ${{ secrets.APIFY_TOKEN }}
+          actor-id: 7EskFvYOwxznhKYhj
+          working-directory: actors/social-preview-drift-guard
+      - name: Report build
+        run: echo "Apify build ${{ steps.push.outputs.build-id }} finished with status ${{ steps.push.outputs.build-status }}"
