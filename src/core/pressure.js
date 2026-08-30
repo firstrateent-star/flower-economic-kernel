@@ -1,3 +1,5 @@
+import { shouldChallengeHumanBoundaryWithExploration } from './terminal-governance.js';
+
 function latestIntegratedExperiment(garden, opportunityId) {
   return (garden.experiments ?? [])
     .filter((x) => x.opportunityId === opportunityId && x.status === 'integrated')
@@ -25,9 +27,6 @@ function hasAutonomousWork(garden) {
 function humanActuationEvidenceTier(garden, item) {
   const fruit = (garden.fruits ?? []).find((x) => x.id === item?.organismId);
   if (!fruit) return 2;
-
-  // Tier 0: actual economic return/repetition. Tier 1: independently attributable use.
-  // Tier 2: no market return yet. Static rank remains the tie-breaker inside a tier.
   if (
     Number(fruit.creatorRevenueUsd ?? 0) > 0
     || Number(fruit.settledValueUsd ?? 0) > 0
@@ -56,7 +55,6 @@ function rankedHumanActuation(garden) {
 }
 
 function highestLeverageHumanFruit(garden) {
-  // Fallback for older Garden states that predate the explicit actuation queue.
   const rank = {
     market_ready_private: 4,
     publish_ready: 3,
@@ -74,10 +72,8 @@ function highestLeverageHumanFruit(garden) {
 }
 
 export function classifyPressure(garden) {
-  // An explicit pending approval is different from merely reaching a human membrane:
-  // the Center-holder has already been asked for a consequential decision, so preserve it.
   const pendingApproval = (garden.approvals ?? []).find((x) => x.status === 'pending');
-  if (pendingApproval) return { type: 'HUMAN', targetId: pendingApproval.id, why: 'A consequential action awaits the Center-holder.' };
+  if (pendingApproval) return { type: 'HUMAN', targetId: pendingApproval.id, why: 'A consequential action already chosen by the Center-holder awaits resolution.' };
 
   const unprocessedEvent = (garden.events ?? []).find((x) => x.status === 'new');
   if (unprocessedEvent) return { type: 'INTEGRATE', targetId: unprocessedEvent.id, why: 'Reality has produced new evidence.' };
@@ -85,54 +81,12 @@ export function classifyPressure(garden) {
   const readyExperiment = (garden.experiments ?? []).find((x) => x.status === 'result_ready');
   if (readyExperiment) return { type: 'INTEGRATE', targetId: readyExperiment.id, why: 'An experiment result is ready.' };
 
-  // FRUIT LOCK remains valid while the next step is machine-carried verification.
   const privateSourceFruit = (garden.fruits ?? []).find((x) => x.status === 'private_source_ready');
   if (privateSourceFruit) return {
     type: 'VERIFY_FRUIT',
     targetId: privateSourceFruit.id,
-    why: 'Validated evidence already has private source. Verify the Fruit before spending another breath on discovery.',
+    why: 'A private source artifact already exists and deterministic verification is free; close that truth gap without confusing verification with market Fruit.',
   };
-
-  // HUMAN ACTUATION PORTFOLIO:
-  // Park human-only boundaries while meaningful machine-carried sibling work remains.
-  // Once autonomous work is exhausted, choose among eligible sovereignty membranes by
-  // verified return tier first and static human-actuation rank second. This allows real
-  // market return to reshuffle attention without letting platform traffic or counters do so.
-  if (!hasAutonomousWork(garden)) {
-    const queued = rankedHumanActuation(garden);
-    if (queued) return {
-      type: 'HUMAN',
-      targetId: queued.organismId ?? null,
-      why: queued.why
-        ? `Autonomous work is exhausted. ${queued.why}`
-        : 'Autonomous work is exhausted and the highest-ranked remaining action requires explicit Center-holder authority.',
-    };
-
-    const humanFruit = highestLeverageHumanFruit(garden);
-    if (humanFruit?.status === 'market_ready_private') return {
-      type: 'HUMAN',
-      targetId: humanFruit.id,
-      why: 'Autonomous work is exhausted and this market-ready private Fruit is one evidence membrane away from independent user return. Vendor, legal, identity, or external-exposure choices require explicit Center-holder authority.',
-    };
-
-    if (humanFruit?.status === 'publish_ready') return {
-      type: 'HUMAN',
-      targetId: humanFruit.id,
-      why: 'Autonomous work is exhausted and this Fruit is technically ready for external market exposure. Pricing, legal terms, and public release require explicit Center-holder authority.',
-    };
-
-    if (humanFruit?.status === 'private_deployed') return {
-      type: 'HUMAN',
-      targetId: humanFruit.id,
-      why: 'Autonomous work is exhausted and a private deployment is closest to decision-changing runtime evidence. The remaining acceptance/platform action requires Center-holder authority or access.',
-    };
-
-    if (humanFruit?.status === 'private_verified') return {
-      type: 'HUMAN',
-      targetId: humanFruit.id,
-      why: `Autonomous work is exhausted and this private Fruit is verified. The next irreducible deployment boundary from ${humanFruit.sourcePath ?? 'its source path'} requires Center-holder authority or access.`,
-    }
-  }
 
   const authorizedExperiment = (garden.experiments ?? []).find((x) => x.status === 'authorized');
   if (authorizedExperiment) return {
@@ -145,21 +99,17 @@ export function classifyPressure(garden) {
   if (validated) return {
     type: 'BUILD_PLAN',
     targetId: validated.id,
-    why: 'Evidence has earned a private build artifact; convert validated knowledge into Fruit before allocating more speculative experiments.',
+    why: 'This branch has earned construction evidence; convert only the smallest validated transformation into a fulfillable artifact.',
   };
 
   const seed = (garden.opportunities ?? []).find((x) => x.status === 'seed');
-  if (seed) return { type: 'FALSIFY', targetId: seed.id, why: 'A living seed has not earned attention yet.' };
+  if (seed) return { type: 'FALSIFY', targetId: seed.id, why: 'A living seed has not earned depth yet.' };
 
   const testable = (garden.opportunities ?? []).filter((x) => ['needs_test', 'supported'].includes(x.status) && !x.experimentId);
   const selected = testable.find((x) => x.selectedForExperiment === true);
 
   if (selected && selectionIsStale(garden, selected) && testable.length > 1) {
-    return {
-      type: 'SELECT',
-      targetId: null,
-      why: 'The selected sibling just received non-supporting external evidence; reselect before allocating another experiment breath.',
-    };
+    return { type: 'SELECT', targetId: null, why: 'The current champion received non-supporting evidence; challenger comparison is required before another allocation.' };
   }
 
   if (selected) {
@@ -167,27 +117,54 @@ export function classifyPressure(garden) {
       type: 'EXPERIMENT',
       targetId: selected.id,
       why: selected.status === 'supported'
-        ? 'This sibling won the current selection round and has external support; push its remaining uncertainty into reality.'
-        : 'This sibling won the current selection round; design its cheapest discriminating reality test.',
+        ? 'The current champion has external support; push the cheapest remaining terminal uncertainty into reality.'
+        : 'The current champion earned the next reality probe, not permanent ownership of the search.',
     };
   }
 
   if (testable.length > 1) {
-    return {
-      type: 'SELECT',
-      targetId: null,
-      why: 'Multiple siblings survived falsification; compare them before allocating the next experiment breath.',
-    };
+    return { type: 'SELECT', targetId: null, why: 'Multiple siblings survived; compare terminal yield and opportunity cost before allocating the next probe.' };
   }
 
   const needsTest = testable.find((x) => x.status === 'needs_test');
   if (needsTest) return { type: 'EXPERIMENT', targetId: needsTest.id, why: 'The idea is plausible but lacks external evidence; design the cheapest discriminating reality test.' };
 
   const supported = testable.find((x) => x.status === 'supported');
-  if (supported) return { type: 'EXPERIMENT', targetId: supported.id, why: 'External evidence supports the seed, but the remaining uncertainty should be pushed into reality.' };
+  if (supported) return { type: 'EXPERIMENT', targetId: supported.id, why: 'External evidence supports the seed, but remaining terminal uncertainty should be pushed into reality.' };
 
   const active = (garden.opportunities ?? []).some((x) => !['compost', 'dormant', 'fruit', 'measurement_blocked'].includes(x.status));
-  if (!active) return { type: 'EXPAND', targetId: null, why: 'No currently actionable opportunity remains; preserve blocked history and expand the search space.' };
+
+  // integrated-v3 correction: a mature human-only boundary no longer automatically
+  // monopolizes foreground attention merely because autonomous siblings are exhausted.
+  // If no opportunity is active, one fresh heterogeneous search pass may challenge that
+  // boundary before we spend scarce Center-holder attention. The lastPressure guard keeps
+  // this from becoming an endless EXPAND loop under unchanged reality.
+  if (!active && shouldChallengeHumanBoundaryWithExploration(garden)) {
+    return {
+      type: 'EXPAND',
+      targetId: null,
+      why: 'No active challenger remains. Before spending scarce human attention at a mature boundary, reopen the reachable field once for a materially better terminal-value path.',
+    };
+  }
+
+  if (!hasAutonomousWork(garden)) {
+    const queued = rankedHumanActuation(garden);
+    if (queued) return {
+      type: 'HUMAN',
+      targetId: queued.organismId ?? null,
+      why: queued.why
+        ? `Fresh challenger pressure is exhausted. ${queued.why}`
+        : 'Fresh challenger pressure is exhausted and the highest-ranked remaining action requires explicit Center-holder authority.',
+    };
+
+    const humanFruit = highestLeverageHumanFruit(garden);
+    if (humanFruit?.status === 'market_ready_private') return { type: 'HUMAN', targetId: humanFruit.id, why: 'Fresh challenger pressure is exhausted; this market-ready private Fruit is closest to independent market evidence and requires explicit authority.' };
+    if (humanFruit?.status === 'publish_ready') return { type: 'HUMAN', targetId: humanFruit.id, why: 'Fresh challenger pressure is exhausted; this Fruit is technically ready for external exposure and requires explicit authority.' };
+    if (humanFruit?.status === 'private_deployed') return { type: 'HUMAN', targetId: humanFruit.id, why: 'Fresh challenger pressure is exhausted; a private deployment is closest to decision-changing runtime evidence and the remaining step requires authority or access.' };
+    if (humanFruit?.status === 'private_verified') return { type: 'HUMAN', targetId: humanFruit.id, why: `Fresh challenger pressure is exhausted; this private Fruit is verified and the next deployment boundary from ${humanFruit.sourcePath ?? 'its source path'} requires authority or access.` };
+  }
+
+  if (!active) return { type: 'EXPAND', targetId: null, why: 'No currently actionable opportunity remains; preserve blocked history and reopen heterogeneous search.' };
 
   return { type: 'STILLNESS', targetId: null, why: 'No additional autonomous cognition is currently justified.' };
 }
