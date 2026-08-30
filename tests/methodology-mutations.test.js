@@ -78,6 +78,28 @@ test('protected methodology domains cannot self-promote without explicit human a
   assert.equal(authorized.state, 'supported');
 });
 
+test('ownership and surplus-allocation authority are protected human domains', () => {
+  const evidence = {
+    ciPass: true,
+    formalEquivalence: true,
+    measuredEfficiencyImprovement: true,
+    protectedInvariantRegressions: [],
+    decisionCapabilityRegressions: [],
+  };
+
+  for (const domain of ['ownership_authority', 'surplus_allocation_authority']) {
+    const result = assessMethodologyMutation(completeProposal({
+      id: `mutation_${domain}`,
+      domains: [domain],
+      thesis: `Attempt to change ${domain}.`,
+    }), evidence);
+    assert.equal(result.protectedDomain, true);
+    assert.equal(result.humanAuthorizationRequired, true);
+    assert.equal(result.eligibleForCanonical, false);
+    assert.equal(result.state, 'supported_requires_human_authority');
+  }
+});
+
 test('any protected-invariant or decision-capability regression blocks evidence routes', () => {
   const proposal = completeProposal();
   const result = assessMethodologyMutation(proposal, {
