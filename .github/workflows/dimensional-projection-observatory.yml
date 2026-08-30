@@ -10,7 +10,9 @@ on:
       - 'src/core/reasoner-view.js'
       - 'src/core/activation-projection-audit.js'
       - 'scripts/dimensional-projection-observatory.mjs'
+      - 'research/dimensional/**'
       - 'tests/activation-projection-audit.test.js'
+      - 'tests/dimensional-projection-math.test.js'
       - 'docs/FLOWER_ORIGIN_PROVENANCE.md'
       - 'docs/DIMENSIONAL_INQUIRY_LOCAL_CHARTS_2026-08-30.md'
       - '.github/workflows/dimensional-projection-observatory.yml'
@@ -26,11 +28,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate projection audit
+      - name: Validate projection audit and inverse-problem math
         run: |
           node --check src/core/activation-projection-audit.js
+          node --check research/dimensional/projection-ambiguity.js
           node --check scripts/dimensional-projection-observatory.mjs
-          node --test tests/activation-projection-audit.test.js
+          node --test tests/activation-projection-audit.test.js tests/dimensional-projection-math.test.js
       - name: Run real-Garden dimensional projection baseline
         run: node scripts/dimensional-projection-observatory.mjs
       - name: Validate epistemic membrane
