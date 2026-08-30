@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "decision_checkpoint_cmn_human_2026_08_30",
+  "capturedProspectively": true,
+  "asOf": "2026-08-30T18:31:20.000Z",
+  "methodologyVersion": "2026-08-30.integrated-v2",
+  "pressure": {
+    "type": "HUMAN",
+    "targetId": "fruit_changed_method_navigator",
+    "why": "Autonomous work is exhausted. Technical truth and independent problem evidence are strong; free evidence is saturated; only real user exposure resolves the next uncertainty."
+  },
+  "snapshot": {
+    "repository": "firstrateent-star/flower-economic-kernel",
+    "path": "garden/seed.json",
+    "blobSha": "cd19d2499dfb3edd52ec33cff32efa3fe4ecdf7b",
+    "retrievalRule": "Replay must retrieve this exact immutable Git blob, not the current main-branch file, and verify the blob SHA before evaluation."
+  },
+  "evidenceBoundary": {
+    "rule": "Only evidence demonstrably available at or before asOf may be supplied to a shadow replay.",
+    "futureEvidenceAllowed": false
+  },
+  "authorityBoundary": {
+    "liveMutationAllowed": false,
+    "spendAllowed": false,
+    "publicationAllowed": false,
+    "legalAcceptanceAllowed": false,
+    "identityChangeAllowed": false
+  },
+  "purpose": "First trustworthy prospective replay specimen for comparing future methodology versions against the exact state that reached the Changed Method Navigator human sovereignty membrane. This checkpoint does not authorize crossing that membrane."
+}
