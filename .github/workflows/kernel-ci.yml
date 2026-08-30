@@ -47,12 +47,18 @@ jobs:
         run: |
           rm -f garden/state.json
           node src/runtime/cli.js status > /tmp/flower-status.json
-          node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/flower-status.json','utf8')); if(x.pressure?.type!=='EXPAND') throw new Error('Expected canonical v3 challenger EXPAND, got '+JSON.stringify(x.pressure)); if(x.wake?.wake!==true) throw new Error('Autonomous challenger pressure should wake');"
+          node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/flower-status.json','utf8')); if(x.pressure?.type!=='TRANSFER') throw new Error('Expected verified internal improvement to route through bounded TRANSFER, got '+JSON.stringify(x.pressure)); if(!x.pressure?.targetId) throw new Error('TRANSFER must identify the verified internal improvement target'); if(x.wake?.wake!==true) throw new Error('Autonomous transfer pressure should wake');"
       - name: Exhausted challenger returns to credential-free idempotent human sleep
         env:
           OPENAI_API_KEY: ''
         run: |
           rm -f garden/state.json
+          # This smoke isolates the exhausted economic-human boundary. Durable internal
+          # improvement evidence is tested above and in unit tests, so remove that independent
+          # pressure from this ephemeral CI workspace rather than marking it assessed by fiat.
+          if [ -d observations/self-improvement-ledger ]; then
+            mv observations/self-improvement-ledger /tmp/flower-self-improvement-ledger
+          fi
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           const garden = JSON.parse(fs.readFileSync('garden/seed.json', 'utf8'));
