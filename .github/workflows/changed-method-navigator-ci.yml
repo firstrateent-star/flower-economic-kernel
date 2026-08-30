@@ -1,0 +1,35 @@
+name: Changed Method Navigator Preflight
+
+on:
+  push:
+    branches:
+      - experiment/changed-method-navigator-ci
+    paths:
+      - 'experiments/changed-method-navigator/**'
+      - '.github/workflows/changed-method-navigator-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.1'
+      - name: Build plugin against real IntelliJ SDK
+        run: gradle -p experiments/changed-method-navigator buildPlugin --stacktrace
+      - name: Verify plugin compatibility
+        run: gradle -p experiments/changed-method-navigator verifyPlugin --stacktrace
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: changed-method-navigator-preflight
+          path: experiments/changed-method-navigator/build/distributions/*.zip
+          if-no-files-found: error
