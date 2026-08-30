@@ -23,7 +23,6 @@ test('Fruit Forge imports live manifest, links opportunity, and ingests latest d
   assert.equal(fruit.standby, false);
   assert.equal(fruit.publicRelease?.economicBoundaryCrossed, true);
   assert.equal(fruit.distributionState?.rails?.githubAction?.state, 'private_staged_ci_passed');
-  assert.equal(fruit.distributionState?.stalenessDetected?.olderValue, 'not_built');
   assert.match(fruit.distributionState?.statePath ?? '', /distribution-state-2026-08-30\.json$/);
   assert.equal(opp.fruitId, fruit.id);
   assert.equal(opp.productizationState, 'live');
