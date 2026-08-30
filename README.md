@@ -4,6 +4,20 @@
 
 Flower v0 is a private event-driven economic specialization of the broader Flower methodology.
 
+## Broader Flower provenance and orientation
+
+This repository is a local executable chart, not the whole Flower ontology.
+
+The historical/generative origin is preserved in:
+
+`docs/FLOWER_ORIGIN_PROVENANCE.md`
+
+The broader cross-domain orientation is preserved in:
+
+`docs/FLOWER_FIELD_CHARTER.md`
+
+Flower began with the Flower of Life geometry and an inquiry into whether its relationships could help reveal or understand something beyond the immediately visible representation, including an early question about an alternate dimension. That origin remains generative provenance, not established physics. The economic specialization exists because material resources and externally verified return can nourish future capacity; economics does not define all abundance or flourishing.
+
 ## Canonical methodology
 
 The current human-readable method is:
@@ -14,13 +28,15 @@ The executable methodology contract is:
 
 `src/core/methodology-core.js`
 
-Historical/root documents remain provenance and specialized documents remain deeper derivations, but they do not silently override the current method. The canonical document defines the precedence model.
+Historical/root documents remain provenance and specialized documents remain deeper derivations, but they do not silently override the current method. The canonical document defines the precedence model. The broader Field Charter constrains scope: a local terminal objective does not silently become the universal objective.
 
 ## Root
 
-The irreducible Flower is:
+The irreducible executable Flower abstraction is:
 
 `STATE -> GRADIENT -> PROBE -> RETURN -> UPDATED STATE`
+
+This is a tested functional projection of a richer historical lineage, not a replacement for that lineage.
 
 The economic specialization aims to increase the human Center-holder's sovereign capacity by cultivating low-maintenance economic Fruit whose accumulated money, knowledge, infrastructure, capability, trust, and distribution lower the cost of producing subsequent Fruit.
 
@@ -72,4 +88,4 @@ Repository artifact truth is distinct from verified deployed-runtime truth; a co
 
 See `docs/REPRODUCTION_TEST.md` and the canonical methodology.
 
-The important metric is not how many apps or ideas Flower makes. It is whether useful complexity, verified return, and regenerative capacity grow faster than human attention, capital, compute, uncertainty, and state-management burden.
+The important metric is not how many apps or ideas Flower makes. It is whether useful complexity, verified return, and regenerative capacity grow faster than human attention, capital, compute, uncertainty, state-management burden, and displaced cost—while the broader reason for accumulating capacity remains visible.
