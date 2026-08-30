@@ -59,28 +59,53 @@ function familyFor(actor) {
   return hits[0]?.family ?? 'other';
 }
 
+function updateTopTwo(row, value) {
+  if (value >= row.topActorRecentUsers) {
+    row.secondActorRecentUsers = row.topActorRecentUsers;
+    row.topActorRecentUsers = value;
+  } else if (value > row.secondActorRecentUsers) {
+    row.secondActorRecentUsers = value;
+  }
+}
+
+function familyEvidenceClass(row) {
+  if (row.recentUsers <= 0) return 'NO_RECENT_DEMAND_WITNESS';
+  if (row.topActorShare >= 0.85 && row.meaningfulActors < 2) return 'CONCENTRATED_DEMAND_WITNESS';
+  if (row.family === 'diagnostics' || row.family === 'other') return 'DEMAND_WITNESS';
+  if (row.meaningfulActors >= 2 && row.topActorShare < 0.8) return 'GAP_PROBE_EARNED';
+  if (row.activeActors >= 3 && row.topTwoShare < 0.9) return 'GAP_PROBE_EARNED';
+  return 'DEMAND_WITNESS';
+}
+
 export function summarizeFamilies(actors = []) {
   const byFamily = new Map();
   for (const actor of actors) {
     const family = familyFor(actor);
+    const recent = recentUsers(actor);
     const row = byFamily.get(family) ?? {
       family,
       actors: 0,
+      activeActors: 0,
+      meaningfulActors: 0,
       recentUsers: 0,
       sevenDayUsers: 0,
       totalUsers: 0,
       payPerEventActors: 0,
       agenticActors: 0,
       topActorRecentUsers: 0,
+      secondActorRecentUsers: 0,
       topActorShare: 0,
+      topTwoShare: 0,
     };
     row.actors += 1;
-    row.recentUsers += recentUsers(actor);
+    row.recentUsers += recent;
     row.sevenDayUsers += sevenDayUsers(actor);
     row.totalUsers += totalUsers(actor);
+    if (recent > 0) row.activeActors += 1;
+    if (recent >= 5) row.meaningfulActors += 1;
     if (pricingModel(actor) === 'PAY_PER_EVENT') row.payPerEventActors += 1;
     if (actor?.allowsAgenticUsers === true) row.agenticActors += 1;
-    row.topActorRecentUsers = Math.max(row.topActorRecentUsers, recentUsers(actor));
+    updateTopTwo(row, recent);
     byFamily.set(family, row);
   }
 
@@ -90,19 +115,29 @@ export function summarizeFamilies(actors = []) {
     const ppeShare = row.payPerEventActors / competition;
     const agenticShare = row.agenticActors / competition;
     const concentration = row.recentUsers > 0 ? row.topActorRecentUsers / row.recentUsers : 1;
-    const crowdingPenalty = Math.log1p(competition);
-    const concentrationPenalty = concentration > 0.8 ? 1.25 : concentration > 0.6 ? 0.6 : 0;
+    const topTwoShare = row.recentUsers > 0 ? (row.topActorRecentUsers + row.secondActorRecentUsers) / row.recentUsers : 1;
+    const breadth = Math.min(1, row.meaningfulActors / 4) + Math.min(0.75, row.activeActors / 20);
+    const crowdingPenalty = Math.log1p(competition) * 0.65;
+    const concentrationPenalty = concentration > 0.85 ? 2 : concentration > 0.7 ? 1 : concentration > 0.55 ? 0.4 : 0;
     const diagnosticPenalty = row.family === 'diagnostics' ? 1.5 : 0;
     const flowBonus = row.family === 'diagnostics' || row.family === 'other' ? 0 : 1.25;
-    const score = demand + ppeShare + agenticShare + flowBonus - crowdingPenalty - concentrationPenalty - diagnosticPenalty;
-    return {
+    const probeScore = demand + ppeShare + agenticShare + breadth + flowBonus - crowdingPenalty - concentrationPenalty - diagnosticPenalty;
+    const enriched = {
       ...row,
       payPerEventShare: Number(ppeShare.toFixed(3)),
       agenticShare: Number(agenticShare.toFixed(3)),
       topActorShare: Number(concentration.toFixed(3)),
-      score: Number(score.toFixed(3)),
+      topTwoShare: Number(topTwoShare.toFixed(3)),
+      demandBreadth: Number(breadth.toFixed(3)),
+      probeScore: Number(probeScore.toFixed(3)),
     };
-  }).sort((a, b) => b.score - a.score || b.recentUsers - a.recentUsers || a.family.localeCompare(b.family));
+    return {
+      ...enriched,
+      evidenceClass: familyEvidenceClass(enriched),
+      buildEligible: false,
+      buildEligibilityReason: 'Store telemetry can witness demand and competitive shape, but cannot independently prove an unserved buyer gap.',
+    };
+  }).sort((a, b) => b.probeScore - a.probeScore || b.recentUsers - a.recentUsers || a.family.localeCompare(b.family));
 }
 
 export function scoreActor(actor, familySummary = null) {
@@ -116,18 +151,29 @@ export function scoreActor(actor, familySummary = null) {
   const dominantCommodityPenalty = containsAny(value, COMMODITY_DOMINANCE_TERMS) && total > 1000 ? 1.25 : 0;
   const ppeBonus = pricingModel(actor) === 'PAY_PER_EVENT' ? 0.8 : 0;
   const agenticBonus = actor?.allowsAgenticUsers === true ? 0.6 : 0;
-  const familyCrowdingPenalty = familySummary ? Math.min(2, Math.log1p(familySummary.actors) / 2) : 0;
-  const incumbentPenalty = familySummary?.topActorShare > 0.8 && recent < familySummary.topActorRecentUsers * 0.05 ? 0.8 : 0;
+  const familyCrowdingPenalty = familySummary ? Math.min(2.5, Math.log1p(familySummary.actors) / 2) : 0;
+  const incumbentPenalty = familySummary?.topActorShare >= 0.7 && recent >= familySummary.topActorRecentUsers * 0.8 ? 1.25 : 0;
   const score = demand + generativeBonus + ppeBonus + agenticBonus - diagnosticPenalty - dominantCommodityPenalty - familyCrowdingPenalty - incumbentPenalty;
   return Number(score.toFixed(3));
 }
 
-export function rankSeedZeroCandidates(actors = [], { minimumRecentUsers = 1, limit = 100 } = {}) {
+function actorEvidenceClass(actor, familySummary) {
+  const recent = recentUsers(actor);
+  if (recent <= 0) return 'NO_RECENT_DEMAND_WITNESS';
+  if (familySummary?.topActorRecentUsers > 0 && recent >= familySummary.topActorRecentUsers * 0.8) {
+    return 'INCUMBENT_DEMAND_WITNESS';
+  }
+  if (familySummary?.evidenceClass === 'GAP_PROBE_EARNED') return 'ADJACENT_WEDGE_REFERENCE';
+  return 'DEMAND_WITNESS';
+}
+
+export function rankSeedZeroProbes(actors = [], { minimumRecentUsers = 1, limit = 100 } = {}) {
   const families = summarizeFamilies(actors);
   const familyMap = new Map(families.map((x) => [x.family, x]));
-  const ranked = actors
+  const probes = actors
     .map((actor) => {
       const family = familyFor(actor);
+      const familySummary = familyMap.get(family);
       return {
         id: actor.id,
         username: actor.username,
@@ -140,13 +186,26 @@ export function rankSeedZeroCandidates(actors = [], { minimumRecentUsers = 1, li
         totalUsers: totalUsers(actor),
         pricingModel: pricingModel(actor),
         allowsAgenticUsers: actor?.allowsAgenticUsers === true,
-        score: scoreActor(actor, familyMap.get(family)),
+        evidenceClass: actorEvidenceClass(actor, familySummary),
+        buildEligible: false,
+        buildEligibilityReason: 'Requires an independent buyer-gap witness plus activation-distance assessment before construction.',
+        probeScore: scoreActor(actor, familySummary),
       };
     })
     .filter((x) => x.recentUsers >= minimumRecentUsers)
-    .sort((a, b) => b.score - a.score || b.recentUsers - a.recentUsers || String(a.title ?? '').localeCompare(String(b.title ?? '')))
+    .sort((a, b) => {
+      const familyA = familyMap.get(a.family)?.evidenceClass === 'GAP_PROBE_EARNED' ? 1 : 0;
+      const familyB = familyMap.get(b.family)?.evidenceClass === 'GAP_PROBE_EARNED' ? 1 : 0;
+      return familyB - familyA || b.probeScore - a.probeScore || b.recentUsers - a.recentUsers || String(a.title ?? '').localeCompare(String(b.title ?? ''));
+    })
     .slice(0, limit);
-  return { families, candidates: ranked };
+  return { families, probes };
+}
+
+// Backward-compatible name. These are probe candidates, not construction candidates.
+export function rankSeedZeroCandidates(actors = [], options = {}) {
+  const { families, probes } = rankSeedZeroProbes(actors, options);
+  return { families, candidates: probes };
 }
 
 export async function fetchPublicStore({ fetchImpl = fetch, pageSize = 1000, maxActors = 5000 } = {}) {
