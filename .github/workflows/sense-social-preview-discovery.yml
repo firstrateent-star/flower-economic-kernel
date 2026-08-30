@@ -24,6 +24,8 @@ jobs:
       - name: Syntax-check discovery sensor
         run: node --check scripts/sense-social-preview-discovery.js
       - name: Sense public Store discovery
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
         run: node scripts/sense-social-preview-discovery.js
       - name: Upload discovery witness artifact
         uses: actions/upload-artifact@v4
