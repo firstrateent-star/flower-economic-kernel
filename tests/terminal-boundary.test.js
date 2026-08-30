@@ -5,7 +5,7 @@ import { pulse } from '../src/core/kernel.js';
 import { classifyPressure } from '../src/core/pressure.js';
 import { MockReasoner } from '../src/reasoners/mock.js';
 
-test('one new event integrates once and stops before ceremonial HUMAN breath', async () => {
+test('one new event integrates, then earns at most one fresh challenger breath before a human membrane', async () => {
   const garden = structuredClone(seed);
   garden.opportunities = [];
   garden.events = [{
@@ -30,15 +30,15 @@ test('one new event integrates once and stops before ceremonial HUMAN breath', a
     syncManifests: false,
   });
 
-  assert.deepEqual(result.breaths.map((x) => x.pressure.type), ['INTEGRATE']);
+  assert.deepEqual(result.breaths.map((x) => x.pressure.type), ['INTEGRATE', 'EXPAND']);
   assert.equal(garden.events[0].status, 'processed');
   assert.equal(classifyPressure(garden).type, 'HUMAN');
-  assert.equal(result.runBudget.costlyBreathsUsed, 0);
+  assert.equal(result.runBudget.costlyBreathsUsed, 1);
   assert.equal(garden.status.pulseCount, beforePulseCount + 1);
-  assert.equal(garden.traces.filter((x) => x.kind === 'breath').at(-1).pressure.type, 'INTEGRATE');
+  assert.equal(garden.traces.filter((x) => x.kind === 'breath').at(-1).pressure.type, 'EXPAND');
 });
 
-test('direct pulse at unchanged HUMAN membrane performs zero breaths and does not increment pulse count', async () => {
+test('first pulse at an unchosen HUMAN membrane spends one challenger breath, then unchanged state rests at HUMAN without another pulse', async () => {
   const garden = structuredClone(seed);
   garden.opportunities = [];
   garden.humanActuationQueue = [{
@@ -48,10 +48,24 @@ test('direct pulse at unchanged HUMAN membrane performs zero breaths and does no
     why: 'Only real exposure resolves the next uncertainty.',
     state: 'awaiting_explicit_authorization',
   }];
+  garden.status.lastPressure = { type: 'STILLNESS' };
   const beforePulseCount = Number(garden.status.pulseCount ?? 0);
-  const beforeTraceCount = garden.traces.length;
 
-  const result = await pulse({
+  const first = await pulse({
+    garden,
+    reasoner: new MockReasoner(),
+    maxBreaths: 12,
+    syncManifests: false,
+  });
+
+  assert.deepEqual(first.breaths.map((x) => x.pressure.type), ['EXPAND']);
+  assert.equal(classifyPressure(garden).type, 'HUMAN');
+  assert.equal(first.runBudget.costlyBreathsUsed, 1);
+  assert.equal(garden.status.pulseCount, beforePulseCount + 1);
+
+  const beforeSecondPulseCount = garden.status.pulseCount;
+  const beforeSecondTraceCount = garden.traces.length;
+  const second = await pulse({
     garden,
     reasoner: new MockReasoner(),
     maxBreaths: 12,
@@ -59,8 +73,8 @@ test('direct pulse at unchanged HUMAN membrane performs zero breaths and does no
   });
 
   assert.equal(classifyPressure(garden).type, 'HUMAN');
-  assert.equal(result.breaths.length, 0);
-  assert.equal(result.runBudget.costlyBreathsUsed, 0);
-  assert.equal(garden.status.pulseCount, beforePulseCount);
-  assert.equal(garden.traces.length, beforeTraceCount);
+  assert.equal(second.breaths.length, 0);
+  assert.equal(second.runBudget.costlyBreathsUsed, 0);
+  assert.equal(garden.status.pulseCount, beforeSecondPulseCount);
+  assert.equal(garden.traces.length, beforeSecondTraceCount);
 });
