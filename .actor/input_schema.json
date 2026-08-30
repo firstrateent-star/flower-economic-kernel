@@ -4,12 +4,12 @@
   "schemaVersion": 1,
   "properties": {
     "maxBreaths": {
-      "title": "Maximum micro-breaths this pulse",
+      "title": "Deterministic closure safety ceiling",
       "type": "integer",
-      "description": "Maximum safe internal transitions in this pulse. The Kernel may traverse up to 12 deterministic/free micro-breaths, while the costly frontier remains capped at one per run.",
-      "default": 12,
+      "description": "Hard safety ceiling for internal transitions in one pulse. The Kernel still crosses at most one costly frontier, but may carry a longer chain of deterministic/free consequences in the same invocation instead of serializing them into repeated runs.",
+      "default": 64,
       "minimum": 1,
-      "maximum": 12,
+      "maximum": 64,
       "editor": "number"
     },
     "observation": {
