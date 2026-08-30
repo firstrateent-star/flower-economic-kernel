@@ -4,7 +4,7 @@ import { classifyPressure } from '../core/pressure.js';
 import { refreshGeometry } from '../core/geometry.js';
 import { reconcileCanonicalControlPlane } from '../core/state-reconcile.js';
 import { prepareRuntimeState } from '../core/runtime-preparation.js';
-import { OpenAIReasoner } from '../reasoners/openai.js';
+import { EfficientOpenAIReasoner } from '../reasoners/efficient-openai.js';
 import seed from '../../garden/seed.json' with { type: 'json' };
 
 const STORE_NAME = 'flower-economic-kernel-v0-state';
@@ -134,7 +134,7 @@ await Actor.main(async () => {
     return;
   }
 
-  const reasoner = new OpenAIReasoner();
+  const reasoner = new EfficientOpenAIReasoner();
   let result;
   try {
     result = await pulse({
