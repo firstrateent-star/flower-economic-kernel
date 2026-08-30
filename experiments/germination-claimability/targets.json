@@ -1,0 +1,24 @@
+{
+  "algora_orgs": [
+    "projectdiscovery",
+    "Dokploy",
+    "drizzle-team",
+    "go-gitea",
+    "unsiloed-ai",
+    "coollabsio",
+    "antinomyhq",
+    "Mudlet",
+    "tscircuit",
+    "comet-ml",
+    "BasedHardware",
+    "spaceandtimelabs",
+    "cloudgakkai",
+    "arakoodev",
+    "aqualinkorg",
+    "thesysdev"
+  ],
+  "max_claims": 8,
+  "min_amount_usd": 20,
+  "max_issue_age_days": 730,
+  "max_repo_idle_days": 120
+}
