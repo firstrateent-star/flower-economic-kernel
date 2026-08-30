@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import seed from './fixtures/test-seed.js';
 import { FLOWER_METHODOLOGY, FLOWER_METHODOLOGY_VERSION } from '../src/core/methodology-core.js';
+import { addTrace } from '../src/core/transitions.js';
 
 test('integrated methodology contains reciprocal Flower-efficiency cultivation rather than one-way optimization', () => {
   assert.equal(FLOWER_METHODOLOGY.version, FLOWER_METHODOLOGY_VERSION);
@@ -27,4 +29,12 @@ test('repository entrypoint points readers to the canonical current methodology'
   const readme = await fs.readFile(new URL('../README.md', import.meta.url), 'utf8');
   assert.match(readme, /docs\/CURRENT_FLOWER_METHODOLOGY\.md/);
   assert.match(readme, /src\/core\/methodology-core\.js/);
+});
+
+test('new traces record the methodology version that produced them', () => {
+  const garden = structuredClone(seed);
+  garden.traces = [];
+  addTrace(garden, { kind: 'methodology_provenance_test', summary: 'test trace' });
+  assert.equal(garden.traces.length, 1);
+  assert.equal(garden.traces[0].methodologyVersion, FLOWER_METHODOLOGY_VERSION);
 });
