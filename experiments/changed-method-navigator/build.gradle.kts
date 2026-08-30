@@ -1,10 +1,12 @@
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+
 plugins {
     java
     id("org.jetbrains.intellij.platform") version "2.18.1"
 }
 
 group = "com.flower"
-version = "0.0.3-preflight"
+version = "0.0.4-preflight"
 
 repositories {
     mavenCentral()
@@ -16,7 +18,12 @@ dependencies {
         intellijIdea("2026.1.4")
         bundledModule("com.intellij.modules.vcs")
         bundledPlugin("com.intellij.java")
+        testFrameworks(
+            TestFrameworkType.Platform,
+            TestFrameworkType.Plugin.Java,
+        )
     }
+    testImplementation("junit:junit:4.13.2")
 }
 
 java {
