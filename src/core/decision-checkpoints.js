@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { FLOWER_METHODOLOGY_VERSION } from './methodology-core.js';
+import { buildDecisionEvidenceManifest } from './evidence-admissibility.js';
 import { nowIso } from './utils.js';
 
 const CONSEQUENTIAL_PRESSURES = new Set([
@@ -65,8 +66,10 @@ export function createDecisionCheckpoint({
 
   const snapshot = clone(garden);
   const snapshotHash = sha256(stableJson(snapshot));
+  const evidenceManifest = buildDecisionEvidenceManifest({ garden: snapshot, asOf: evidenceCutoff });
+  const evidenceManifestHash = sha256(stableJson(evidenceManifest));
   const identity = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     capturedAt,
     captureClock: 'runtime_wall_clock',
     asOf: evidenceCutoff,
@@ -75,6 +78,7 @@ export function createDecisionCheckpoint({
     costClass,
     reason,
     snapshotHash,
+    evidenceManifestHash,
   };
   const checkpointHash = sha256(stableJson(identity));
 
@@ -82,6 +86,7 @@ export function createDecisionCheckpoint({
     ...identity,
     id: `decision_checkpoint_${checkpointHash.slice(0, 24)}`,
     checkpointHash,
+    evidenceManifest,
     snapshot,
   };
 }
@@ -95,6 +100,11 @@ export function verifyDecisionCheckpoint(checkpoint) {
   const snapshotHash = sha256(stableJson(checkpoint.snapshot));
   if (snapshotHash !== checkpoint.snapshotHash) return { ok: false, reason: 'snapshot_hash_mismatch' };
 
+  const rebuiltManifest = buildDecisionEvidenceManifest({ garden: checkpoint.snapshot, asOf: checkpoint.asOf });
+  const evidenceManifestHash = sha256(stableJson(rebuiltManifest));
+  if (evidenceManifestHash !== checkpoint.evidenceManifestHash) return { ok: false, reason: 'evidence_manifest_hash_mismatch' };
+  if (stableJson(rebuiltManifest) !== stableJson(checkpoint.evidenceManifest)) return { ok: false, reason: 'evidence_manifest_mismatch' };
+
   const identity = {
     schemaVersion: checkpoint.schemaVersion,
     capturedAt: checkpoint.capturedAt,
@@ -105,6 +115,7 @@ export function verifyDecisionCheckpoint(checkpoint) {
     costClass: checkpoint.costClass,
     reason: checkpoint.reason ?? null,
     snapshotHash: checkpoint.snapshotHash,
+    evidenceManifestHash: checkpoint.evidenceManifestHash,
   };
   const checkpointHash = sha256(stableJson(identity));
   if (checkpointHash !== checkpoint.checkpointHash) return { ok: false, reason: 'checkpoint_hash_mismatch' };
@@ -121,5 +132,6 @@ export async function persistDecisionCheckpoint({ checkpoint, sink } = {}) {
     id: checkpoint.id,
     checkpointHash: checkpoint.checkpointHash,
     snapshotHash: checkpoint.snapshotHash,
+    evidenceManifestHash: checkpoint.evidenceManifestHash,
   };
 }
