@@ -1,4 +1,4 @@
-export const FLOWER_METHODOLOGY_VERSION = '2026-08-30.integrated-v4';
+export const FLOWER_METHODOLOGY_VERSION = '2026-08-30.integrated-v5';
 
 export const FLOWER_METHODOLOGY = Object.freeze({
   version: FLOWER_METHODOLOGY_VERSION,
@@ -31,6 +31,7 @@ export const FLOWER_METHODOLOGY = Object.freeze({
     'Repeated reconciliation must converge to a fixed point under unchanged state and evidence.',
     'The same Garden and evidence must prepare to the same decision state regardless of storage/runtime adapter.',
     'Efficiency may compress execution and representation only when the same or better decisions remain possible.',
+    'An internal improvement and an external benefit are different claims. A reusable internal transformation creates a transfer hypothesis, not proof that another system or person values it.',
     'The organism exists to nourish the human Center-holder; the human does not exist to nourish the organism.',
   ],
   terminalGovernance: {
@@ -102,6 +103,38 @@ export const FLOWER_METHODOLOGY = Object.freeze({
       'Repeated useful transformations should crystallize into reusable artifacts, rules, tests, caches, skills, schemas, or tools when doing so lowers future cost without erasing uncertainty.',
     ],
   },
+  selfImprovementValueGovernance: {
+    principle: 'Every evidenced internal improvement may produce two distinct dividends: a better Flower and a reusable transformation that might help another system or person. The first can be proven internally; the second remains a hypothesis until independent reality contact.',
+    loop: 'INTERNAL CHANGE -> MEASURE MULTIDIMENSIONALLY -> PRESERVE TRADEOFFS -> GENERALIZE TRANSFORMATION -> TRANSFER HYPOTHESIS -> EXTERNAL SHADOW PROBE -> EXTERNAL VALUE EVIDENCE -> OPTIONAL FORM',
+    dimensions: {
+      energy: 'Measure human attention, compute, capital, state churn, recomputation, and other resource use relevant to the changed operation.',
+      speed: 'Measure latency or time-to-decision/time-to-truth without treating faster as better when quality or future-state integrity regresses.',
+      accuracy: 'Measure decision quality, prediction/intervention correctness, evidence mapping, error rate, or equivalence appropriate to the operation.',
+      complexityCapacity: 'Measure how much decision-relevant complexity can remain usable without proportional growth in human, compute, state, or coordination burden.',
+    },
+    rules: [
+      'Do not collapse energy, speed, accuracy, and complexity capacity into one vanity score. Preserve each dimension and any regression capable of changing a decision.',
+      'An improvement is not evidenced merely because code changed, tests were added, or a model says it is better. Use before/after measurements, equivalence fixtures, decision outcomes, or other accountable evidence appropriate to the claim.',
+      'A verified tradeoff is not silently promoted to a Pareto improvement. Keep the regression visible and route it through the objective and protected invariants.',
+      'When an internal Pareto improvement is evidenced and higher-priority terminal work is not displaced, spend at most one bounded transfer-analysis frontier to strip Flower-specific nouns and identify the reusable transformation.',
+      'Transferability is optional. A context-specific gain may remain internal forever without being treated as waste or failure.',
+      'A transfer seed is cold optionality, not a product commitment. Do not package, publish, support, or monetize merely because a transformation is reusable.',
+      'Internal usefulness does not verify external problem reality, demand, value, ownership, willingness to pay, or return. Promote those claims only through independent evidence.',
+      'Before outward form, test whether another system or person experiences the relevant problem and whether the transfer improves a measurable outcome without creating hidden maintenance, fulfillment, agency, or support burden.',
+      'If repeated external usefulness is evidenced, only then consider the smallest reusable outward form: rule, library, API, workflow, document, interface, service, open contribution, or other fit-for-purpose artifact.',
+    ],
+    maturityLadder: [
+      'internal_change',
+      'internal_improvement_unverified',
+      'internal_improvement_evidenced',
+      'transfer_hypothesis',
+      'external_shadow_probe_ready',
+      'external_value_evidenced',
+      'repeat_external_value_evidenced',
+      'optional_outward_form',
+    ],
+    antiGoodhartCheck: 'Ask how optimizing the measured internal gain or maximizing the number of transfer seeds could reduce actual decision quality, attention, truthfulness, maintainability, user value, or terminal progress. More self-improvement artifacts are not automatically more improvement.',
+  },
   dualCultivation: {
     purpose: 'Flower and complexity-preserving efficiency recursively improve one another rather than becoming separate doctrines.',
     methodologyToEfficiency: [
@@ -111,7 +144,7 @@ export const FLOWER_METHODOLOGY = Object.freeze({
     ],
     efficiencyToMethodology: [
       'Every new Flower law, petal, sensor, or organism should declare causal inputs, affected decisions, activation scope, cost class, freshness/volatility, memory temperature, falsifier, return path, and stopping condition when applicable.',
-      'A conceptual addition that cannot alter prediction, selection, intervention, sovereignty, regeneration, or return belongs in cold/reference memory rather than the hot operating method.',
+      'A conceptual addition that cannot alter prediction, selection, intervention, sovereignty, regeneration, return, or a transferable internal capability belongs in cold/reference memory rather than the hot operating method.',
       'When multiple laws produce the same decision, consolidate execution without erasing distinct provenance or scope.',
       'Methodology expansion should increase useful option space faster than it increases mandatory work.',
     ],
@@ -120,6 +153,9 @@ export const FLOWER_METHODOLOGY = Object.freeze({
       'What exact state variables can this new evidence or law causally affect?',
       'What can remain dormant, cached, projected, batched, or cold without loss?',
       'What is the cheapest falsifier or equivalence proof?',
+      'What internal improvement was actually measured across energy, speed, accuracy, or complexity capacity, and what regressions remain visible?',
+      'What general transformation caused the internal gain, and could another system or person plausibly benefit without assuming that they do?',
+      'What independent evidence would verify the outward-value hypothesis, and would externalization erase the gain through maintenance, support, fulfillment, or attention burden?',
       'What useful external value was actually created or preserved, and what evidence supports that claim?',
       'What return is actually attributable to that value path, and who legally/economically owns the return rail?',
       'After lifecycle costs and obligations, is there realized surplus or only gross activity/revenue?',
@@ -127,7 +163,7 @@ export const FLOWER_METHODOLOGY = Object.freeze({
       'What returns to make the next cycle cheaper, better, safer, or more capable?',
       'Under unchanged reality, does the system converge and remain still?',
       'Has local efficiency improved while global complexity capacity, ethics, sovereignty, or external value degraded?',
-      'Has the method started optimizing a proxy, capture ratio, sunk-cost branch, or recursion whose expected value is lower than acting?',
+      'Has the method started optimizing a proxy, capture ratio, transfer-seed count, sunk-cost branch, or recursion whose expected value is lower than acting?',
     ],
   },
   mutationGovernance: {
@@ -153,7 +189,8 @@ export const FLOWER_METHODOLOGY = Object.freeze({
       'sovereignty',
       'legal/public authority',
       'human identity',
-      'ownership and surplus allocation authority',
+      'ownership authority',
+      'surplus allocation authority',
     ],
     authorityRule: 'A mutation touching a protected domain may be privately analyzed or technically supported, but cannot self-promote to canonical authority without explicit human authorization.',
     evaluationRule: 'Prefer Pareto improvement across terminal alignment, transition yield, human burden, compute, state churn, external truth, external value, capture integrity, regeneration, and decision capability; never collapse methodology quality to one vanity score.',
@@ -168,6 +205,8 @@ export const FLOWER_METHODOLOGY = Object.freeze({
     'PROBE: cross the cheapest reversible frontier that can materially change the decision; predeclare success and kill signals.',
     'CRYSTALLIZE: when a useful transformation repeats, prefer reusable structure that lowers future cost over repeated reasoning or manual effort.',
     'CLOSE: propagate deterministic consequences toward a fixed point without requiring human clock pulses.',
+    'IMPROVE: when the organism changes itself, measure the relevant before/after dimensions and preserve both gains and regressions instead of assuming improvement from change.',
+    'TRANSFER: when a verified internal Pareto improvement has no higher-priority terminal work to displace, derive at most one bounded hypothesis for how the underlying transformation could help another system or person; external value remains unverified until independent evidence.',
     'VALUE: distinguish the useful external state change from internal activity and record evidence proportional to the value claim.',
     'RETURN: project attributable return into accountable state without conflating usage, gross activity, or projected revenue with owned settled return.',
     'RECONCILE: subtract known lifecycle costs and obligations before claiming surplus; material unknown costs remain unresolved.',
