@@ -1,0 +1,55 @@
+name: Flower Cross-Domain Transfer Observatory
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'methodology/meta-learning/cross-domain-transfer-v1.json'
+      - 'src/core/semantic-index-transfer.js'
+      - 'scripts/cross-domain-transfer-observatory.mjs'
+      - 'tests/semantic-index-transfer.test.js'
+      - '.github/workflows/cross-domain-transfer-observatory.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  transfer-shadow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate transfer model
+        run: |
+          node --check src/core/semantic-index-transfer.js
+          node --check scripts/cross-domain-transfer-observatory.mjs
+          node --test tests/semantic-index-transfer.test.js
+      - name: Run cross-domain transfer shadow probe
+        run: node scripts/cross-domain-transfer-observatory.mjs
+      - name: Validate transfer boundaries
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('reports/cross-domain-transfer-observatory-latest.json', 'utf8'));
+          if (report.epistemicStatus !== 'external_source_shadow_test_not_external_value') throw new Error('Transfer shadow probe overstated epistemic status.');
+          if (report.externalValueVerified !== false || report.externalFlourishingVerified !== false) throw new Error('Source/model evidence may not claim external value or flourishing.');
+          if (report.cases?.storybook?.conclusion !== 'negative_transfer_boundary_confirmed') throw new Error('Storybook should remain a negative transfer boundary on current evidence.');
+          if (report.cases?.n8n?.conclusion !== 'conditional_on_stability_and_reuse') throw new Error('n8n should remain conditional on stability/reuse evidence.');
+          if (report.nextPressure?.type !== 'EXTERNAL_RUNTIME_WITNESS') throw new Error('Shadow transfer should advance to external runtime evidence, not patching.');
+          console.log(JSON.stringify({
+            storybook: report.cases.storybook,
+            n8n: report.cases.n8n,
+            nextPressure: report.nextPressure,
+            metaLearningUpdate: report.metaLearningUpdate,
+          }, null, 2));
+          NODE
+      - name: Upload transfer report
+        uses: actions/upload-artifact@v4
+        with:
+          name: flower-cross-domain-transfer-observatory
+          path: reports/cross-domain-transfer-observatory-latest.json
+          if-no-files-found: error
+          retention-days: 14
