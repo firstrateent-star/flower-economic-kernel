@@ -55,10 +55,10 @@ test('canonical methodology document agrees with executable methodology version 
   assert.match(doc, /champion/i);
   assert.match(doc, /two-temperature/i);
   assert.match(doc, /regenerative value governance/i);
-  assert.match(doc, /gross return is not surplus/i);
+  assert.match(doc, /Gross return is not surplus/i);
   assert.match(doc, /ownership/i);
-  assert.match(doc, /dual dividend/i);
-  assert.match(doc, /self-improvement observatory/i);
+  assert.match(doc, /Dual Dividend/i);
+  assert.match(doc, /Self-Improvement Observatory/i);
   assert.match(doc, /internal improvement.*external value/is);
   assert.match(doc, /TRANSFER/);
 });
@@ -70,6 +70,14 @@ test('prior cold mutation ledger remains preserved as ancestry', async () => {
   assert.equal(ledger.evidence.measurement.rediscoveries, 100);
   assert.equal(ledger.evidence.measurement.freshEvaluationsRequired, 1);
   assert.equal(ledger.evidence.measurement.priorAssessmentsReused, 99);
+});
+
+test('v5 promotion ledger preserves the dual-dividend evidence and stopping condition', async () => {
+  const ledger = JSON.parse(await fs.readFile(new URL('../methodology/mutation-ledger/2026-08-30-integrated-v5.json', import.meta.url), 'utf8'));
+  assert.equal(ledger.promotedMethodologyVersion, FLOWER_METHODOLOGY_VERSION);
+  assert.equal(ledger.assessment.eligibleForCanonical, true);
+  assert.match(ledger.thesis, /dual-dividend membrane/i);
+  assert.match(ledger.assessment.stoppingCondition, /measurement/i);
 });
 
 test('repository entrypoint points readers to the canonical current methodology', async () => {
