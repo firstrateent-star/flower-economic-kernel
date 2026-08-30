@@ -1,6 +1,6 @@
 # Current Flower Methodology
 
-**Canonical methodology version:** `2026-08-30.integrated-v1`
+**Canonical methodology version:** `2026-08-30.integrated-v2`
 
 This is the current operating methodology for Flower. Historical documents remain evidence of how the method evolved; specialized documents remain deeper derivations. When wording conflicts, precedence is:
 
@@ -185,6 +185,30 @@ Every methodology mutation should be pressure-tested against these questions:
 9. Does this mutation make future Flowering cheaper/better, or merely make the methodology larger?
 
 If the answer to the last question is merely “larger,” the mutation has not earned hot status.
+
+## Methodology mutation memory
+
+Methodology candidates now follow the same memory discipline as economic branches.
+
+A proposed mutation receives a stable semantic fingerprint based on the parts of the proposal that define what it actually changes. Its evidence receives a separate fingerprint. Assessments may be preserved in cold, content-addressed ancestry rather than promoted into the hot operating methodology.
+
+The reuse rule is:
+
+`Same proposal + Same evidence -> Reuse prior assessment`
+
+while:
+
+`Same proposal + Materially new evidence -> Reevaluate`
+
+and:
+
+`Different semantic proposal -> Evaluate as new candidate`.
+
+This prevents the Flower from repeatedly paying to rediscover the same methodological insight while still allowing reality to reopen a previously rejected or incomplete idea.
+
+The first promoted use of this rule demonstrated semantic equivalence between stored and fresh mutation assessments and reduced 100 identical rediscoveries from 100 fresh evaluations to 1 fresh evaluation + 99 prior-assessment reuses. This measured redundancy reduction earned promotion without altering any protected value, sovereignty, ethical, or decision-capability domain.
+
+Canonical methodology versions therefore advance only when an earned methodology mutation changes the governing method. Ordinary implementation commits do not constitute methodology versions.
 
 ## Current economic specialization
 
