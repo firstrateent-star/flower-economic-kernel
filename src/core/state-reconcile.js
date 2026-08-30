@@ -106,7 +106,11 @@ export function reconcileCanonicalControlPlane(existing, canonical) {
     Number(garden.status.generation ?? 0),
     Number(canonical.status?.generation ?? 0),
   );
-  garden.updatedAt = canonical.updatedAt ?? garden.updatedAt ?? null;
+
+  // updatedAt belongs to the persisted data plane. Reconciliation must not rewrite it
+  // merely because the repository seed has a different edit timestamp; otherwise a
+  // no-op load/save oscillates state and fabricates activity.
+  garden.updatedAt ??= canonical.updatedAt ?? null;
 
   return { garden, changes };
 }
