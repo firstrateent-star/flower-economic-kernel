@@ -8,6 +8,7 @@ import { syncFruitManifests, verifyPrivateFruit } from './fruit-forge.js';
 import { reconcileDistributionTruth } from './distribution-truth.js';
 import { captureMethodologyArtifactIds, stampNewMethodologyArtifactOrigins } from './methodology-lineage.js';
 import { reconcileImprovementTransferSeeds } from './improvement-transfer.js';
+import { runImprovementTransfer } from './improvement-transfer-enzyme.js';
 
 function applyPostIntegrationSelectionPolicy(garden, pressure) {
   if (pressure.type !== 'INTEGRATE') return null;
@@ -28,7 +29,7 @@ function applyPostIntegrationSelectionPolicy(garden, pressure) {
 
 export function pressureCostClass(garden, pressure) {
   if (!pressure) return 'free';
-  if (['EXPAND', 'FALSIFY', 'BUILD_PLAN'].includes(pressure.type)) return 'reasoner';
+  if (['EXPAND', 'FALSIFY', 'BUILD_PLAN', 'TRANSFER'].includes(pressure.type)) return 'reasoner';
   if (pressure.type === 'SELECT') return selectionRequiresReasoner(garden) ? 'reasoner' : 'free';
   if (pressure.type === 'EXPERIMENT' || pressure.type === 'VERIFY_FRUIT') return 'free';
 
@@ -75,6 +76,8 @@ export async function breathe({ garden, reasoner, pressure = classifyPressure(ga
 
   if (pressure.type === 'VERIFY_FRUIT') {
     result = await verifyFruitBreath(garden, pressure);
+  } else if (pressure.type === 'TRANSFER') {
+    result = await runImprovementTransfer({ garden, reasoner, targetId: pressure.targetId });
   } else if (pressure.type === 'SELECT') {
     result = await runSelection({ garden, reasoner });
   } else {
