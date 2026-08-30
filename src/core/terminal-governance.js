@@ -1,4 +1,5 @@
 import { evaluateRegenerativeValue } from './regenerative-value.js';
+import { evaluateValueField } from './value-field.js';
 
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, Number(value) || 0));
 
@@ -29,6 +30,7 @@ export function scoreTerminalCandidate(candidate = {}, {
   const repeatability = prior(candidate.repeatability ?? candidate.reproductivePotential, 0.5);
   const distribution = optionalUnit(candidate.distributionReachability ?? candidate.distributionAccess ?? candidate.realityAccess);
   const regenerativeValue = evaluateRegenerativeValue(candidate);
+  const valueField = evaluateValueField(candidate);
 
   // Unknown evidence receives a neutral prior for exploratory ordering, but never passes
   // a construction/transaction gate merely because the score function needs a number.
@@ -67,6 +69,7 @@ export function scoreTerminalCandidate(candidate = {}, {
     offerIntegrity: candidate.offerIntegrity !== false,
     terminalEvidenceNamed: Boolean(candidate.terminalEvidence ?? candidate.successSignal ?? candidate.validationGate),
     antiExtractionClear: !regenerativeValue.antiExtractionRisk,
+    noVerifiedMaterialValueRegression: valueField.noVerifiedMaterialRegression,
   };
   gate.buildEligible = gate.demandWitnessed
     && gate.accessWitnessed
@@ -74,7 +77,8 @@ export function scoreTerminalCandidate(candidate = {}, {
     && gate.distributionReachable
     && gate.capturePathNamed
     && gate.offerIntegrity
-    && gate.antiExtractionClear;
+    && gate.antiExtractionClear
+    && gate.noVerifiedMaterialValueRegression;
 
   return {
     fruitVelocity: Number(fruitVelocity.toFixed(6)),
@@ -84,6 +88,7 @@ export function scoreTerminalCandidate(candidate = {}, {
     friction: Number(friction.toFixed(6)),
     evidenceCompleteness: Number(evidenceCompleteness.toFixed(3)),
     regenerativeValue,
+    valueField,
     gate,
     unknowns: {
       demand: demand === null,
@@ -105,6 +110,7 @@ export function classifyTerminalCandidate(candidate = {}, options = {}) {
   }
 
   if (!scored.gate.antiExtractionClear) return { ...scored, state: 'reframe_capture_value_relationship' };
+  if (!scored.gate.noVerifiedMaterialValueRegression) return { ...scored, state: 'reframe_material_value_regression' };
   const missingCriticalEvidence = Object.values(scored.unknowns).some(Boolean);
   if (missingCriticalEvidence) return { ...scored, state: 'probe_missing_evidence' };
   return { ...scored, state: 'prune_or_reframe' };
