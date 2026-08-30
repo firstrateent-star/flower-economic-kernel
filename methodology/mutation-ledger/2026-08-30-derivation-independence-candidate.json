@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "candidate_not_promoted",
+  "status": "cold_no_current_allocation_gain",
   "name": "Derivation Independence",
   "thesis": "Meta-learning recurrence should distinguish repeated descendants of one causal lineage from genuinely independent convergence across distinct derivation ancestries.",
   "origin": {
@@ -31,13 +31,19 @@
   "currentEvidence": [
     "research/meta-learning/derivation-independence.js",
     "tests/meta-learning-derivation-independence.test.js",
-    "research/dimensional/an-growth.js",
-    "src/core/terminal-governance.js",
-    "src/core/reasoner-view.js"
+    "research/meta-learning/real-history-derivation-audit.mjs",
+    "methodology/meta-learning/derivation-families-v1.json",
+    "github-actions-run:33341860668"
   ],
-  "falsifier": "Annotating real historical episodes with defensible derivation ancestry does not change any candidate ranking, confidence interpretation, or future test allocation compared with raw recurrence, or the ancestry bookkeeping adds more ambiguity/burden than it removes.",
-  "rollbackPath": "Keep the research audit cold and leave src/core/meta-learning.js unchanged.",
-  "stoppingCondition": "Do not modify canonical meta-learning until a real-history audit demonstrates at least one decision-relevant difference between raw recurrence and derivation-independent recurrence.",
+  "realHistoryResult": {
+    "decisionChanged": false,
+    "interpretation": "Under the defended ancestry overlay, the mechanisms currently eligible for prospective meta-testing already have at least two explicit derivation families. Lineage-aware recurrence therefore does not change current allocation.",
+    "consequence": "Do not modify src/core/meta-learning.js or canonical methodology for this concept now. Preserve the research audit as a future guard if the episode corpus grows enough for correlated recurrence to become decision-relevant."
+  },
+  "falsifier": "Satisfied for current history: annotating real historical episodes with defensible derivation ancestry did not change current prospective-test allocation compared with raw recurrence.",
+  "rollbackPath": "Already applied: keep the research audit cold and leave src/core/meta-learning.js unchanged.",
+  "revivalCondition": "Reopen only when a future recurrence-based ranking or test allocation would differ depending on whether supporting episodes share derivation ancestry.",
+  "stoppingCondition": "Reached for the current corpus; no further hot-method work is justified.",
   "epistemicBoundary": "Independent convergence increases evidential diversity; it does not establish universal truth, external usefulness, physical dimensional claims, or canonical authority.",
   "protectedDomainTouch": false
 }
