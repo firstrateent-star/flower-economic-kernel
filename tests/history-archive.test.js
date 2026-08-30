@@ -4,6 +4,7 @@ import seed from './fixtures/test-seed.js';
 import {
   planTraceArchive,
   commitTraceArchivePlan,
+  archiveTraceHistory,
   verifyTraceArchiveChain,
 } from '../src/core/history-archive.js';
 
@@ -39,6 +40,40 @@ test('committing a successfully persisted archive plan bounds active traces with
   assert.equal(garden.historyArchive.traceBlocks.length, 1);
   assert.equal(garden.historyArchive.traceBlocks[0].firstTraceId, 'trace_0000');
   assert.equal(garden.historyArchive.traceBlocks[0].lastTraceId, 'trace_0043');
+});
+
+test('transactional archive mutates active state only after the sink accepts the block', async () => {
+  const garden = structuredClone(seed);
+  garden.traces = Array.from({ length: 300 }, (_, i) => trace(i));
+  const before = JSON.stringify(garden);
+  let received = null;
+
+  const result = await archiveTraceHistory(garden, {
+    maxActiveTraces: 256,
+    persistBlock: async (block) => { received = structuredClone(block); },
+  });
+
+  assert.ok(received?.blockHash);
+  assert.equal(result.changed, true);
+  assert.equal(garden.traces.length, 256);
+  assert.equal(garden.historyArchive.latestTraceBlockHash, received.blockHash);
+  assert.notEqual(JSON.stringify(garden), before);
+});
+
+test('failed archive persistence leaves the Garden byte-for-byte unchanged', async () => {
+  const garden = structuredClone(seed);
+  garden.traces = Array.from({ length: 300 }, (_, i) => trace(i));
+  const before = JSON.stringify(garden);
+
+  await assert.rejects(
+    archiveTraceHistory(garden, {
+      maxActiveTraces: 256,
+      persistBlock: async () => { throw new Error('archive sink unavailable'); },
+    }),
+    /archive sink unavailable/,
+  );
+
+  assert.equal(JSON.stringify(garden), before);
 });
 
 test('hash-linked archive blocks verify as an append-only provenance chain', () => {
