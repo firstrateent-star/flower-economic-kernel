@@ -1,23 +1,35 @@
 import fs from 'node:fs/promises';
-import { fetchPublicStore, rankSeedZeroCandidates } from '../src/economics/seed-zero-market-flow-scanner.js';
+import { fetchPublicStore, rankSeedZeroProbes } from '../src/economics/seed-zero-market-flow-scanner.js';
 
 const outputPath = process.argv[2] ?? 'artifacts/seed-zero-market-flow-scan.json';
 const maxActors = Math.max(100, Math.min(Number(process.env.SEED_ZERO_MAX_ACTORS ?? 5000), 10000));
 const actors = await fetchPublicStore({ maxActors });
-const ranked = rankSeedZeroCandidates(actors, { minimumRecentUsers: 1, limit: 100 });
+const ranked = rankSeedZeroProbes(actors, { minimumRecentUsers: 1, limit: 100 });
+const gapProbeFamilies = ranked.families.filter((x) => x.evidenceClass === 'GAP_PROBE_EARNED');
+const gapProbes = ranked.probes.filter((x) => gapProbeFamilies.some((family) => family.family === x.family));
 const report = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   observedAt: new Date().toISOString(),
   source: 'https://api.apify.com/v2/store',
   sourceAuthenticationRequired: false,
   scannedActors: actors.length,
   methodology: {
-    objective: 'Find zero-cash machine-consumed generative transformations with current usage and lower competitive concentration; do not rank raw popularity alone.',
-    caveat: 'Marketplace usage is demand evidence, not proof that a new entrant can capture demand. Ranking is a probe for where deeper falsification is earned.',
+    objective: 'Use Store telemetry to witness current machine-consumed demand and identify market families where independent gap falsification is worth spending attention.',
+    epistemicBoundary: 'Store usage can witness demand, breadth, concentration, pricing, and agentic compatibility. It cannot prove that an unserved buyer gap exists.',
+    promotionRule: 'No Store-only result is build-eligible. Construction requires an independent buyer-gap witness and a separate activation-distance assessment.',
   },
   topFamilies: ranked.families.slice(0, 20),
-  topCandidates: ranked.candidates.slice(0, 50),
+  gapProbeFamilies: gapProbeFamilies.slice(0, 20),
+  topDemandWitnesses: ranked.probes.slice(0, 50),
+  gapProbes: gapProbes.slice(0, 50),
+  buildCandidates: [],
 };
 await fs.mkdir(outputPath.split('/').slice(0, -1).join('/') || '.', { recursive: true });
 await fs.writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`);
-console.log(JSON.stringify({ observedAt: report.observedAt, scannedActors: report.scannedActors, topFamilies: report.topFamilies.slice(0, 8), topCandidates: report.topCandidates.slice(0, 12) }));
+console.log(JSON.stringify({
+  observedAt: report.observedAt,
+  scannedActors: report.scannedActors,
+  gapProbeFamilies: report.gapProbeFamilies.slice(0, 8),
+  gapProbes: report.gapProbes.slice(0, 12),
+  buildCandidates: report.buildCandidates,
+}));
