@@ -5,7 +5,10 @@ on:
     branches:
       - experiment/changed-method-navigator-ci
     paths:
-      - 'experiments/changed-method-navigator/**'
+      - 'experiments/changed-method-navigator/src/**'
+      - 'experiments/changed-method-navigator/build.gradle.kts'
+      - 'experiments/changed-method-navigator/settings.gradle.kts'
+      - 'experiments/changed-method-navigator/gradle.properties'
       - '.github/workflows/changed-method-navigator-ci.yml'
   workflow_dispatch:
 
