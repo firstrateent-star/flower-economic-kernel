@@ -1,20 +1,38 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { buildReasonerGardenView } from '../src/core/reasoner-view.js';
 import { classifyPressure } from '../src/core/pressure.js';
 
 const OUTPUT_PATH = process.env.FLOWER_IMPROVEMENT_REPORT
   || 'reports/self-improvement-observatory-latest.json';
-const IMPLEMENTATION_KEY = process.env.FLOWER_IMPLEMENTATION_KEY
-  || process.env.GITHUB_SHA
+const REVISION_KEY = process.env.GITHUB_SHA
+  || process.env.FLOWER_IMPLEMENTATION_KEY
   || 'working-tree';
+const CAUSAL_IMPLEMENTATION_FILES = [
+  'src/core/reasoner-view.js',
+  'src/core/pressure.js',
+  'src/core/methodology-core.js',
+  'src/core/improvement-transfer.js',
+];
 
 function percentile(values, p) {
   if (values.length === 0) return null;
   const sorted = [...values].sort((a, b) => a - b);
   const index = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * p)));
   return sorted[index];
+}
+
+async function causalImplementationFingerprint() {
+  const hash = createHash('sha256');
+  for (const file of CAUSAL_IMPLEMENTATION_FILES) {
+    hash.update(file);
+    hash.update('\0');
+    hash.update(await fs.readFile(file));
+    hash.update('\0');
+  }
+  return `causal_${hash.digest('hex').slice(0, 24)}`;
 }
 
 function makeGarden(portfolioSize = 1) {
@@ -137,6 +155,7 @@ function measureTargetedProjection(portfolioSize, iterations = 150) {
 
 async function main() {
   const startedAt = new Date().toISOString();
+  const implementationKey = await causalImplementationFingerprint();
   const decisions = decisionFixtures();
   const portfolioSizes = [10, 100, 1000, 5000];
   const projections = portfolioSizes.map((size) => measureTargetedProjection(size));
@@ -147,14 +166,16 @@ async function main() {
     .reduce((max, value) => Math.max(max, value), 0);
 
   const report = {
-    schemaVersion: 1,
-    probe: 'flower_self_improvement_observatory_v1',
+    schemaVersion: 2,
+    probe: 'flower_self_improvement_observatory_v2',
     epistemicStatus: 'observation_only',
     startedAt,
     completedAt: new Date().toISOString(),
-    implementationKey: IMPLEMENTATION_KEY,
-    workloadKey: 'kernel_targeted_projection_and_pressure_fixture_v1',
-    workloadVersion: 1,
+    revisionKey: REVISION_KEY,
+    implementationKey,
+    causalImplementationFiles: CAUSAL_IMPLEMENTATION_FILES,
+    workloadKey: 'kernel_targeted_projection_and_pressure_fixture',
+    workloadVersion: 2,
     dimensions: {
       computeInputProxy: {
         value: largest.payloadBytes,
@@ -191,7 +212,7 @@ async function main() {
     },
     decisionWitness: {
       verified: decisions.passRate === 1,
-      taskKey: 'pressure-routing-fixture-v1',
+      taskKey: 'pressure-routing-fixture-v2',
       resultFingerprint: decisions.fingerprint,
       qualityScore: decisions.passRate,
       qualityDirection: 'higher',
@@ -201,11 +222,12 @@ async function main() {
     physicalEnergyMeasured: false,
     currentClaims: {
       selfImprovementObserved: false,
-      why: 'This run establishes an accountable observation. Improvement requires a comparable prior observation from the same workload/version and an implementation change.',
+      why: 'This run establishes an accountable observation. Improvement requires a comparable prior observation from the same workload/version and a different causal implementation fingerprint.',
       externalValueObserved: false,
     },
     caveats: [
       'Different workloads or workload versions must not be compared as self-improvement evidence.',
+      'Repository revisions that do not change the declared causal implementation files do not count as implementation changes for this workload.',
       'CI timing is retained as an observation but is not promotion evidence until repeated or controlled measurements make it comparable enough.',
       'Payload bytes and synthetic portfolio capacity are explicit proxies, not energy or universal complexity truth.',
       'A benchmark improvement would prove only an internal gain on this fixture; external usefulness requires separate evidence.',
