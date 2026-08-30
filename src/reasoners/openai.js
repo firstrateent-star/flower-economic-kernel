@@ -49,7 +49,7 @@ function structuredFormatFor(operation) {
   if (operation === 'EXPAND') {
     return {
       type: 'json_schema',
-      name: 'flower_evidence_bearing_expansion',
+      name: 'flower_regenerative_field_expansion',
       strict: true,
       schema: {
         type: 'object',
@@ -63,9 +63,26 @@ function structuredFormatFor(operation) {
               properties: {
                 name: { type: 'string' },
                 thesis: { type: 'string' },
+                economicHabitat: { type: 'string' },
                 moneyFlow: { type: 'string' },
                 buyer: { type: 'string' },
                 nutrientChannel: { type: 'string' },
+                externalValueHypothesis: { type: 'string' },
+                externalValueMeasure: { type: 'string' },
+                valueCapturePath: { type: 'string' },
+                ownershipPath: { type: 'string' },
+                lifecycleCostModel: { type: 'string' },
+                reinvestmentPath: { type: 'string' },
+                timeToFirstTruth: { type: 'string' },
+                humanBoundary: { type: 'string' },
+                downstreamObligation: { type: 'string' },
+                antiGoodhartRisk: { type: 'string' },
+                alternativesConsidered: {
+                  type: 'array',
+                  minItems: 3,
+                  maxItems: 6,
+                  items: { type: 'string', maxLength: 220 },
+                },
                 passivity: { type: 'string' },
                 autonomyCompatibility: { type: 'string' },
                 reproductivePotential: { type: 'string' },
@@ -91,11 +108,14 @@ function structuredFormatFor(operation) {
                 },
               },
               required: [
-                'name', 'thesis', 'moneyFlow', 'buyer', 'nutrientChannel', 'passivity',
+                'name', 'thesis', 'economicHabitat', 'moneyFlow', 'buyer', 'nutrientChannel',
+                'externalValueHypothesis', 'externalValueMeasure', 'valueCapturePath', 'ownershipPath',
+                'lifecycleCostModel', 'reinvestmentPath', 'timeToFirstTruth', 'humanBoundary',
+                'downstreamObligation', 'antiGoodhartRisk', 'alternativesConsidered', 'passivity',
                 'autonomyCompatibility', 'reproductivePotential', 'realityAccess',
                 'cheapestRealityTest', 'inheritedInfrastructure', 'whyNow',
                 'failureArchetype', 'reusableCapability', 'resolutionPrimitive',
-                'geometryReuse', 'failureEvidence', 'buyerEvidence',
+                'geometryReuse', 'failureEvidence', 'buyerEvidence'
               ],
               additionalProperties: false,
             },
@@ -252,7 +272,7 @@ export class OpenAIReasoner {
   }
 
   async reason({ operation, garden, target, prompt, allowWebSearch = false }) {
-    const instructions = `You are the cognition substrate inside Flower Economic Kernel v0.\n\nROOT: ${garden.center.rootGoal}\nDIRECTION: ${garden.center.direction}\n\nYou do not decide values or permissions. You create candidate reasoning only. Preserve uncertainty. Prefer falsification over enthusiasm. The economic target is low-maintenance, machine-mediated income with passive discoverability and reproductive inheritance. Sacred-geometry language is a functional design metaphor for centers, overlaps, and reusable relationships; it is never evidence by itself. Never claim economic validation without accountable external evidence. Return ONLY valid JSON.`;
+    const instructions = `You are the cognition substrate inside Flower Economic Kernel v0.\n\nROOT: ${garden.center.rootGoal}\nDIRECTION: ${garden.center.direction}\n\nThe canonical Flower methodology supplied in the input governs your reasoning. You do not decide human values, ownership, or permissions; you create candidate reasoning and bounded tests. Preserve uncertainty. Prefer falsification and external reality over enthusiasm. The economic target is the shortest truthful reachable regenerative-value loop: useful external transformation -> legitimate attributable return -> measurable full-cost surplus -> repeat/regeneration. Passivity and autonomy are downstream compression advantages, not purity gates for first value. Never optimize capture at the expense of useful value, trust, fulfillment, or agency. Sacred-geometry language is a functional design metaphor for centers, overlaps, and reusable relationships; it is never evidence by itself. Never claim economic validation, value, ownership, attribution, surplus, or regeneration without accountable evidence appropriate to that claim. Return ONLY valid JSON.`;
 
     const useWebSearch = this.enableWebSearch || allowWebSearch === true;
     const structuredFormat = structuredFormatFor(operation);
@@ -282,17 +302,17 @@ export class OpenAIReasoner {
         })),
       } : null;
 
-      boundedPrompt = `${prompt}\n\nEVIDENCE-BEARING GEOMETRY RULES:\n- Return ZERO candidates when current public evidence does not justify a real center. Never invent a candidate merely to fill the schema.\n- Return at most ONE candidate. The expensive frontier should maximize information density, not branch count.\n- Search failure reality first. A candidate is admissible only when failureEvidence contains at least 3 exact consulted URLs across at least 2 independent hosts documenting concrete real-world cases of the specific failure. Generic risk articles do not count.\n- Map provenance explicitly: failureEvidence contains only sources supporting failure reality; buyerEvidence contains only sources supporting concrete buyer/action or paid-market demand. A source may appear in both only when it genuinely supports both claims.\n- Every evidence URL must be an exact URL actually consulted in this web-search response. Do not invent URLs and do not cite a source you did not inspect.\n- Buyer evidence is harvested opportunistically in the SAME frontier. If it is strong, Flower may avoid a later buyer-demand search. If it is weak, leave buyerEvidence sparse or empty rather than overstating it.\n- Name a cross-domain failureArchetype, the reusableCapability or sensor/algorithm this branch could leave behind, the smallest resolutionPrimitive, and geometryReuse: how this center overlaps existing geometry or why a genuinely novel center is worth the cost.\n- Prefer overlap that lowers future testing/build cost, but do not force a cosmetic variant merely to reuse an old pattern. Reuse must be functional.\n- CURRENT GENERIC EXECUTOR: public web_search. Branch-specific sensors do not automatically generalize. Reject candidates whose decisive reality requires private data, authentication, arbitrary HTTP/API enumeration, GitHub/package-registry access, DNS, scraping, or another unavailable executor.\n- Prefer existing machine/buyer nutrient channels with metered or self-serve payment and automatic fulfillment.\n- Penalize consulting, cold outreach, physical fulfillment, procurement watches, speculative trading/gambling, regulated/gray-market activity, identity use, contracts, recurring obligations, and continuing human labor.\n- The Fruit-of-Life/Metatron metaphor guides graph reuse; it does not lower evidence thresholds.\nINACTIVE HISTORY: ${JSON.stringify(inactiveHistory)}\nRECENT SCOUT MISSES: ${JSON.stringify(scoutMisses)}\nCURRENT GEOMETRY: ${JSON.stringify(geometry)}\nOUTPUT BUDGET: No prose outside the schema. Keep descriptive fields compact and evidence claims specific.`;
+      boundedPrompt = `${prompt}\n\nREGENERATIVE FIELD-SCAN RULES:\n- Before selecting a center, compare materially different economic habitats rather than variations of the first plausible idea. Include at least agent/developer infrastructure, marketplaces/platforms, existing business or asset flows, information/data transformations, content/attention flows, and operational/transactional friction when public evidence supports them. The returned candidate must list at least 3 materially different alternatives considered.\n- Return ZERO candidates when current public evidence does not justify a real center. Never invent a candidate merely to fill the schema.\n- Return at most ONE winner because the external response is an allocation result, not because only one branch exists. The winner must earn the right to consume the next costly frontier against the broader field.\n- Search concrete recurring waste, failure, friction, or unmet transformation first. A candidate is admissible only when failureEvidence contains at least 3 exact consulted URLs across at least 2 independent hosts documenting real cases of the specific state that could be improved. Generic opportunity articles do not count.\n- Map provenance explicitly: failureEvidence contains only sources supporting concrete failure/friction reality; buyerEvidence contains only sources supporting concrete buyer/action or paid-market demand. A source may appear in both only when it genuinely supports both claims.\n- Every evidence URL must be an exact URL actually consulted in this web-search response. Do not invent URLs and do not cite a source you did not inspect.\n- Buyer evidence is harvested opportunistically in the SAME frontier. If weak, leave buyerEvidence sparse or empty rather than overstating it.\n- Name externalValueHypothesis and externalValueMeasure separately. The hypothesis describes the useful state change; the measure describes how reality could later verify it. Neither is verified merely because it is written here.\n- Name a plausible legitimate valueCapturePath and ownershipPath before heavy economic construction. These are hypotheses until verified; do not infer ownership merely from creating an artifact. Reject a candidate that has no plausible return rail capable of routing attributable value back to the organism or Center-holder.\n- Name lifecycleCostModel and downstreamObligation so gross return cannot masquerade as surplus. Unknown material costs remain unknown.\n- Name reinvestmentPath: what reusable capability, distribution, data, compute, reserve, or other capacity a positive surplus could nourish.\n- Prefer the shortest path to decision-changing external truth, not the largest theoretical market. timeToFirstTruth should identify the earliest falsifiable external membrane.\n- Name antiGoodhartRisk: how optimizing the apparent success metric could reduce actual value, trust, adoption, fulfillment, or regeneration.\n- Name a cross-domain failureArchetype, reusableCapability, smallest resolutionPrimitive, and geometryReuse. Prefer functional overlap that lowers future cost, but do not force cosmetic reuse.\n- CURRENT GENERIC EXECUTOR: public web_search. Branch-specific sensors do not automatically generalize. Reject candidates whose decisive *next* reality test requires private data, authentication, arbitrary HTTP/API enumeration, GitHub/package-registry access, DNS, scraping, or another unavailable executor unless the candidate explicitly identifies that as a later human/capability boundary rather than pretending it is currently executable.\n- Existing machine/self-serve distribution and settlement rails are valuable because they inherit access and trust, but do not let marketplace availability substitute for demand or useful value.\n- Penalize continuing consulting, cold outreach, physical fulfillment, procurement watches, speculative trading/gambling, regulated/gray-market activity, identity use, debt, contracts, recurring obligations, and continuing human labor. Bounded initial human actuation is not disqualifying when it materially shortens truthful time-to-value and can later be compressed.\n- Passivity, autonomy, and reproductive inheritance improve a validated loop; they do not outweigh missing demand, access, value, fulfillment, capture, or measurable return.\n- The Fruit-of-Life/Metatron metaphor guides graph reuse; it does not lower evidence thresholds.\nINACTIVE HISTORY: ${JSON.stringify(inactiveHistory)}\nRECENT SCOUT MISSES: ${JSON.stringify(scoutMisses)}\nCURRENT GEOMETRY: ${JSON.stringify(geometry)}\nOUTPUT BUDGET: No prose outside the schema. Keep descriptive fields compact and evidence claims specific.`;
     } else if (operation === 'FALSIFY') {
-      boundedPrompt = `${prompt}\nCURRENT V0 EXECUTORS: generic autonomous experiment execution is public web_search only; branch-specific sensors are not generic capabilities. Do not call DNS/API/package/GitHub/direct sampling cheap or immediately available unless a real executor exists. If the cheapest falsifier requires missing capability, say so explicitly in the action.\nOUTPUT BUDGET: Keep rationale concise. Return at most 4 short evidence items, 4 short counter-evidence items, and 3 principles. Do not invent external evidence; without retrieved sources, economic claims remain hypotheses.`;
+      boundedPrompt = `${prompt}\nCURRENT V0 EXECUTORS: generic autonomous experiment execution is public web_search only; branch-specific sensors are not generic capabilities. Do not call DNS/API/package/GitHub/direct sampling cheap or immediately available unless a real executor exists. If the cheapest falsifier requires missing capability, say so explicitly in the action.\nREGENERATIVE CHECK: attack the claimed useful transformation, reachable return path, material cost assumptions, downstream obligations, and ownership/attribution assumptions separately. A narrative field does not verify any of them.\nOUTPUT BUDGET: Keep rationale concise. Return at most 4 short evidence items, 4 short counter-evidence items, and 3 principles. Do not invent external evidence; without retrieved sources, economic claims remain hypotheses.`;
     } else if (operation === 'SELECT') {
-      boundedPrompt = `${prompt}\nSELECTION RULE: Choose exactly one supplied opportunity ID. Do not claim new evidence. Prefer the sibling with the best combination of passive distribution, executable cheap falsifiability, autonomy compatibility, resolution value, and reusable inheritance. CURRENT generic v0 executor is public web_search; branch-specific sensors do not generalize automatically. Penalize broad targets, inaccessible evidence, and continuing human labor. Keep rationale under 500 characters.`;
+      boundedPrompt = `${prompt}\nSELECTION RULE: Choose exactly one supplied opportunity ID. Do not claim new evidence. Prefer the sibling with the strongest shortest truthful path through external value -> reachable capture -> measurable costs -> possible surplus -> regeneration, while treating passivity/autonomy as downstream advantages rather than entry gates. CURRENT generic v0 executor is public web_search; branch-specific sensors do not generalize automatically. Penalize broad targets, inaccessible evidence, capture without value, unclear obligations, and continuing human labor. Keep rationale under 500 characters.`;
     } else if (operation === 'EXECUTE_EXPERIMENT') {
       boundedPrompt = `${prompt}\nOUTPUT BUDGET: Keep finding under 500 characters. Return at most 4 observations, each under 220 characters. Do not place source URLs in observations; sources are captured separately by the API.`;
     }
 
     const operationMaxOutputTokens = operation === 'EXPAND'
-      ? Math.max(this.maxOutputTokens, 2200)
+      ? Math.max(this.maxOutputTokens, 3000)
       : this.maxOutputTokens;
 
     const body = {
@@ -300,7 +320,7 @@ export class OpenAIReasoner {
       instructions,
       reasoning: { effort: this.reasoningEffort },
       max_output_tokens: operationMaxOutputTokens,
-      input: `OPERATION: ${operation}\nTARGET: ${JSON.stringify(target ?? null)}\nSOIL: ${JSON.stringify(garden.soil)}\nFRUIT: ${JSON.stringify(garden.fruits)}\nGEOMETRY: ${JSON.stringify(garden.geometry ?? null)}\n\n${boundedPrompt}`,
+      input: `OPERATION: ${operation}\nTARGET: ${JSON.stringify(target ?? null)}\nMETHODOLOGY: ${JSON.stringify(garden.methodology ?? null)}\nSOIL: ${JSON.stringify(garden.soil)}\nFRUIT: ${JSON.stringify(garden.fruits)}\nGEOMETRY: ${JSON.stringify(garden.geometry ?? null)}\n\n${boundedPrompt}`,
       ...(structuredFormat ? { text: { format: structuredFormat } } : {}),
       ...(useWebSearch ? {
         tools: [{ type: 'web_search_preview', search_context_size: 'low' }],
