@@ -75,7 +75,7 @@ test('one evidence-bearing EXPAND automatically authorizes the next unearned rea
   assert.equal(classifyPressure(garden).type, 'EXECUTE_EXPERIMENT');
 });
 
-test('one web-search frontier automatically integrates and lines up the reserve sibling', async () => {
+test('a non-supporting web-search frontier blocks that sibling and directly authorizes the sole reserve', async () => {
   const garden = structuredClone(seed);
   garden.opportunities = [
     {
@@ -134,11 +134,13 @@ test('one web-search frontier automatically integrates and lines up the reserve 
   });
 
   const result = await pulse({ garden, reasoner, maxBreaths: 12, maxCostlyBreaths: 1 });
-  assert.deepEqual(result.breaths.map((x) => x.pressure.type), ['EXECUTE_EXPERIMENT', 'INTEGRATE', 'SELECT', 'EXPERIMENT']);
+  assert.deepEqual(result.breaths.map((x) => x.pressure.type), ['EXECUTE_EXPERIMENT', 'INTEGRATE', 'EXPERIMENT']);
   assert.equal(garden.experiments.find((x) => x.id === 'exp_first').status, 'integrated');
-  assert.equal(garden.opportunities.find((x) => x.id === 'opp_first').selectionState, 'cooldown');
-  assert.equal(garden.opportunities.find((x) => x.id === 'opp_reserve').selectedForExperiment, true);
-  assert.ok(garden.opportunities.find((x) => x.id === 'opp_reserve').experimentId);
+  assert.equal(garden.opportunities.find((x) => x.id === 'opp_first').selectionState, 'measurement_blocked');
+  assert.equal(garden.opportunities.find((x) => x.id === 'opp_first').status, 'measurement_blocked');
+  const reserve = garden.opportunities.find((x) => x.id === 'opp_reserve');
+  assert.ok(reserve.experimentId);
+  assert.equal(classifyPressure(garden).type, 'EXECUTE_EXPERIMENT');
 });
 
 test('email DNS weakening threshold makes the branch dormant before another search', async () => {
