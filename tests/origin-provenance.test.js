@@ -34,7 +34,7 @@ test('origin memory separates rich generative history from compact executable ab
   assert.match(originDoc, /Compress execution without erasing generative provenance/);
 });
 
-test('origin remains retrievable without forcing itself into every runtime cognition payload', () => {
-  assert.match(originDoc, /cold but retrievable/i);
-  assert.match(originDoc, /not forcing it into every runtime cognition payload/i);
+test('origin stays in cold preserved memory without being forced through every runtime cognition payload', () => {
+  assert.match(originDoc, /RICH ORIGIN \/ HISTORY \(cold, preserved\)/i);
+  assert.match(originDoc, /without forcing it into every runtime cognition payload/i);
 });
