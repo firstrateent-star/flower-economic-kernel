@@ -1,29 +1,25 @@
-const POSITIVE_OUTCOMES = new Set([
-  'supported',
-  'measured_improvement',
-  'baseline_problem_confirmed',
-]);
-
-const NON_PROMOTED_OUTCOMES = new Set([
-  'candidate_not_promoted',
-  'rejected',
-  'no_gain',
-  'regressed',
-]);
-
-const STRONG_EVIDENCE = new Set([
-  'measured',
-  'tested',
-  'observed_plus_tested',
-  'measured_baseline',
-]);
+const POSITIVE_OUTCOMES = new Set(['supported', 'measured_improvement']);
+const NEGATIVE_OUTCOMES = new Set(['rejected', 'no_gain', 'regressed']);
+const STRONG_EVIDENCE = new Set(['measured', 'tested', 'observed_plus_tested', 'measured_baseline']);
 
 function unique(values = []) {
-  return [...new Set(values.filter(Boolean))];
+  return [...new Set((values ?? []).filter(Boolean))];
 }
 
 function ratio(numerator, denominator) {
   return denominator > 0 ? numerator / denominator : null;
+}
+
+function appliedMechanisms(episode) {
+  return unique(episode.mechanismsApplied ?? episode.mechanisms ?? []);
+}
+
+function violatedMechanisms(episode) {
+  return unique(episode.mechanismsViolated ?? []);
+}
+
+function inferredMechanisms(episode) {
+  return unique(episode.mechanismsInferred ?? []);
 }
 
 function classifyFlourishing(episodes) {
@@ -41,22 +37,26 @@ function classifyFlourishing(episodes) {
 function mechanismStats(episodes) {
   const stats = new Map();
   for (const episode of episodes) {
-    for (const mechanism of unique(episode.mechanisms)) {
+    for (const mechanism of appliedMechanisms(episode)) {
       const current = stats.get(mechanism) ?? {
         mechanism,
-        episodeIds: [],
+        appliedEpisodeIds: [],
         positiveEpisodeIds: [],
-        nonPromotedEpisodeIds: [],
+        negativeEpisodeIds: [],
+        candidateEpisodeIds: [],
         domains: new Set(),
         evidenceStrengths: new Set(),
-        externalValueVerifiedCount: 0,
+        strongEvidenceEpisodeIds: [],
+        externallyVerifiedEpisodeIds: [],
       };
-      current.episodeIds.push(episode.id);
+      current.appliedEpisodeIds.push(episode.id);
       if (POSITIVE_OUTCOMES.has(episode.outcomeState)) current.positiveEpisodeIds.push(episode.id);
-      if (NON_PROMOTED_OUTCOMES.has(episode.outcomeState)) current.nonPromotedEpisodeIds.push(episode.id);
+      if (NEGATIVE_OUTCOMES.has(episode.outcomeState)) current.negativeEpisodeIds.push(episode.id);
+      if (episode.outcomeState === 'candidate_not_promoted') current.candidateEpisodeIds.push(episode.id);
       for (const domain of episode.domains ?? []) current.domains.add(domain);
       if (episode.evidenceStrength) current.evidenceStrengths.add(episode.evidenceStrength);
-      if (episode.externalValueVerified === true) current.externalValueVerifiedCount += 1;
+      if (STRONG_EVIDENCE.has(episode.evidenceStrength)) current.strongEvidenceEpisodeIds.push(episode.id);
+      if (episode.externalValueVerified === true) current.externallyVerifiedEpisodeIds.push(episode.id);
       stats.set(mechanism, current);
     }
   }
@@ -64,64 +64,92 @@ function mechanismStats(episodes) {
   return [...stats.values()]
     .map((item) => ({
       mechanism: item.mechanism,
-      episodeCount: item.episodeIds.length,
+      appliedEpisodeCount: item.appliedEpisodeIds.length,
       positiveEpisodeCount: item.positiveEpisodeIds.length,
-      nonPromotedEpisodeCount: item.nonPromotedEpisodeIds.length,
+      negativeEpisodeCount: item.negativeEpisodeIds.length,
+      candidateEpisodeCount: item.candidateEpisodeIds.length,
       domainBreadth: item.domains.size,
       domains: [...item.domains].sort(),
       evidenceStrengths: [...item.evidenceStrengths].sort(),
-      strongEvidenceEpisodeCount: item.episodeIds.filter((id) => {
-        const episode = episodes.find((candidate) => candidate.id === id);
-        return STRONG_EVIDENCE.has(episode?.evidenceStrength);
-      }).length,
-      externalValueVerifiedCount: item.externalValueVerifiedCount,
-      episodeIds: item.episodeIds,
+      strongEvidenceEpisodeCount: item.strongEvidenceEpisodeIds.length,
+      externalValueVerifiedCount: item.externallyVerifiedEpisodeIds.length,
+      appliedEpisodeIds: item.appliedEpisodeIds,
+      positiveEpisodeIds: item.positiveEpisodeIds,
+      negativeEpisodeIds: item.negativeEpisodeIds,
     }))
     .sort((a, b) => b.positiveEpisodeCount - a.positiveEpisodeCount
       || b.domainBreadth - a.domainBreadth
       || a.mechanism.localeCompare(b.mechanism));
 }
 
+function violationStats(episodes) {
+  const stats = new Map();
+  for (const episode of episodes) {
+    for (const mechanism of violatedMechanisms(episode)) {
+      const current = stats.get(mechanism) ?? { mechanism, episodeIds: [], domains: new Set() };
+      current.episodeIds.push(episode.id);
+      for (const domain of episode.domains ?? []) current.domains.add(domain);
+      stats.set(mechanism, current);
+    }
+  }
+  return [...stats.values()]
+    .map((item) => ({
+      mechanism: item.mechanism,
+      violationEpisodeCount: item.episodeIds.length,
+      domainBreadth: item.domains.size,
+      domains: [...item.domains].sort(),
+      episodeIds: item.episodeIds,
+    }))
+    .sort((a, b) => b.violationEpisodeCount - a.violationEpisodeCount || a.mechanism.localeCompare(b.mechanism));
+}
+
 function candidateRules(stats) {
   return stats
     .filter((item) => item.positiveEpisodeCount >= 2 && item.domainBreadth >= 2)
     .map((item) => {
-      const crossDomain = item.domainBreadth >= 3;
       const recurrence = item.positiveEpisodeCount >= 3;
-      const hasCounterPressure = item.nonPromotedEpisodeCount > 0;
+      const crossDomain = item.domainBreadth >= 3;
       const strongEvidence = item.strongEvidenceEpisodeCount >= 2;
-      const eligibleForFurtherTesting = recurrence && crossDomain && strongEvidence;
+      const hasDirectNegative = item.negativeEpisodeCount > 0;
       return {
         id: `meta_rule_${item.mechanism}`,
         mechanism: item.mechanism,
         supportEpisodes: item.positiveEpisodeIds,
+        directNegativeEpisodes: item.negativeEpisodeIds,
         domainBreadth: item.domainBreadth,
-        hasCounterPressure,
         strongEvidenceEpisodeCount: item.strongEvidenceEpisodeCount,
-        eligibleForFurtherTesting,
+        eligibleForProspectiveTest: recurrence && crossDomain && strongEvidence,
         eligibleForCanonicalPromotion: false,
-        whyNotCanonical: item.externalValueVerifiedCount === 0
-          ? 'Historical recurrence may justify a methodology experiment, but it does not establish broad external flourishing or universal causality.'
-          : 'Historical recurrence is still observational and must survive prospective tests and complexity tax before canonical promotion.',
+        interpretation: hasDirectNegative
+          ? 'The mechanism has both support and direct negative/no-gain evidence; any prospective use must state the boundary condition that distinguishes them.'
+          : 'The mechanism recurs historically but lacks direct negative evidence; treat it as a hypothesis needing prospective falsification.',
       };
     });
 }
 
 function selfAudit(episodes, stats) {
-  const negativeControls = episodes.filter((episode) => ['rejected', 'no_gain', 'regressed'].includes(episode.outcomeState));
+  const negativeControls = episodes.filter((episode) => NEGATIVE_OUTCOMES.has(episode.outcomeState));
   const candidateOnly = episodes.filter((episode) => episode.outcomeState === 'candidate_not_promoted');
   const strongEvidence = episodes.filter((episode) => STRONG_EVIDENCE.has(episode.evidenceStrength));
   const humanCorrections = episodes.filter((episode) => episode.humanEpistemicCorrection === true);
   const externallyVerified = episodes.filter((episode) => episode.externalValueVerified === true);
+  const explicitRoles = episodes.filter((episode) => Array.isArray(episode.mechanismsApplied) && Array.isArray(episode.mechanismsViolated));
+  const causalProof = episodes.filter((episode) => episode.causalEvidence === 'prospective_comparable_intervention');
   const topMechanism = stats[0] ?? null;
-  const labels = unique(episodes.flatMap((episode) => episode.mechanisms ?? []));
+  const labels = unique(episodes.flatMap((episode) => [
+    ...appliedMechanisms(episode),
+    ...violatedMechanisms(episode),
+    ...inferredMechanisms(episode),
+  ]));
 
   const risks = [];
   if (negativeControls.length < 2) risks.push('survivor_bias: too few rejected/no-gain/regression episodes are represented.');
   if (candidateOnly.length === 0) risks.push('premature_universalization: no preserved non-promoted candidate is represented.');
   if (ratio(strongEvidence.length, episodes.length) < 0.6) risks.push('weak_evidence_mix: too much of the lineage relies on observation or inference rather than measured/tested evidence.');
-  if (externallyVerified.length === 0) risks.push('external_value_gap: the lineage can explain internal methodology improvement but cannot yet claim broad external flourishing impact.');
-  if (topMechanism && ratio(topMechanism.episodeCount, episodes.length) > 0.8) risks.push('ontology_lock: one mechanism explains more than 80% of episodes and may be an overfit label.');
+  if (ratio(explicitRoles.length, episodes.length) < 1) risks.push('mechanism_role_confusion: some episodes do not distinguish mechanisms applied from mechanisms violated or merely inferred.');
+  if (externallyVerified.length === 0) risks.push('external_value_gap: internal methodology history cannot establish broad external flourishing impact.');
+  if (causalProof.length === 0) risks.push('causality_gap: retrospective lineage can generate hypotheses but has no prospective comparable intervention proving a meta-rule yet.');
+  if (topMechanism && ratio(topMechanism.appliedEpisodeCount, episodes.length) > 0.8) risks.push('ontology_lock: one applied mechanism labels more than 80% of episodes and may be overfitting the history.');
   if (labels.length < 4) risks.push('ontology_underfit: mechanism vocabulary is too small to represent materially different learning moves.');
 
   return {
@@ -130,21 +158,21 @@ function selfAudit(episodes, stats) {
     nonPromotedCandidateCount: candidateOnly.length,
     strongEvidenceEpisodeCount: strongEvidence.length,
     strongEvidenceCoverage: ratio(strongEvidence.length, episodes.length),
+    explicitMechanismRoleCoverage: ratio(explicitRoles.length, episodes.length),
+    prospectiveCausalEpisodeCount: causalProof.length,
     humanEpistemicCorrectionCount: humanCorrections.length,
     humanEpistemicCorrectionShare: ratio(humanCorrections.length, episodes.length),
     externalValueVerifiedEpisodeCount: externallyVerified.length,
     mechanismLabelCount: labels.length,
     risks,
-    metaLearningMaturity: risks.some((risk) => risk.startsWith('survivor_bias'))
-      ? 'historical_pattern_candidate_needs_negative_controls'
-      : 'historical_pattern_candidate_ready_for_prospective_tests',
+    metaLearningMaturity: negativeControls.length >= 2 && explicitRoles.length === episodes.length
+      ? 'counterpressured_historical_candidate_ready_for_prospective_test'
+      : 'historical_candidate_needs_better_counterpressure',
   };
 }
 
 export function analyzeMetaLearningEpisodes(episodes = []) {
-  if (!Array.isArray(episodes) || episodes.length === 0) {
-    throw new Error('analyzeMetaLearningEpisodes requires at least one episode.');
-  }
+  if (!Array.isArray(episodes) || episodes.length === 0) throw new Error('analyzeMetaLearningEpisodes requires at least one episode.');
 
   const ids = new Set();
   for (const episode of episodes) {
@@ -153,42 +181,47 @@ export function analyzeMetaLearningEpisodes(episodes = []) {
     ids.add(episode.id);
     if (!episode.observedTrigger) throw new Error(`Episode ${episode.id} requires observedTrigger.`);
     if (!episode.decisionRelevantMove) throw new Error(`Episode ${episode.id} requires decisionRelevantMove.`);
-    if (!Array.isArray(episode.mechanisms) || episode.mechanisms.length === 0) throw new Error(`Episode ${episode.id} requires mechanisms.`);
+    if (appliedMechanisms(episode).length === 0 && violatedMechanisms(episode).length === 0 && inferredMechanisms(episode).length === 0) {
+      throw new Error(`Episode ${episode.id} requires at least one applied, violated, or inferred mechanism.`);
+    }
     if (!Array.isArray(episode.domains) || episode.domains.length === 0) throw new Error(`Episode ${episode.id} requires domains.`);
     if (!episode.falsifier) throw new Error(`Episode ${episode.id} requires falsifier.`);
   }
 
   const stats = mechanismStats(episodes);
+  const violations = violationStats(episodes);
   const audit = selfAudit(episodes, stats);
   const rules = candidateRules(stats);
 
   return {
-    schemaVersion: 1,
-    epistemicStatus: 'historical_meta_learning_candidate_not_causal_proof',
+    schemaVersion: 2,
+    epistemicStatus: 'counterpressured_historical_meta_learning_not_causal_proof',
     episodeCount: episodes.length,
-    coreHypothesis: 'Flower improves when it separates causal states that can change a decision, recognizes semantic equivalence where distinctions cannot change a decision, instruments the difference, tests it against reality, preserves counterevidence, and reconciles the result into executable behavior.',
+    coreHypothesis: 'Flower tends to improve when it first preserves the real contradiction or repeated waste, then differentiates only causal states that can change a decision while compressing semantically equivalent states, builds a decision-relevant witness, tests the intervention comparably, and reconciles the result into executable behavior. Differentiation or instrumentation alone is insufficient when evidence provenance, comparability, or complexity tax is missing.',
     operatingCandidate: [
-      'OBSERVE: preserve the actual contradiction, surprise, repeated waste, or equivalence before explaining it.',
-      'DIFFERENTIATE_OR_COMPRESS: split states only when the distinction can change a decision; collapse/reuse states when they are semantically equivalent for that decision.',
-      'INSTRUMENT: create the cheapest witness that can tell the candidate explanations apart.',
-      'TEST: prefer comparable prospective evidence over narrative confidence.',
-      'RECONCILE: make code, tests, runtime cognition, documentation, memory, and authority boundaries agree with the evidence.',
-      'GENERALIZE: infer a reusable transformation only to the breadth supported by structurally different episodes.',
-      'TRANSFER: test possible usefulness elsewhere without promoting internal value into external value.',
-      'META_AUDIT: search for survivor bias, ontology lock, proxy drift, complexity growth, displaced costs, and missing negative controls in the learning process itself.',
+      'OBSERVE: preserve contradiction, surprise, repeated waste, successful invariance, and who supplied the correction before assigning a mechanism.',
+      'ROLE: separate the mechanism actually applied from the mechanism violated/missing and from the mechanism inferred after the fact.',
+      'DIFFERENTIATE_OR_COMPRESS: split states only when the distinction can change a decision; reuse/collapse states when they are equivalent for that decision.',
+      'INSTRUMENT: construct the cheapest witness that can discriminate the competing causal stories, and record what it cannot measure.',
+      'PROSPECTIVE_TEST: when safe, change one causal mechanism on a stable workload and preserve a comparable decision witness.',
+      'RECONCILE: make code, tests, runtime cognition, documentation, memory, and authority boundaries agree with the measured result.',
+      'GENERALIZE_WITH_BOUNDARY: transfer only the transformation plus its observed boundary conditions, counterexamples, and uncertainty.',
+      'FLOURISHING_AUDIT: evaluate agency, truth, capability, wellbeing, resilience, optionality, regeneration, resource burden, displaced costs, and harm without collapsing them into one vanity score.',
+      'META_AUDIT: pressure-test the meta-learner for survivor bias, ontology lock, causal overclaim, proxy drift, complexity growth, and missing external evidence.',
     ],
     mechanismStats: stats,
+    violationStats: violations,
     candidateRules: rules,
     flourishingVectorSummary: classifyFlourishing(episodes),
     selfAudit: audit,
-    nextPressure: audit.negativeControlCount < 2
+    nextPressure: audit.negativeControlCount < 2 || audit.explicitMechanismRoleCoverage < 1
       ? {
-          type: 'ADD_NEGATIVE_CONTROLS',
-          why: 'The current historical sample is dominated by retained/supported mutations. Meta-learning should not infer a universal recipe until rejected, no-gain, or regression episodes are represented and allowed to falsify the ontology.',
+          type: 'IMPROVE_META_EVIDENCE_MODEL',
+          why: 'Historical learning roles or counterexamples are still underspecified; improve the episode model before trusting recurrence rankings.',
         }
       : {
           type: 'PROSPECTIVE_META_TEST',
-          why: 'The historical pattern has enough counterpressure to justify a bounded prospective test, not canonical promotion.',
+          why: 'Counterpressured history is sufficient for one bounded prospective test of a candidate meta-mechanism. Success may update the meta-model but cannot by itself prove broad flourishing.',
         },
   };
 }
