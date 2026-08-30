@@ -1,0 +1,35 @@
+name: Seed-0 Market Flow Scan
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/economics/seed-zero-market-flow-scanner.js'
+      - 'scripts/scan-seed-zero-market-flows.js'
+      - 'tests/seed-zero-market-flow-scanner.test.js'
+      - '.github/workflows/seed-zero-market-flow-scan.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test scanner
+        run: node --test tests/seed-zero-market-flow-scanner.test.js
+      - name: Scan public Store
+        env:
+          SEED_ZERO_MAX_ACTORS: '5000'
+        run: node scripts/scan-seed-zero-market-flows.js artifacts/seed-zero-market-flow-scan.json | tee /tmp/seed-zero-summary.json
+      - name: Upload scan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: seed-zero-market-flow-scan
+          path: artifacts/seed-zero-market-flow-scan.json
+          retention-days: 30
