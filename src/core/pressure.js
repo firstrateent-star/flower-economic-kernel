@@ -22,10 +22,37 @@ function hasAutonomousWork(garden) {
   return false;
 }
 
+function humanActuationEvidenceTier(garden, item) {
+  const fruit = (garden.fruits ?? []).find((x) => x.id === item?.organismId);
+  if (!fruit) return 2;
+
+  // Tier 0: actual economic return/repetition. Tier 1: independently attributable use.
+  // Tier 2: no market return yet. Static rank remains the tie-breaker inside a tier.
+  if (
+    Number(fruit.creatorRevenueUsd ?? 0) > 0
+    || Number(fruit.settledValueUsd ?? 0) > 0
+    || fruit.repeatDemand === true
+    || fruit.repeatDemand === 'confirmed'
+    || fruit.chargedEvent === true
+  ) return 0;
+
+  if (
+    fruit.independentUser === true
+    || fruit.externalUsage === 'independent_confirmed'
+    || ['confirmed', 'positive', 'validated'].includes(String(fruit.marketTruth ?? '').toLowerCase())
+  ) return 1;
+
+  return 2;
+}
+
 function rankedHumanActuation(garden) {
   return (garden.humanActuationQueue ?? [])
     .filter((x) => x?.state === 'awaiting_explicit_authorization')
-    .sort((a, b) => Number(a.rank ?? Infinity) - Number(b.rank ?? Infinity))[0] ?? null;
+    .sort((a, b) => {
+      const evidenceDelta = humanActuationEvidenceTier(garden, a) - humanActuationEvidenceTier(garden, b);
+      if (evidenceDelta !== 0) return evidenceDelta;
+      return Number(a.rank ?? Infinity) - Number(b.rank ?? Infinity);
+    })[0] ?? null;
 }
 
 function highestLeverageHumanFruit(garden) {
@@ -68,9 +95,9 @@ export function classifyPressure(garden) {
 
   // HUMAN ACTUATION PORTFOLIO:
   // Park human-only boundaries while meaningful machine-carried sibling work remains.
-  // Once autonomous work is exhausted, honor the Garden's explicit ranked queue before
-  // speculative EXPAND. This prevents a mature organism from being forgotten merely
-  // because its status vocabulary evolved after the pressure classifier was written.
+  // Once autonomous work is exhausted, choose among eligible sovereignty membranes by
+  // verified return tier first and static human-actuation rank second. This allows real
+  // market return to reshuffle attention without letting platform traffic or counters do so.
   if (!hasAutonomousWork(garden)) {
     const queued = rankedHumanActuation(garden);
     if (queued) return {
@@ -104,7 +131,7 @@ export function classifyPressure(garden) {
       type: 'HUMAN',
       targetId: humanFruit.id,
       why: `Autonomous work is exhausted and this private Fruit is verified. The next irreducible deployment boundary from ${humanFruit.sourcePath ?? 'its source path'} requires Center-holder authority or access.`,
-    };
+    }
   }
 
   const authorizedExperiment = (garden.experiments ?? []).find((x) => x.status === 'authorized');
