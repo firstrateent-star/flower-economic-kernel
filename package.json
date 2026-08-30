@@ -11,7 +11,7 @@
     "status": "node src/runtime/cli.js status",
     "reset": "node src/runtime/cli.js reset",
     "test": "node --test",
-    "check": "node --check src/runtime/cli.js && node --check src/runtime/apify-main.js && node --check src/runtime/apify-main-v2.js && node --check src/core/garden.js && node --check src/core/state-reconcile.js && node --check src/core/legacy-state-migrations.js && node --check src/core/wake.js && node --check src/core/observations.js && node --check src/core/pressure.js && node --check src/core/kernel.js && node --check src/core/fruit-forge.js && node --check src/reasoners/openai.js && node --check actors/social-preview-drift-guard/src/core.js && node --check actors/social-preview-drift-guard/src/main.js"
+    "check": "node --check src/runtime/cli.js && node --check src/runtime/apify-main.js && node --check src/runtime/apify-main-v2.js && node --check src/core/garden.js && node --check src/core/state-reconcile.js && node --check src/core/legacy-state-migrations.js && node --check src/core/wake.js && node --check src/core/observations.js && node --check src/core/distribution-truth.js && node --check src/core/pressure.js && node --check src/core/kernel.js && node --check src/core/fruit-forge.js && node --check src/reasoners/openai.js && node --check actors/social-preview-drift-guard/src/core.js && node --check actors/social-preview-drift-guard/src/main.js"
   },
   "engines": {"node": ">=20"},
   "dependencies": {"apify": "^3.7.2"}
