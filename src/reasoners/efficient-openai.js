@@ -6,6 +6,7 @@ export class EfficientOpenAIReasoner extends OpenAIReasoner {
     const garden = buildReasonerGardenView({
       garden: args.garden,
       operation: args.operation,
+      target: args.target ?? null,
     });
     return super.reason({ ...args, garden });
   }
