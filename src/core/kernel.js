@@ -98,19 +98,22 @@ export async function breathe({ garden, reasoner, pressure = classifyPressure(ga
   return { pressure, result, changed: before !== JSON.stringify(garden) };
 }
 
-// A pulse crosses at most one costly frontier, then automatically carries the
-// Garden through every safe deterministic transition that follows. Terminal HUMAN /
-// STILLNESS pressure is a boundary, not a ceremonial breath: stop before executing it.
+// A pulse crosses at most one costly frontier, then automatically carries the Garden
+// through the deterministic closure that follows. The breath ceiling is only a cycle /
+// runaway safety bound; it should be high enough that ordinary free complexity is not
+// serialized into repeated invocations. Terminal HUMAN / STILLNESS pressure remains a
+// boundary, not a ceremonial breath: stop before executing it.
 export async function pulse({
   garden,
   reasoner,
-  maxBreaths = 12,
+  maxBreaths = 64,
   maxCostlyBreaths = 1,
   syncManifests = true,
 }) {
   const breaths = [];
   let costlyBreaths = 0;
   let stoppedByCostFrontier = false;
+  let stoppedBySafetyCeiling = false;
 
   if (syncManifests) {
     await syncFruitManifests(garden);
@@ -139,6 +142,15 @@ export async function pulse({
     if (!step.result.changed) break;
   }
 
+  if (breaths.length >= maxBreaths) {
+    const nextPressure = classifyPressure(garden);
+    if (!['HUMAN', 'STILLNESS'].includes(nextPressure.type)) {
+      const nextCostClass = pressureCostClass(garden, nextPressure);
+      if (nextCostClass === 'free') stoppedBySafetyCeiling = true;
+      else if (costlyBreaths >= maxCostlyBreaths) stoppedByCostFrontier = true;
+    }
+  }
+
   refreshGeometry(garden);
   if (breaths.length > 0) {
     garden.status.lastPulseAt = nowIso();
@@ -148,6 +160,7 @@ export async function pulse({
     garden,
     breaths,
     stoppedByCostFrontier,
+    stoppedBySafetyCeiling,
     runBudget: {
       costlyBreathsUsed: costlyBreaths,
       maxCostlyBreaths,
