@@ -24,6 +24,7 @@ test('reasoner Garden view preserves decision structure while removing execution
   assert.equal(view.geometry.centers.length, garden.geometry.centers.length);
   assert.equal(view.geometry.archetypes.length, garden.geometry.archetypes.length);
   assert.equal(view.geometry.capabilities.length, garden.geometry.capabilities.length);
+  assert.equal(view.reasonerView.activation.mode, 'global');
   assert.equal('edges' in view.geometry, false);
   assert.equal('traces' in view, false);
   assert.equal('events' in view, false);
@@ -32,7 +33,62 @@ test('reasoner Garden view preserves decision structure while removing execution
   assert.deepEqual(view.fruits[0].distributionRails, garden.fruits[0].distributionRails);
 });
 
-test('efficient reasoner passes the projected Garden into the existing reasoner logic', async () => {
+test('targeted reasoning activates only the target geometry neighborhood while retaining portfolio totals', () => {
+  const garden = structuredClone(seed);
+  const target = garden.opportunities[0];
+  target.failureArchetype = 'identity_pointer_drift';
+  target.reusableCapability = 'entity_identity_matching';
+  garden.opportunities.push(
+    {
+      id: 'opp_related_identity',
+      name: 'Related Identity Check',
+      status: 'needs_test',
+      thesis: 'Identity can drift across representations.',
+      failureArchetype: 'identity_metadata_conflict',
+      reusableCapability: 'cross_source_identity_reconciliation',
+    },
+    {
+      id: 'opp_unrelated_semantic',
+      name: 'Unrelated Semantic Check',
+      status: 'needs_test',
+      thesis: 'Document reading order can fail.',
+      failureArchetype: 'document_structure_order',
+      reusableCapability: 'document_structure_graph_analysis',
+    },
+  );
+  refreshGeometry(garden);
+
+  const view = buildReasonerGardenView({ garden, operation: 'FALSIFY', target });
+  const visibleIds = new Set(view.geometry.centers.map((center) => center.id));
+
+  assert.equal(view.reasonerView.activation.mode, 'target_neighborhood');
+  assert.ok(visibleIds.has(target.id));
+  assert.ok(visibleIds.has('opp_related_identity'));
+  assert.equal(visibleIds.has('opp_unrelated_semantic'), false);
+  assert.equal(view.portfolioSummary.opportunityCount, garden.opportunities.length);
+  assert.equal(view.opportunities.some((opp) => opp.id === 'opp_unrelated_semantic'), false);
+});
+
+test('global comparison operations keep the full compressed field', () => {
+  const garden = structuredClone(seed);
+  garden.opportunities.push({
+    id: 'opp_unrelated_global',
+    name: 'Unrelated Global Candidate',
+    status: 'needs_test',
+    thesis: 'Another independent hypothesis.',
+    failureArchetype: 'document_structure_order',
+  });
+  refreshGeometry(garden);
+
+  for (const operation of ['EXPAND', 'SELECT']) {
+    const view = buildReasonerGardenView({ garden, operation, target: garden.opportunities[0] });
+    assert.equal(view.reasonerView.activation.mode, 'global');
+    assert.equal(view.opportunities.length, garden.opportunities.length);
+    assert.equal(view.geometry.centers.length, garden.geometry.centers.length);
+  }
+});
+
+test('efficient reasoner passes the projected Garden and target activation into existing reasoner logic', async () => {
   const garden = structuredClone(seed);
   refreshGeometry(garden);
   garden.traces.push({ id: 'trace_should_not_cross_boundary', kind: 'telemetry' });
@@ -41,15 +97,15 @@ test('efficient reasoner passes the projected Garden into the existing reasoner 
   const originalReason = OpenAIReasoner.prototype.reason;
   OpenAIReasoner.prototype.reason = async function capture(args) {
     capturedGarden = args.garden;
-    return { data: { candidates: [] }, sources: [], rawId: 'captured', usage: null };
+    return { data: { verdict: 'needs_test', rationale: 'test', evidence: [], counterEvidence: [], cheapestFalsifier: { question: 'q', action: 'a', estimatedCostUsd: 0 }, principles: [] }, sources: [], rawId: 'captured', usage: null };
   };
 
   try {
     const reasoner = new EfficientOpenAIReasoner({ apiKey: 'test-key' });
     await reasoner.reason({
-      operation: 'EXPAND',
+      operation: 'FALSIFY',
       garden,
-      target: null,
+      target: garden.opportunities[0],
       prompt: 'test',
       allowWebSearch: false,
     });
@@ -60,6 +116,6 @@ test('efficient reasoner passes the projected Garden into the existing reasoner 
   assert.ok(capturedGarden);
   assert.equal('traces' in capturedGarden, false);
   assert.equal('edges' in capturedGarden.geometry, false);
-  assert.equal(capturedGarden.geometry.centers.length, garden.geometry.centers.length);
+  assert.equal(capturedGarden.reasonerView.activation.targetId, garden.opportunities[0].id);
   assert.deepEqual(capturedGarden.soil.map((x) => x.principle), garden.soil.map((x) => x.principle));
 });
