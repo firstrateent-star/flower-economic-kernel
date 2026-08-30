@@ -22,11 +22,16 @@ function hasAutonomousWork(garden) {
   return false;
 }
 
+function rankedHumanActuation(garden) {
+  return (garden.humanActuationQueue ?? [])
+    .filter((x) => x?.state === 'awaiting_explicit_authorization')
+    .sort((a, b) => Number(a.rank ?? Infinity) - Number(b.rank ?? Infinity))[0] ?? null;
+}
+
 function highestLeverageHumanFruit(garden) {
-  // Human-boundary stages compete for attention instead of blocking the Garden merely
-  // because they exist. When autonomous work is exhausted, prefer the organism closest
-  // to an external decision-changing return.
+  // Fallback for older Garden states that predate the explicit actuation queue.
   const rank = {
+    market_ready_private: 4,
     publish_ready: 3,
     private_deployed: 2,
     private_verified: 1,
@@ -44,18 +49,16 @@ function highestLeverageHumanFruit(garden) {
 export function classifyPressure(garden) {
   // An explicit pending approval is different from merely reaching a human membrane:
   // the Center-holder has already been asked for a consequential decision, so preserve it.
-  const pendingApproval = garden.approvals.find((x) => x.status === 'pending');
+  const pendingApproval = (garden.approvals ?? []).find((x) => x.status === 'pending');
   if (pendingApproval) return { type: 'HUMAN', targetId: pendingApproval.id, why: 'A consequential action awaits the Center-holder.' };
 
-  const unprocessedEvent = garden.events.find((x) => x.status === 'new');
+  const unprocessedEvent = (garden.events ?? []).find((x) => x.status === 'new');
   if (unprocessedEvent) return { type: 'INTEGRATE', targetId: unprocessedEvent.id, why: 'Reality has produced new evidence.' };
 
-  const readyExperiment = garden.experiments.find((x) => x.status === 'result_ready');
+  const readyExperiment = (garden.experiments ?? []).find((x) => x.status === 'result_ready');
   if (readyExperiment) return { type: 'INTEGRATE', targetId: readyExperiment.id, why: 'An experiment result is ready.' };
 
   // FRUIT LOCK remains valid while the next step is machine-carried verification.
-  // A private source artifact has already consumed build uncertainty, so verify it before
-  // allocating another speculative build/research breath.
   const privateSourceFruit = (garden.fruits ?? []).find((x) => x.status === 'private_source_ready');
   if (privateSourceFruit) return {
     type: 'VERIFY_FRUIT',
@@ -64,13 +67,27 @@ export function classifyPressure(garden) {
   };
 
   // HUMAN ACTUATION PORTFOLIO:
-  // Reaching KYC/deployment/publication/legal/identity boundaries does not automatically
-  // make the human the next executor. Keep autonomous siblings growing around parked human
-  // membranes. Only surface one mature human-boundary Fruit when no machine-carried work
-  // remains. Live Fruits awaiting stranger usage are observations, not human tasks, and
-  // therefore never block expansion on their own.
+  // Park human-only boundaries while meaningful machine-carried sibling work remains.
+  // Once autonomous work is exhausted, honor the Garden's explicit ranked queue before
+  // speculative EXPAND. This prevents a mature organism from being forgotten merely
+  // because its status vocabulary evolved after the pressure classifier was written.
   if (!hasAutonomousWork(garden)) {
+    const queued = rankedHumanActuation(garden);
+    if (queued) return {
+      type: 'HUMAN',
+      targetId: queued.organismId ?? null,
+      why: queued.why
+        ? `Autonomous work is exhausted. ${queued.why}`
+        : 'Autonomous work is exhausted and the highest-ranked remaining action requires explicit Center-holder authority.',
+    };
+
     const humanFruit = highestLeverageHumanFruit(garden);
+    if (humanFruit?.status === 'market_ready_private') return {
+      type: 'HUMAN',
+      targetId: humanFruit.id,
+      why: 'Autonomous work is exhausted and this market-ready private Fruit is one evidence membrane away from independent user return. Vendor, legal, identity, or external-exposure choices require explicit Center-holder authority.',
+    };
+
     if (humanFruit?.status === 'publish_ready') return {
       type: 'HUMAN',
       targetId: humanFruit.id,
@@ -90,26 +107,24 @@ export function classifyPressure(garden) {
     };
   }
 
-  const authorizedExperiment = garden.experiments.find((x) => x.status === 'authorized');
+  const authorizedExperiment = (garden.experiments ?? []).find((x) => x.status === 'authorized');
   if (authorizedExperiment) return {
     type: 'EXECUTE_EXPERIMENT',
     targetId: authorizedExperiment.id,
     why: 'A low-risk experiment already passed the autonomy membrane and is ready for bounded execution.',
   };
 
-  // A validated opportunity without a source artifact still earns a private build stage.
-  // Fruit Forge manifests can bypass prose planning by linking real private source first.
-  const validated = garden.opportunities.find((x) => x.status === 'validated' && !x.fruitId);
+  const validated = (garden.opportunities ?? []).find((x) => x.status === 'validated' && !x.fruitId);
   if (validated) return {
     type: 'BUILD_PLAN',
     targetId: validated.id,
     why: 'Evidence has earned a private build artifact; convert validated knowledge into Fruit before allocating more speculative experiments.',
   };
 
-  const seed = garden.opportunities.find((x) => x.status === 'seed');
+  const seed = (garden.opportunities ?? []).find((x) => x.status === 'seed');
   if (seed) return { type: 'FALSIFY', targetId: seed.id, why: 'A living seed has not earned attention yet.' };
 
-  const testable = garden.opportunities.filter((x) => ['needs_test', 'supported'].includes(x.status) && !x.experimentId);
+  const testable = (garden.opportunities ?? []).filter((x) => ['needs_test', 'supported'].includes(x.status) && !x.experimentId);
   const selected = testable.find((x) => x.selectedForExperiment === true);
 
   if (selected && selectionIsStale(garden, selected) && testable.length > 1) {
@@ -144,7 +159,7 @@ export function classifyPressure(garden) {
   const supported = testable.find((x) => x.status === 'supported');
   if (supported) return { type: 'EXPERIMENT', targetId: supported.id, why: 'External evidence supports the seed, but the remaining uncertainty should be pushed into reality.' };
 
-  const active = garden.opportunities.some((x) => !['compost', 'dormant', 'fruit', 'measurement_blocked'].includes(x.status));
+  const active = (garden.opportunities ?? []).some((x) => !['compost', 'dormant', 'fruit', 'measurement_blocked'].includes(x.status));
   if (!active) return { type: 'EXPAND', targetId: null, why: 'No currently actionable opportunity remains; preserve blocked history and expand the search space.' };
 
   return { type: 'STILLNESS', targetId: null, why: 'No additional autonomous cognition is currently justified.' };
