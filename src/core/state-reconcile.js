@@ -44,20 +44,35 @@ function queueIdentity(item) {
   return `${item?.organismId ?? ''}::${item?.action ?? ''}`;
 }
 
+const PENDING_HUMAN_STATES = new Set([
+  'awaiting_explicit_authorization',
+  'parked_pending_more_platform_truth',
+  'staged_not_earned_over_rank_1',
+]);
+
 function reconcileHumanQueue(existing = [], canonical = []) {
   const prior = new Map((existing ?? []).map((x) => [queueIdentity(x), x]));
 
   return (canonical ?? []).map((item) => {
     const previous = prior.get(queueIdentity(item));
     const previousState = previous?.state;
-    const preserveResolvedState = previousState
-      && previousState !== 'awaiting_explicit_authorization'
-      && previousState !== 'parked_pending_more_platform_truth'
-      && previousState !== 'staged_not_earned_over_rank_1';
+    const preserveResolvedState = previousState && !PENDING_HUMAN_STATES.has(previousState);
+
+    if (!preserveResolvedState) return clone(item);
+
+    // Canonical rank/action/why remain the control plane, while terminal runtime
+    // resolution provenance (resolvedBecause, resolvedAt, receipt ids, etc.) remains
+    // data-plane evidence. Dropping that evidence on every reconciliation prevents
+    // R(R(S)) = R(S) and makes sleep fabricate state churn.
+    const canonicalKeys = new Set(Object.keys(item ?? {}));
+    const resolutionProvenance = Object.fromEntries(
+      Object.entries(previous ?? {}).filter(([key]) => key === 'state' || !canonicalKeys.has(key)),
+    );
 
     return {
       ...clone(item),
-      ...(preserveResolvedState ? { state: previousState } : {}),
+      ...clone(resolutionProvenance),
+      state: previousState,
     };
   });
 }
