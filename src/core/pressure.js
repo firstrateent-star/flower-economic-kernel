@@ -1,4 +1,5 @@
 import { shouldChallengeHumanBoundaryWithExploration } from './terminal-governance.js';
+import { assessImprovementDividend } from './improvement-transfer.js';
 
 function latestIntegratedExperiment(garden, opportunityId) {
   return (garden.experiments ?? [])
@@ -22,6 +23,16 @@ function hasAutonomousWork(garden) {
   if ((garden.opportunities ?? []).some((x) => x.status === 'seed')) return true;
   if ((garden.opportunities ?? []).some((x) => ['needs_test', 'supported'].includes(x.status) && !x.experimentId)) return true;
   return false;
+}
+
+function unassessedTransferImprovement(garden) {
+  return (garden.internalImprovements ?? []).find((improvement) => {
+    if (!improvement?.id) return false;
+    if (improvement.transferAssessmentState) return false;
+    const assessment = assessImprovementDividend(improvement);
+    return assessment.internalState === 'internal_improvement_evidenced'
+      && !assessment.transferShapeComplete;
+  }) ?? null;
 }
 
 function humanActuationEvidenceTier(garden, item) {
@@ -131,6 +142,13 @@ export function classifyPressure(garden) {
 
   const supported = testable.find((x) => x.status === 'supported');
   if (supported) return { type: 'EXPERIMENT', targetId: supported.id, why: 'External evidence supports the seed, but remaining terminal uncertainty should be pushed into reality.' };
+
+  const transferCandidate = !hasAutonomousWork(garden) ? unassessedTransferImprovement(garden) : null;
+  if (transferCandidate) return {
+    type: 'TRANSFER',
+    targetId: transferCandidate.id,
+    why: 'A verified internal improvement has not yet been tested for general transferability. Derive a bounded outward-value hypothesis before inventing unrelated new form.',
+  };
 
   const active = (garden.opportunities ?? []).some((x) => !['compost', 'dormant', 'fruit', 'measurement_blocked'].includes(x.status));
 
