@@ -82,6 +82,49 @@ test('geometry cache ignores telemetry churn and preserves the exact derived gra
   assert.equal(JSON.stringify(second), firstSerialized);
 });
 
+test('non-supporting experiment lifecycle churn does not invalidate geometry', () => {
+  const garden = structuredClone(seed);
+  const opp = garden.opportunities[0];
+  garden.experiments.push({
+    id: 'exp_noncausal_geometry',
+    opportunityId: opp.id,
+    status: 'authorized',
+    validationDimension: 'failure_reality',
+    result: null,
+  });
+  const first = refreshGeometry(garden);
+  const signature = first.inputSignature;
+  const updatedAt = first.updatedAt;
+
+  const exp = garden.experiments.at(-1);
+  exp.status = 'result_ready';
+  exp.result = { verdict: 'inconclusive' };
+  const second = refreshGeometry(garden);
+
+  assert.equal(second, first);
+  assert.equal(second.inputSignature, signature);
+  assert.equal(second.updatedAt, updatedAt);
+});
+
+test('integrated supporting evidence invalidates geometry because coverage can change', () => {
+  const garden = structuredClone(seed);
+  const opp = garden.opportunities[0];
+  const first = refreshGeometry(garden);
+  const firstSignature = first.inputSignature;
+
+  garden.experiments.push({
+    id: 'exp_geometry_support',
+    opportunityId: opp.id,
+    status: 'integrated',
+    validationDimension: 'failure_reality',
+    result: { verdict: 'supports' },
+  });
+  const second = refreshGeometry(garden);
+
+  assert.notEqual(second.inputSignature, firstSignature);
+  assert.equal(second.centers.find((x) => x.id === opp.id).coverage.failure_reality, 'earned');
+});
+
 test('geometry cache invalidates when a geometry-relevant state field changes', () => {
   const garden = structuredClone(seed);
   const first = refreshGeometry(garden);
