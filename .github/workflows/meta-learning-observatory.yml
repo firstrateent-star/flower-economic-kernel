@@ -7,10 +7,12 @@ on:
     paths:
       - 'methodology/meta-learning/**'
       - 'methodology/mutation-ledger/**'
+      - 'research/meta-learning/**'
       - 'docs/FLOWER_ORIGIN_PROVENANCE.md'
       - 'src/core/meta-learning.js'
       - 'scripts/meta-learning-observatory.mjs'
       - 'tests/meta-learning.test.js'
+      - 'tests/meta-learning-derivation-independence.test.js'
       - 'tests/origin-provenance.test.js'
       - '.github/workflows/meta-learning-observatory.yml'
 
@@ -28,8 +30,9 @@ jobs:
       - name: Validate meta-learning code and origin provenance
         run: |
           node --check src/core/meta-learning.js
+          node --check research/meta-learning/derivation-independence.js
           node --check scripts/meta-learning-observatory.mjs
-          node --test tests/meta-learning.test.js tests/origin-provenance.test.js
+          node --test tests/meta-learning.test.js tests/meta-learning-derivation-independence.test.js tests/origin-provenance.test.js
       - name: Run counterpressured historical origin-aware plus prospective meta-learning Observatory
         run: node scripts/meta-learning-observatory.mjs
       - name: Validate epistemic boundaries
