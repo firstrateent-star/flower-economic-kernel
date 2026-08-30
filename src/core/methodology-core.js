@@ -1,4 +1,4 @@
-export const FLOWER_METHODOLOGY_VERSION = '2026-08-30.integrated-v1';
+export const FLOWER_METHODOLOGY_VERSION = '2026-08-30.integrated-v2';
 
 export const FLOWER_METHODOLOGY = Object.freeze({
   version: FLOWER_METHODOLOGY_VERSION,
@@ -86,6 +86,7 @@ export const FLOWER_METHODOLOGY = Object.freeze({
     ],
     authorityRule: 'A mutation touching a protected domain may be privately analyzed or technically supported, but cannot self-promote to canonical authority without explicit human authorization.',
     evaluationRule: 'Prefer Pareto improvement across transition yield, human burden, compute, state churn, external truth, regeneration, and decision capability; never collapse methodology quality to one vanity score.',
+    memoryRule: 'Preserve methodology candidates and assessments outside the hot operating method using stable semantic fingerprints and accountable evidence ancestry. Same proposal plus same evidence reuses the prior assessment; materially new evidence may reopen the same proposal without pretending it is a novel mutation.',
   },
   operatingLoop: [
     'SENSE: absorb current state, evidence, resources, constraints, commitments, and uncertainty without promoting inference to fact.',
