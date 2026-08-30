@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { FLOWER_METHODOLOGY_VERSION } from './methodology-core.js';
 import { buildDecisionEvidenceManifest } from './evidence-admissibility.js';
+import { verifyStateAvailabilityWitness } from './state-availability-witness.js';
 import { nowIso } from './utils.js';
 
 const CONSEQUENTIAL_PRESSURES = new Set([
@@ -50,6 +51,7 @@ export function createDecisionCheckpoint({
   asOf = null,
   methodologyVersion = FLOWER_METHODOLOGY_VERSION,
   reason = null,
+  availabilityWitness = null,
   clock = nowIso,
 } = {}) {
   if (!garden || typeof garden !== 'object') throw new Error('Decision checkpoint requires a Garden snapshot.');
@@ -66,10 +68,25 @@ export function createDecisionCheckpoint({
 
   const snapshot = clone(garden);
   const snapshotHash = sha256(stableJson(snapshot));
-  const evidenceManifest = buildDecisionEvidenceManifest({ garden: snapshot, asOf: evidenceCutoff });
+  let witness = null;
+  if (availabilityWitness) {
+    const verified = verifyStateAvailabilityWitness({ witness: availabilityWitness, garden: snapshot });
+    if (!verified.ok) throw new Error(`Decision checkpoint received invalid availability witness: ${verified.reason}`);
+    if (Date.parse(availabilityWitness.witnessedAt) > Date.parse(evidenceCutoff)) {
+      throw new Error('Decision checkpoint availability witness cannot be later than its evidence cutoff.');
+    }
+    witness = clone(availabilityWitness);
+  }
+
+  const evidenceManifest = buildDecisionEvidenceManifest({
+    garden: snapshot,
+    asOf: evidenceCutoff,
+    availabilityWitness: witness,
+  });
   const evidenceManifestHash = sha256(stableJson(evidenceManifest));
+  const availabilityWitnessHash = witness?.witnessHash ?? null;
   const identity = {
-    schemaVersion: 3,
+    schemaVersion: 4,
     capturedAt,
     captureClock: 'runtime_wall_clock',
     asOf: evidenceCutoff,
@@ -78,6 +95,7 @@ export function createDecisionCheckpoint({
     costClass,
     reason,
     snapshotHash,
+    availabilityWitnessHash,
     evidenceManifestHash,
   };
   const checkpointHash = sha256(stableJson(identity));
@@ -86,6 +104,7 @@ export function createDecisionCheckpoint({
     ...identity,
     id: `decision_checkpoint_${checkpointHash.slice(0, 24)}`,
     checkpointHash,
+    availabilityWitness: witness,
     evidenceManifest,
     snapshot,
   };
@@ -100,7 +119,24 @@ export function verifyDecisionCheckpoint(checkpoint) {
   const snapshotHash = sha256(stableJson(checkpoint.snapshot));
   if (snapshotHash !== checkpoint.snapshotHash) return { ok: false, reason: 'snapshot_hash_mismatch' };
 
-  const rebuiltManifest = buildDecisionEvidenceManifest({ garden: checkpoint.snapshot, asOf: checkpoint.asOf });
+  if (checkpoint.availabilityWitness) {
+    const verified = verifyStateAvailabilityWitness({ witness: checkpoint.availabilityWitness, garden: checkpoint.snapshot });
+    if (!verified.ok) return { ok: false, reason: `availability_witness_${verified.reason}` };
+    if (checkpoint.availabilityWitness.witnessHash !== checkpoint.availabilityWitnessHash) {
+      return { ok: false, reason: 'availability_witness_hash_mismatch' };
+    }
+    if (Date.parse(checkpoint.availabilityWitness.witnessedAt) > Date.parse(checkpoint.asOf)) {
+      return { ok: false, reason: 'availability_witness_after_cutoff' };
+    }
+  } else if (checkpoint.availabilityWitnessHash) {
+    return { ok: false, reason: 'missing_availability_witness' };
+  }
+
+  const rebuiltManifest = buildDecisionEvidenceManifest({
+    garden: checkpoint.snapshot,
+    asOf: checkpoint.asOf,
+    availabilityWitness: checkpoint.availabilityWitness ?? null,
+  });
   const evidenceManifestHash = sha256(stableJson(rebuiltManifest));
   if (evidenceManifestHash !== checkpoint.evidenceManifestHash) return { ok: false, reason: 'evidence_manifest_hash_mismatch' };
   if (stableJson(rebuiltManifest) !== stableJson(checkpoint.evidenceManifest)) return { ok: false, reason: 'evidence_manifest_mismatch' };
@@ -115,6 +151,7 @@ export function verifyDecisionCheckpoint(checkpoint) {
     costClass: checkpoint.costClass,
     reason: checkpoint.reason ?? null,
     snapshotHash: checkpoint.snapshotHash,
+    availabilityWitnessHash: checkpoint.availabilityWitnessHash ?? null,
     evidenceManifestHash: checkpoint.evidenceManifestHash,
   };
   const checkpointHash = sha256(stableJson(identity));
@@ -132,6 +169,7 @@ export async function persistDecisionCheckpoint({ checkpoint, sink } = {}) {
     id: checkpoint.id,
     checkpointHash: checkpoint.checkpointHash,
     snapshotHash: checkpoint.snapshotHash,
+    availabilityWitnessHash: checkpoint.availabilityWitnessHash ?? null,
     evidenceManifestHash: checkpoint.evidenceManifestHash,
   };
 }
