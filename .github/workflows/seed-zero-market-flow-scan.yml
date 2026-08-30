@@ -6,8 +6,10 @@ on:
     branches: [main]
     paths:
       - 'src/economics/seed-zero-market-flow-scanner.js'
+      - 'src/economics/seed-zero-market-archetypes.js'
       - 'scripts/scan-seed-zero-market-flows.js'
       - 'tests/seed-zero-market-flow-scanner.test.js'
+      - 'tests/seed-zero-market-archetypes.test.js'
       - '.github/workflows/seed-zero-market-flow-scan.yml'
 
 permissions:
@@ -22,7 +24,7 @@ jobs:
         with:
           node-version: '22'
       - name: Test scanner
-        run: node --test tests/seed-zero-market-flow-scanner.test.js
+        run: node --test tests/seed-zero-market-flow-scanner.test.js tests/seed-zero-market-archetypes.test.js
       - name: Scan public Store
         env:
           SEED_ZERO_MAX_ACTORS: '5000'
