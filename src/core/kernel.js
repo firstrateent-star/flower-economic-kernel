@@ -7,6 +7,7 @@ import { refreshGeometry } from './geometry.js';
 import { syncFruitManifests, verifyPrivateFruit } from './fruit-forge.js';
 import { reconcileDistributionTruth } from './distribution-truth.js';
 import { captureMethodologyArtifactIds, stampNewMethodologyArtifactOrigins } from './methodology-lineage.js';
+import { reconcileImprovementTransferSeeds } from './improvement-transfer.js';
 
 function applyPostIntegrationSelectionPolicy(garden, pressure) {
   if (pressure.type !== 'INTEGRATE') return null;
@@ -80,6 +81,12 @@ export async function breathe({ garden, reasoner, pressure = classifyPressure(ga
     result = await runEnzyme({ garden, pressure, reasoner });
   }
 
+  const transferReconciliation = reconcileImprovementTransferSeeds(garden);
+  if (transferReconciliation.changed) {
+    result.transferSeedsReconciled = transferReconciliation;
+    result.summary = `${result.summary} ${transferReconciliation.created.length + transferReconciliation.updated.length} internal improvement transfer seed(s) reconciled without promoting internal usefulness to external value.`;
+  }
+
   const lineageStamps = stampNewMethodologyArtifactOrigins(garden, methodologyArtifactsBefore);
   if (lineageStamps.length > 0) result.methodologyOriginsStamped = lineageStamps;
 
@@ -124,6 +131,7 @@ export async function pulse({
     await syncFruitManifests(garden);
     reconcileDistributionTruth(garden);
   }
+  const initialTransferReconciliation = reconcileImprovementTransferSeeds(garden);
   refreshGeometry(garden);
 
   for (let i = 0; i < maxBreaths; i += 1) {
@@ -166,6 +174,7 @@ export async function pulse({
     breaths,
     stoppedByCostFrontier,
     stoppedBySafetyCeiling,
+    transferSeedReconciliation: initialTransferReconciliation,
     runBudget: {
       costlyBreathsUsed: costlyBreaths,
       maxCostlyBreaths,
