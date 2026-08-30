@@ -28,21 +28,26 @@ jobs:
           node --check src/core/meta-learning.js
           node --check scripts/meta-learning-observatory.mjs
           node --test tests/meta-learning.test.js
-      - name: Run historical meta-learning Observatory
+      - name: Run counterpressured historical meta-learning Observatory
         run: node scripts/meta-learning-observatory.mjs
       - name: Validate epistemic boundaries
         run: |
           node - <<'NODE'
           const fs = require('fs');
           const report = JSON.parse(fs.readFileSync('reports/meta-learning-observatory-latest.json', 'utf8'));
-          if (report.epistemicStatus !== 'historical_meta_learning_candidate_not_causal_proof') throw new Error('Meta-learning report overstated epistemic status.');
+          if (report.epistemicStatus !== 'counterpressured_historical_meta_learning_not_causal_proof') throw new Error('Meta-learning report overstated epistemic status.');
           if (report.externalFlourishingClaim !== false) throw new Error('Internal lineage may not claim external flourishing.');
+          if (report.flourishingOrientation?.scalarized !== false) throw new Error('Flourishing may not collapse into one scalar objective.');
           if (report.candidateRules.some((rule) => rule.eligibleForCanonicalPromotion === true)) throw new Error('Historical recurrence may not self-promote a canonical rule.');
-          if (!report.selfAudit?.risks?.some((risk) => risk.startsWith('survivor_bias'))) throw new Error('v1 history should expose missing negative controls.');
+          if (report.selfAudit?.negativeControlCount < 2) throw new Error('v2 requires represented negative controls.');
+          if (report.selfAudit?.explicitMechanismRoleCoverage !== 1) throw new Error('v2 requires applied/violated/inferred mechanism roles for every episode.');
+          if (!report.selfAudit?.risks?.some((risk) => risk.startsWith('causality_gap'))) throw new Error('Historical v2 must retain the need for a prospective meta-test.');
+          if (report.nextPressure?.type !== 'PROSPECTIVE_META_TEST') throw new Error('Counterpressured v2 should request one bounded prospective meta-test.');
           console.log(JSON.stringify({
             nextPressure: report.nextPressure,
             selfAudit: report.selfAudit,
             topMechanisms: report.mechanismStats.slice(0, 8),
+            violationStats: report.violationStats.slice(0, 8),
             candidateRules: report.candidateRules,
           }, null, 2));
           NODE
