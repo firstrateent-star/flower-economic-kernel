@@ -14,14 +14,14 @@ const COMMODITY_DOMINANCE_TERMS = [
 ];
 
 const FLOW_FAMILIES = [
-  { id: 'lead_generation', terms: ['lead', 'prospect', 'contact', 'email finder', 'phone', 'business'] },
-  { id: 'commerce_inventory', terms: ['product', 'price', 'inventory', 'e-commerce', 'ecommerce', 'shop', 'marketplace'] },
-  { id: 'jobs_talent', terms: ['job', 'jobs', 'vacancy', 'hiring', 'candidate'] },
-  { id: 'real_estate', terms: ['real estate', 'property', 'rental', 'rent', 'home listing'] },
-  { id: 'ads_competitive_intel', terms: ['ad library', 'ads', 'advertising', 'competitor', 'creative'] },
-  { id: 'search_discovery', terms: ['search result', 'serp', 'search engine', 'keyword'] },
-  { id: 'reviews_reputation', terms: ['review', 'reviews', 'rating', 'reputation'] },
-  { id: 'content_for_ai', terms: ['rag', 'llm', 'ai model', 'content crawler', 'markdown'] },
+  { id: 'lead_generation', terms: ['lead', 'leads', 'prospect', 'prospects', 'contact', 'contacts', 'email finder', 'phone', 'business leads'] },
+  { id: 'commerce_inventory', terms: ['product', 'products', 'price', 'prices', 'inventory', 'e-commerce', 'ecommerce', 'shop', 'shopping', 'marketplace'] },
+  { id: 'jobs_talent', terms: ['job', 'jobs', 'vacancy', 'vacancies', 'hiring', 'candidate', 'candidates'] },
+  { id: 'real_estate', terms: ['real estate', 'property', 'properties', 'rental', 'rentals', 'home listing', 'home listings'] },
+  { id: 'ads_competitive_intel', terms: ['ad library', 'ads library', 'advertising', 'advertisement', 'advertisements', 'competitor', 'competitors', 'creative intelligence'] },
+  { id: 'search_discovery', terms: ['search result', 'search results', 'serp', 'search engine', 'keyword', 'keywords'] },
+  { id: 'reviews_reputation', terms: ['review', 'reviews', 'rating', 'ratings', 'reputation'] },
+  { id: 'content_for_ai', terms: ['rag', 'llm', 'ai model', 'ai models', 'content crawler', 'markdown'] },
   { id: 'diagnostics', terms: DIAGNOSTIC_TERMS },
 ];
 
@@ -29,8 +29,22 @@ function text(actor) {
   return `${actor?.title ?? ''} ${actor?.name ?? ''} ${actor?.description ?? ''}`.toLowerCase();
 }
 
+function normalizeLexical(value) {
+  return String(value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function containsTerm(value, term) {
+  const haystack = ` ${normalizeLexical(value)} `;
+  const needle = normalizeLexical(term);
+  return needle.length > 0 && haystack.includes(` ${needle} `);
+}
+
 function containsAny(value, terms) {
-  return terms.some((term) => value.includes(term));
+  return terms.some((term) => containsTerm(value, term));
 }
 
 function recentUsers(actor) {
@@ -53,7 +67,7 @@ function pricingModel(actor) {
 function familyFor(actor) {
   const value = text(actor);
   const hits = FLOW_FAMILIES
-    .map((family) => ({ family: family.id, hits: family.terms.filter((term) => value.includes(term)).length }))
+    .map((family) => ({ family: family.id, hits: family.terms.filter((term) => containsTerm(value, term)).length }))
     .filter((x) => x.hits > 0)
     .sort((a, b) => b.hits - a.hits || a.family.localeCompare(b.family));
   return hits[0]?.family ?? 'other';
