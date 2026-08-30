@@ -87,7 +87,7 @@ if (command === 'pulse') {
   }
 
   const reasoner = new OpenAIReasoner();
-  const maxBreaths = Math.max(1, Math.min(12, Number(process.env.FLOWER_MAX_BREATHS_PER_PULSE ?? 12)));
+  const maxBreaths = Math.max(1, Math.min(64, Number(process.env.FLOWER_MAX_BREATHS_PER_PULSE ?? 64)));
   const result = await pulse({ garden, reasoner, maxBreaths, syncManifests: false });
   await saveGarden(stateFile, garden);
   console.log(JSON.stringify({
@@ -101,6 +101,8 @@ if (command === 'pulse') {
       reason: observationIngest.reason,
     } : null,
     breaths: result.breaths.map((x) => ({ pressure: x.pressure.type, summary: x.result.summary })),
+    stoppedByCostFrontier: result.stoppedByCostFrontier,
+    stoppedBySafetyCeiling: result.stoppedBySafetyCeiling,
     nextPressure: classifyPressure(garden),
     legacyMigrations: prepared.legacy.stateMigrations,
     epistemicRepairs: prepared.legacy.repaired,
