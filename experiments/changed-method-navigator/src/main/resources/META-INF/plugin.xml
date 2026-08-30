@@ -1,0 +1,12 @@
+<idea-plugin>
+    <id>com.flower.changedmethods</id>
+    <name>Changed Method Navigator</name>
+    <vendor>Flower v2 Shadow Lab</vendor>
+    <description><![CDATA[Private preflight for navigating methods touched by local VCS changes.]]></description>
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.vcs</depends>
+    <depends>com.intellij.java</depends>
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Changed Methods" anchor="right" factoryClass="com.flower.changedmethods.ide.ChangedMethodsToolWindowFactory"/>
+    </extensions>
+</idea-plugin>
