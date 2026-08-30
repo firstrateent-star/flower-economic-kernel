@@ -60,6 +60,33 @@ export const FLOWER_METHODOLOGY = Object.freeze({
       'Has local efficiency improved while global complexity capacity, ethics, or sovereignty degraded?',
     ],
   },
+  mutationGovernance: {
+    principle: 'Methodology mutations must earn canonical promotion just as economic branches must earn depth.',
+    requiredProposalShape: [
+      'thesis',
+      'affected decisions',
+      'causal inputs',
+      'complexity that must be preserved',
+      'falsifier',
+      'rollback path',
+      'stopping condition',
+    ],
+    promotionRoutes: [
+      'Semantic/formal equivalence plus measured efficiency improvement and no protected-invariant or decision-capability regression.',
+      'Measured decision-capability improvement plus no material efficiency regression and no protected-invariant regression.',
+    ],
+    protectedDomains: [
+      'center orientation',
+      'love orientation',
+      'reality contact',
+      'ethics',
+      'sovereignty',
+      'legal/public authority',
+      'human identity',
+    ],
+    authorityRule: 'A mutation touching a protected domain may be privately analyzed or technically supported, but cannot self-promote to canonical authority without explicit human authorization.',
+    evaluationRule: 'Prefer Pareto improvement across transition yield, human burden, compute, state churn, external truth, regeneration, and decision capability; never collapse methodology quality to one vanity score.',
+  },
   operatingLoop: [
     'SENSE: absorb current state, evidence, resources, constraints, commitments, and uncertainty without promoting inference to fact.',
     'DIFFERENTIATE: rank gradients globally while allowing many petals to remain independently alive.',
