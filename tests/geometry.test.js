@@ -125,6 +125,58 @@ test('integrated supporting evidence invalidates geometry because coverage can c
   assert.equal(second.centers.find((x) => x.id === opp.id).coverage.failure_reality, 'earned');
 });
 
+test('incremental family edge rebuilding is semantically identical to a forced full rebuild', () => {
+  const garden = structuredClone(seed);
+  garden.opportunities[0].failureArchetype = 'identity_pointer_drift';
+  garden.opportunities[0].reusableCapability = 'entity_identity_matching';
+  garden.opportunities.push(
+    {
+      id: 'opp_identity_neighbor',
+      name: 'Identity Neighbor',
+      status: 'needs_test',
+      thesis: 'Identity metadata can drift.',
+      failureArchetype: 'identity_metadata_conflict',
+      reusableCapability: 'cross_source_identity_reconciliation',
+    },
+    {
+      id: 'opp_semantic_a',
+      name: 'Semantic A',
+      status: 'needs_test',
+      thesis: 'Document order can drift.',
+      failureArchetype: 'document_structure_order',
+      reusableCapability: 'document_structure_graph_analysis',
+    },
+    {
+      id: 'opp_semantic_b',
+      name: 'Semantic B',
+      status: 'needs_test',
+      thesis: 'Semantic structure can drift.',
+      failureArchetype: 'semantic_structure_order',
+      reusableCapability: 'structure_graph_analysis',
+    },
+  );
+  refreshGeometry(garden);
+
+  garden.opportunities[0].failureArchetype = 'document_structure_order';
+  garden.opportunities[0].reusableCapability = 'document_structure_graph_analysis';
+
+  const forced = structuredClone(garden);
+  delete forced.geometry;
+  const full = refreshGeometry(forced);
+  const incremental = refreshGeometry(garden);
+
+  assert.equal(incremental.recomputation.mode, 'incremental');
+  assert.ok(incremental.recomputation.affectedArchetypeFamilies.includes('identity_integrity'));
+  assert.ok(incremental.recomputation.affectedArchetypeFamilies.includes('semantic_structure_integrity'));
+  assert.ok(incremental.recomputation.affectedCapabilityFamilies.includes('identity_reconciliation'));
+  assert.ok(incremental.recomputation.affectedCapabilityFamilies.includes('structure_graph_analysis'));
+  assert.deepEqual(incremental.centers, full.centers);
+  assert.deepEqual(incremental.edges, full.edges);
+  assert.deepEqual(incremental.archetypes, full.archetypes);
+  assert.deepEqual(incremental.capabilities, full.capabilities);
+  assert.deepEqual(incremental.metrics, full.metrics);
+});
+
 test('geometry cache invalidates when a geometry-relevant state field changes', () => {
   const garden = structuredClone(seed);
   const first = refreshGeometry(garden);
