@@ -1,0 +1,36 @@
+name: Capture Decision Checkpoint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'methodology/checkpoint-requests/**'
+      - 'scripts/capture-current-checkpoint.js'
+      - 'src/core/decision-checkpoints.js'
+      - 'src/core/state-availability-witness.js'
+      - 'src/core/evidence-admissibility.js'
+      - '.github/workflows/capture-decision-checkpoint.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate verified prospective checkpoint
+        run: |
+          node scripts/capture-current-checkpoint.js garden/seed.json artifacts/current-decision-checkpoint.json | tee /tmp/checkpoint-summary.json
+          node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/checkpoint-summary.json','utf8')); if(x.verified!==true) throw new Error('Checkpoint did not verify'); if(x.pressure?.type!=='HUMAN') throw new Error('Expected HUMAN checkpoint'); if(!x.availabilityWitnessHash) throw new Error('Missing availability witness'); console.log('CHECKPOINT_SUMMARY='+JSON.stringify(x));"
+      - name: Upload checkpoint artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prospective-decision-checkpoint
+          path: artifacts/current-decision-checkpoint.json
+          if-no-files-found: error
+          retention-days: 90
