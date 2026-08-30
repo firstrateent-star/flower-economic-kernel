@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { assessMethodologyMutation } from '../src/core/methodology-mutations.js';
 import {
   createMethodologyMutationRecord,
   methodologyMutationReuseDecision,
@@ -36,6 +37,11 @@ test('identical methodology proposal and evidence reuses prior assessment instea
   assert.equal(decision.priorRecord.recordHash, first.recordHash);
 });
 
+test('stored methodology assessment is semantically equivalent to fresh assessment for identical proposal/evidence', () => {
+  const record = createMethodologyMutationRecord({ proposal, evidence: evidenceA });
+  assert.deepEqual(record.assessment, assessMethodologyMutation(proposal, evidenceA));
+});
+
 test('same semantic proposal with reordered set-like fields has the same fingerprint', () => {
   const first = createMethodologyMutationRecord({ proposal, evidence: evidenceA });
   const reordered = structuredClone(proposal);
@@ -53,6 +59,20 @@ test('new evidence reopens the same methodology proposal without treating it as 
   const decision = methodologyMutationReuseDecision({ proposal, evidence: evidenceB, priorRecords: [first] });
   assert.equal(decision.action, 'reevaluate');
   assert.equal(decision.reason, 'same_proposal_new_evidence');
+});
+
+test('one prior mutation assessment eliminates 99 of 100 redundant identical reevaluations', () => {
+  const first = createMethodologyMutationRecord({ proposal, evidence: evidenceA });
+  let evaluateCount = 1;
+  let reuseCount = 0;
+  for (let i = 1; i < 100; i += 1) {
+    const decision = methodologyMutationReuseDecision({ proposal, evidence: evidenceA, priorRecords: [first] });
+    if (decision.action === 'reuse_prior_assessment') reuseCount += 1;
+    else evaluateCount += 1;
+  }
+  assert.equal(evaluateCount, 1);
+  assert.equal(reuseCount, 99);
+  console.log(JSON.stringify({ rediscoveries: 100, freshEvaluationsRequired: evaluateCount, priorAssessmentsReused: reuseCount, redundantEvaluationReduction: 0.99 }));
 });
 
 test('hash-linked methodology records preserve assessment ancestry and detect tampering', () => {
