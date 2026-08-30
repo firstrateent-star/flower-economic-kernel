@@ -19,16 +19,20 @@ test('integrated methodology contains reciprocal Flower-efficiency cultivation r
   assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('RECURSE:')));
 });
 
-test('integrated v3 makes terminal alignment and challenger search native governance', () => {
-  assert.equal(FLOWER_METHODOLOGY_VERSION, '2026-08-30.integrated-v3');
+test('integrated v4 makes terminal alignment, challenger search, and regenerative capture native governance', () => {
+  assert.equal(FLOWER_METHODOLOGY_VERSION, '2026-08-30.integrated-v4');
   assert.match(FLOWER_METHODOLOGY.center.terminalValueAim, /true objective/);
+  assert.match(FLOWER_METHODOLOGY.center.regenerativeAim, /surplus/);
   assert.match(FLOWER_METHODOLOGY.fieldGovernance.championChallenger, /current champion/);
   assert.match(FLOWER_METHODOLOGY.fieldGovernance.twoTemperatureSearch, /bounded exploration/);
   assert.match(FLOWER_METHODOLOGY.terminalGovernance.principle, /terminal outcome/);
+  assert.match(FLOWER_METHODOLOGY.regenerativeValueGovernance.principle, /closed and accountable loop/);
+  assert.match(FLOWER_METHODOLOGY.regenerativeValueGovernance.ledgers.surplus, /attributable return/);
+  assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('ALLOCATE:')));
   assert.ok(FLOWER_METHODOLOGY.stopConditions.some((x) => /lower expected value than a safe available action/.test(x)));
 });
 
-test('integrated v3 retains cold methodology mutation memory', () => {
+test('integrated v4 retains cold methodology mutation memory', () => {
   assert.match(FLOWER_METHODOLOGY.mutationGovernance.memoryRule, /Same proposal plus same evidence reuses the prior assessment/);
   assert.match(FLOWER_METHODOLOGY.mutationGovernance.memoryRule, /materially new evidence may reopen/);
 });
@@ -42,6 +46,9 @@ test('canonical methodology document agrees with executable methodology version 
   assert.match(doc, /terminal objective/i);
   assert.match(doc, /champion/i);
   assert.match(doc, /two-temperature/i);
+  assert.match(doc, /regenerative value governance/i);
+  assert.match(doc, /gross return is not surplus/i);
+  assert.match(doc, /ownership/i);
 });
 
 test('prior cold mutation ledger remains preserved as ancestry', async () => {
