@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 4,
+  "probe": "flower_self_improvement_observatory_v3",
+  "epistemicStatus": "observation_only",
+  "startedAt": "2026-08-30T22:21:51.530Z",
+  "completedAt": "2026-08-30T22:21:55.938Z",
+  "revisionKey": "330791a8a4b0bfba59ce2e131674839f3404f726",
+  "implementationKey": "causal_575b2b39e6c94a944ae07e7d",
+  "causalImplementationFiles": [
+    "src/core/reasoner-view.js",
+    "src/core/pressure.js",
+    "src/core/methodology-core.js",
+    "src/core/improvement-transfer.js"
+  ],
+  "workloadKey": "kernel_targeted_projection_and_pressure_fixture",
+  "workloadVersion": 3,
+  "dimensions": {
+    "computeInputProxy": {
+      "value": 23559,
+      "unit": "projected-json-bytes",
+      "direction": "lower",
+      "evidenceVerified": true,
+      "proxy": true,
+      "note": "Payload bytes are a compute/input proxy, not a physical-energy measurement."
+    },
+    "activationWorkProxy": {
+      "value": 0,
+      "unit": "geometry-records-examined",
+      "direction": "lower",
+      "evidenceVerified": true,
+      "proxy": true,
+      "note": "Exact record-visit witness for the targeted neighborhood-resolution path on this workload; a compute-work proxy, not physical energy."
+    },
+    "speed": {
+      "value": 18.703856000000087,
+      "unit": "milliseconds",
+      "direction": "lower",
+      "evidenceVerified": false,
+      "proxy": false,
+      "note": "Observed on a shared CI runner. Retained for trend visibility but not promotion evidence until repeated or controlled measurements establish comparability."
+    },
+    "accuracy": {
+      "value": 1,
+      "unit": "fixture-pass-rate",
+      "direction": "higher",
+      "evidenceVerified": true,
+      "proxy": false,
+      "note": "Accuracy here means correctness on declared deterministic pressure-routing fixtures, not general intelligence accuracy."
+    },
+    "complexityCapacity": {
+      "value": 5000,
+      "unit": "synthetic-portfolio-items-under-30kb-targeted-view",
+      "direction": "higher",
+      "evidenceVerified": true,
+      "proxy": true,
+      "note": "Synthetic capacity witness for sparse activation; not a universal complexity measure."
+    }
+  },
+  "decisionWitness": {
+    "verified": true,
+    "taskKey": "pressure-routing-fixture-v3",
+    "resultFingerprint": "seed routes to FALSIFY:FALSIFY|unassessed verified internal gain routes to TRANSFER:TRANSFER",
+    "qualityScore": 1,
+    "qualityDirection": "higher"
+  },
+  "projections": [
+    {
+      "portfolioSize": 10,
+      "projectedOpportunityCount": 1,
+      "projectedFruitCount": 0,
+      "payloadBytes": 23557,
+      "activationRecordsExamined": 0,
+      "activationLookupMode": "cached_family_index",
+      "medianLatencyMs": 0.10274100000000175,
+      "p95LatencyMs": 0.2042199999999994,
+      "targetPreserved": true
+    },
+    {
+      "portfolioSize": 100,
+      "projectedOpportunityCount": 1,
+      "projectedFruitCount": 0,
+      "payloadBytes": 23558,
+      "activationRecordsExamined": 0,
+      "activationLookupMode": "cached_family_index",
+      "medianLatencyMs": 0.37698999999999216,
+      "p95LatencyMs": 0.46865100000000837,
+      "targetPreserved": true
+    },
+    {
+      "portfolioSize": 1000,
+      "projectedOpportunityCount": 1,
+      "projectedFruitCount": 0,
+      "payloadBytes": 23559,
+      "activationRecordsExamined": 0,
+      "activationLookupMode": "cached_family_index",
+      "medianLatencyMs": 3.8740980000000036,
+      "p95LatencyMs": 8.485353999999973,
+      "targetPreserved": true
+    },
+    {
+      "portfolioSize": 5000,
+      "projectedOpportunityCount": 1,
+      "projectedFruitCount": 0,
+      "payloadBytes": 23559,
+      "activationRecordsExamined": 0,
+      "activationLookupMode": "cached_family_index",
+      "medianLatencyMs": 18.703856000000087,
+      "p95LatencyMs": 24.8470870000001,
+      "targetPreserved": true
+    }
+  ],
+  "decisionFixtures": {
+    "cases": [
+      {
+        "name": "seed routes to FALSIFY",
+        "expected": "FALSIFY",
+        "actual": "FALSIFY"
+      },
+      {
+        "name": "unassessed verified internal gain routes to TRANSFER",
+        "expected": "TRANSFER",
+        "actual": "TRANSFER"
+      }
+    ],
+    "passed": 2,
+    "total": 2,
+    "passRate": 1,
+    "fingerprint": "seed routes to FALSIFY:FALSIFY|unassessed verified internal gain routes to TRANSFER:TRANSFER"
+  },
+  "physicalEnergyMeasured": false,
+  "baselinePath": "benchmarks/self-improvement-baseline-v3.json",
+  "currentClaims": {
+    "selfImprovementObserved": true,
+    "externalValueObserved": false,
+    "selfImprovementScope": "fixture_scoped_internal_only",
+    "why": "A comparable causal implementation improved this stable internal workload without a verified regression. External usefulness remains unverified."
+  },
+  "caveats": [
+    "Different workloads or workload versions must not be compared as self-improvement evidence.",
+    "Repository revisions that do not change the declared causal implementation files do not count as implementation changes for this workload.",
+    "Activation record visits are a deterministic compute-work proxy for this resolution path, not a universal compute or energy metric.",
+    "CI timing is retained as an observation but is not promotion evidence until repeated or controlled measurements make it comparable enough.",
+    "Payload bytes and synthetic portfolio capacity are explicit proxies, not energy or universal complexity truth.",
+    "A benchmark improvement would prove only an internal gain on this fixture; external usefulness requires separate evidence."
+  ],
+  "baselineComparison": {
+    "state": "internal_improvement_evidenced",
+    "comparisonValid": true,
+    "selfImprovementObserved": true,
+    "sameWorkload": true,
+    "implementationChanged": true,
+    "witnessMode": "verified_decision_equivalence",
+    "improvedDimensions": [
+      "activationWorkProxy"
+    ],
+    "regressedDimensions": [],
+    "unitMismatches": [],
+    "baselineImplementationKey": "causal_38a5d1ab1a6077032fd28de3",
+    "currentImplementationKey": "causal_575b2b39e6c94a944ae07e7d",
+    "internalImprovementCandidate": {
+      "id": "imp_280e3a1e46d4f2eb",
+      "name": "Fixture-scoped Flower causal implementation comparison",
+      "description": "Compares the current causal implementation against the canonical observatory baseline on the declared stable workload only.",
+      "workloadKey": "kernel_targeted_projection_and_pressure_fixture",
+      "workloadVersion": 3,
+      "baselineObservationId": "obs_5f918ede3bec7d1d",
+      "afterObservationId": "obs_03990ce2886fa5cb",
+      "baselineImplementationKey": "causal_38a5d1ab1a6077032fd28de3",
+      "implementationKey": "causal_575b2b39e6c94a944ae07e7d",
+      "dimensions": {
+        "computeInputProxy": {
+          "baseline": 23559,
+          "after": 23559,
+          "unit": "projected-json-bytes",
+          "direction": "lower",
+          "evidenceVerified": true,
+          "proxy": true
+        },
+        "activationWorkProxy": {
+          "baseline": 10000,
+          "after": 0,
+          "unit": "geometry-records-examined",
+          "direction": "lower",
+          "evidenceVerified": true,
+          "proxy": true
+        },
+        "speed": {
+          "baseline": 19.49194000000034,
+          "after": 18.703856000000087,
+          "unit": "milliseconds",
+          "direction": "lower",
+          "evidenceVerified": false,
+          "proxy": false
+        },
+        "accuracy": {
+          "baseline": 1,
+          "after": 1,
+          "unit": "fixture-pass-rate",
+          "direction": "higher",
+          "evidenceVerified": true,
+          "proxy": false
+        },
+        "complexityCapacity": {
+          "baseline": 5000,
+          "after": 5000,
+          "unit": "synthetic-portfolio-items-under-30kb-targeted-view",
+          "direction": "higher",
+          "evidenceVerified": true,
+          "proxy": true
+        }
+      },
+      "internalEvidence": [
+        "Comparable workload: true.",
+        "Implementation changed: true.",
+        "Decision witness: verified_decision_equivalence."
+      ],
+      "comparisonVerified": true,
+      "comparisonWitnessMode": "verified_decision_equivalence",
+      "unitMismatches": [],
+      "sourceArtifact": "reports/self-improvement-observatory-latest.json"
+    },
+    "scopeNote": "Any improvement state is scoped only to this declared workload and its decision witness. It is not a claim of global Flower improvement or external value."
+  },
+  "sourceWorkflowRun": 33338940702,
+  "persistedAt": "2026-08-30T22:21:56.468Z",
+  "persistenceState": "cold_verified_internal_improvement",
+  "explicitNonClaims": [
+    "This record does not prove external usefulness.",
+    "This record does not prove demand, willingness to pay, ownership, revenue, or regenerative surplus.",
+    "This record is scoped to the declared workload and decision witness."
+  ]
+}
