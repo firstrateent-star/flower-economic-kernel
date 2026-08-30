@@ -7,12 +7,17 @@ async function cmnPacket() {
   return JSON.parse(await fs.readFile(new URL('../experiments/changed-method-navigator/HUMAN_BOUNDARY_PACKET.json', import.meta.url), 'utf8'));
 }
 
-test('CMN boundary compiles to five irreducible human-authority choices and seven downstream machine actions', async () => {
+test('CMN boundary preserves five human decisions while batching them into one interaction that unlocks seven machine actions', async () => {
   const packet = await cmnPacket();
   const compiled = compileHumanBoundary(packet);
   assert.equal(compiled.minimumHumanDecisionCount, 5);
+  assert.equal(compiled.minimumHumanInteractionCount, 1);
   assert.equal(compiled.downstreamMachineActionCount, 7);
+  assert.equal(compiled.decisionActivationGainProxy, 1.4);
+  assert.equal(compiled.interactionActivationGainProxy, 7);
   assert.equal(compiled.activationGainProxy, 1.4);
+  assert.equal(compiled.interactionBatches.length, 1);
+  assert.equal(compiled.interactionBatches[0].decisionIds.length, 5);
   assert.equal(compiled.readyForMachineContinuation, false);
   assert.deepEqual(
     compiled.humanChoices.map((x) => x.id).sort(),
@@ -31,6 +36,7 @@ test('machine actions remain blocked only by unresolved sovereignty choices', as
   };
   const compiled = compileHumanBoundary(packet, resolved);
   assert.equal(compiled.minimumHumanDecisionCount, 0);
+  assert.equal(compiled.minimumHumanInteractionCount, 0);
   assert.equal(compiled.blockedMachineActions.length, 0);
   assert.equal(compiled.executableMachineActions.length, 7);
   assert.equal(compiled.readyForMachineContinuation, true);
@@ -43,4 +49,12 @@ test('compiler never substitutes recommended posture for unresolved human author
   assert.equal(uploadDecision.recommendedPosture, 'authorize hidden only');
   assert.equal(uploadDecision.resolved, false);
   assert.equal(compiled.readyForMachineContinuation, false);
+});
+
+test('interaction compression preserves distinct decision semantics instead of merging authority', async () => {
+  const packet = await cmnPacket();
+  const compiled = compileHumanBoundary(packet);
+  assert.equal(new Set(compiled.interactionBatches[0].decisionIds).size, 5);
+  assert.equal(compiled.humanChoices.length, 5);
+  assert.equal(compiled.minimumHumanInteractionCount, 1);
 });
