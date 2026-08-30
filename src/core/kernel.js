@@ -98,18 +98,27 @@ export async function breathe({ garden, reasoner, pressure = classifyPressure(ga
 }
 
 // A pulse crosses at most one costly frontier, then automatically carries the
-// Garden through every safe deterministic transition that follows. Once real private
-// Fruit source exists, Fruit Lock keeps attention on shipping rather than new seeds.
-export async function pulse({ garden, reasoner, maxBreaths = 12, maxCostlyBreaths = 1 }) {
+// Garden through every safe deterministic transition that follows. Terminal HUMAN /
+// STILLNESS pressure is a boundary, not a ceremonial breath: stop before executing it.
+export async function pulse({
+  garden,
+  reasoner,
+  maxBreaths = 12,
+  maxCostlyBreaths = 1,
+  syncManifests = true,
+}) {
   const breaths = [];
   let costlyBreaths = 0;
   let stoppedByCostFrontier = false;
 
-  await syncFruitManifests(garden);
+  if (syncManifests) await syncFruitManifests(garden);
   refreshGeometry(garden);
 
   for (let i = 0; i < maxBreaths; i += 1) {
     const pressure = classifyPressure(garden);
+
+    if (['HUMAN', 'STILLNESS'].includes(pressure.type)) break;
+
     const costClass = pressureCostClass(garden, pressure);
     const costly = costClass !== 'free';
 
@@ -123,13 +132,14 @@ export async function pulse({ garden, reasoner, maxBreaths = 12, maxCostlyBreath
     breaths.push(step);
     if (costly) costlyBreaths += 1;
 
-    if (['HUMAN', 'STILLNESS'].includes(step.pressure.type)) break;
     if (!step.result.changed) break;
   }
 
   refreshGeometry(garden);
-  garden.status.lastPulseAt = nowIso();
-  garden.status.pulseCount = Number(garden.status.pulseCount ?? 0) + 1;
+  if (breaths.length > 0) {
+    garden.status.lastPulseAt = nowIso();
+    garden.status.pulseCount = Number(garden.status.pulseCount ?? 0) + 1;
+  }
   return {
     garden,
     breaths,
