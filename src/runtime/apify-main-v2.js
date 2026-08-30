@@ -2,12 +2,8 @@ import { Actor, log } from 'apify';
 import { pulse } from '../core/kernel.js';
 import { classifyPressure } from '../core/pressure.js';
 import { refreshGeometry } from '../core/geometry.js';
-import { classifyWake } from '../core/wake.js';
-import { ingestFruitObservation } from '../core/observations.js';
 import { reconcileCanonicalControlPlane } from '../core/state-reconcile.js';
-import { migrateLegacyRuntimeState } from '../core/legacy-state-migrations.js';
-import { syncFruitManifests } from '../core/fruit-forge.js';
-import { reconcileDistributionTruth } from '../core/distribution-truth.js';
+import { prepareRuntimeState } from '../core/runtime-preparation.js';
 import { OpenAIReasoner } from '../reasoners/openai.js';
 import seed from '../../garden/seed.json' with { type: 'json' };
 
@@ -79,21 +75,13 @@ await Actor.main(async () => {
   const persistedBefore = existing == null ? null : JSON.stringify(existing);
   const canonical = reconcileCanonicalControlPlane(existing, seed);
   const garden = canonical.garden;
-  const legacy = migrateLegacyRuntimeState(garden);
-  const manifestSync = await syncFruitManifests(garden);
-  const distributionTruth = reconcileDistributionTruth(garden);
-
-  let observationIngest = null;
-  if (input.observation) {
-    observationIngest = ingestFruitObservation(garden, input.observation);
-  }
+  const prepared = await prepareRuntimeState({
+    garden,
+    observation: input.observation ?? null,
+  });
+  const { pressure: startingPressure, wake, observationIngest } = prepared;
 
   const geometryBefore = geometrySnapshot(garden);
-  const startingPressure = classifyPressure(garden);
-  const wake = classifyWake({
-    pressure: startingPressure,
-    event: observationIngest?.event ?? null,
-  });
   const stateChangedBeforeWake = persistedBefore == null || persistedBefore !== JSON.stringify(garden);
 
   log.info('Flower wake decision', {
@@ -101,9 +89,9 @@ await Actor.main(async () => {
     pressure: startingPressure,
     stateChangedBeforeWake,
     canonicalReconciliation: canonical.changes,
-    legacyMigrations: legacy.stateMigrations,
-    manifestChanges: manifestSync.changes,
-    distributionTruthChanges: distributionTruth.changes,
+    legacyMigrations: prepared.legacy.stateMigrations,
+    manifestChanges: prepared.manifestSync.changes,
+    distributionTruthChanges: prepared.distributionTruth.changes,
     observationChanged: observationIngest?.changed ?? false,
     observationStateChanged: observationIngest?.stateChanged ?? false,
   });
@@ -125,10 +113,10 @@ await Actor.main(async () => {
       pulseCount: Number(garden.status.pulseCount ?? 0),
       persistentStore: STORE_NAME,
       canonicalReconciliation: canonical.changes,
-      legacyMigrations: legacy.stateMigrations,
-      epistemicRepairs: legacy.repaired,
-      manifestChanges: manifestSync.changes,
-      distributionTruthChanges: distributionTruth.changes,
+      legacyMigrations: prepared.legacy.stateMigrations,
+      epistemicRepairs: prepared.legacy.repaired,
+      manifestChanges: prepared.manifestSync.changes,
+      distributionTruthChanges: prepared.distributionTruth.changes,
       observationIngest: observationIngest
         ? {
           changed: observationIngest.changed,
@@ -170,10 +158,10 @@ await Actor.main(async () => {
       pulseCount: Number(garden.status.pulseCount ?? 0),
       persistentStore: STORE_NAME,
       canonicalReconciliation: canonical.changes,
-      legacyMigrations: legacy.stateMigrations,
-      epistemicRepairs: legacy.repaired,
-      manifestChanges: manifestSync.changes,
-      distributionTruthChanges: distributionTruth.changes,
+      legacyMigrations: prepared.legacy.stateMigrations,
+      epistemicRepairs: prepared.legacy.repaired,
+      manifestChanges: prepared.manifestSync.changes,
+      distributionTruthChanges: prepared.distributionTruth.changes,
       activeOpportunities: activeOpportunitySnapshot(garden),
       geometry: geometryBefore,
     };
@@ -211,10 +199,10 @@ await Actor.main(async () => {
     pulseCount: garden.status.pulseCount,
     persistentStore: STORE_NAME,
     canonicalReconciliation: canonical.changes,
-    legacyMigrations: legacy.stateMigrations,
-    epistemicRepairs: legacy.repaired,
-    manifestChanges: manifestSync.changes,
-    distributionTruthChanges: distributionTruth.changes,
+    legacyMigrations: prepared.legacy.stateMigrations,
+    epistemicRepairs: prepared.legacy.repaired,
+    manifestChanges: prepared.manifestSync.changes,
+    distributionTruthChanges: prepared.distributionTruth.changes,
     observationIngest: observationIngest
       ? {
         changed: observationIngest.changed,
