@@ -16,6 +16,12 @@ test('integrated methodology contains reciprocal Flower-efficiency cultivation r
   assert.ok(FLOWER_METHODOLOGY.operatingLoop.some((step) => step.startsWith('RECURSE:')));
 });
 
+test('integrated v2 makes cold methodology mutation memory part of canonical governance', () => {
+  assert.equal(FLOWER_METHODOLOGY_VERSION, '2026-08-30.integrated-v2');
+  assert.match(FLOWER_METHODOLOGY.mutationGovernance.memoryRule, /Same proposal plus same evidence reuses the prior assessment/);
+  assert.match(FLOWER_METHODOLOGY.mutationGovernance.memoryRule, /materially new evidence may reopen/);
+});
+
 test('canonical methodology document agrees with executable methodology version and precedence', async () => {
   const doc = await fs.readFile(new URL('../docs/CURRENT_FLOWER_METHODOLOGY.md', import.meta.url), 'utf8');
   assert.match(doc, new RegExp(FLOWER_METHODOLOGY_VERSION.replaceAll('.', '\\.')));
@@ -23,6 +29,16 @@ test('canonical methodology document agrees with executable methodology version 
   assert.match(doc, /COMPLEXITY_PRESERVING_EFFICIENCY_2026-08-30\.md/);
   assert.match(doc, /FLOWER_ROOT_RECURSION_AND_ABUNDANCE_RESET_2026-08-29\.md/);
   assert.match(doc, /Dual cultivation/);
+  assert.match(doc, /Methodology mutation memory/);
+});
+
+test('cold mutation ledger preserves the evidence that earned the current methodology version', async () => {
+  const ledger = JSON.parse(await fs.readFile(new URL('../methodology/mutation-ledger/2026-08-30-integrated-v2.json', import.meta.url), 'utf8'));
+  assert.equal(ledger.promotedMethodologyVersion, FLOWER_METHODOLOGY_VERSION);
+  assert.equal(ledger.assessment.eligibleForCanonical, true);
+  assert.equal(ledger.evidence.measurement.rediscoveries, 100);
+  assert.equal(ledger.evidence.measurement.freshEvaluationsRequired, 1);
+  assert.equal(ledger.evidence.measurement.priorAssessmentsReused, 99);
 });
 
 test('repository entrypoint points readers to the canonical current methodology', async () => {
