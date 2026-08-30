@@ -1,8 +1,8 @@
 # Current Flower Methodology
 
-**Canonical methodology version:** `2026-08-30.integrated-v4`
+**Canonical methodology version:** `2026-08-30.integrated-v5`
 
-This is the current operating methodology for Flower. Historical documents remain evidence of how the method evolved; specialized documents remain deeper derivations. When wording conflicts, precedence is:
+This is the current human-readable operating methodology for Flower. Historical documents remain evidence of how the method evolved; specialized documents remain deeper derivations. When wording conflicts, precedence is:
 
 1. `src/core/methodology-core.js` — executable methodology contract.
 2. `docs/CURRENT_FLOWER_METHODOLOGY.md` — human-readable canonical method.
@@ -14,7 +14,7 @@ Precedence is not permission to erase history. It determines what governs the ne
 
 ## Center
 
-The irreducible Flower is now represented as:
+The irreducible Flower is:
 
 `STATE -> GRADIENT -> PROBE -> VALUE -> RETURN -> REGENERATE -> UPDATED STATE`
 
@@ -24,17 +24,21 @@ Its layered form is:
 
 Flower exists to increase generative capacity while preserving agency, reality contact, love as a non-reductive orientation, and the conditions for future good growth.
 
-The terminal-objective lock remains:
+The terminal objective remains locked:
 
-`TRUE OBJECTIVE -> ADMISSIBLE EVIDENCE -> SEARCH/PROBE/ACT -> VERIFIED OUTCOME`
+`TRUE OBJECTIVE -> ADMISSIBLE EVIDENCE -> SEARCH / PROBE / ACT -> VERIFIED OUTCOME`
 
 Internal sophistication, research, code, tests, deployments, listings, traffic, gross usage, and platform readiness are means unless the actual objective explicitly names them as ends.
 
-For regenerative economic work, the path is:
+For regenerative economic work:
 
-`REACHABLE NEED -> ACCESS/DISTRIBUTION -> TRUTHFUL FULFILLMENT -> USEFUL EXTERNAL CHANGE -> ATTRIBUTABLE RETURN -> FULL-COST SURPLUS -> SOVEREIGN ALLOCATION -> GREATER CAPACITY / HUMAN NOURISHMENT`
+`REACHABLE NEED -> ACCESS / DISTRIBUTION -> TRUTHFUL FULFILLMENT -> USEFUL EXTERNAL CHANGE -> ATTRIBUTABLE RETURN -> FULL-COST SURPLUS -> SOVEREIGN ALLOCATION -> GREATER CAPACITY / HUMAN NOURISHMENT`
 
-Money is one return carrier. Capability, distribution, trust, knowledge, optionality, reusable artifacts, and reduced future burden are nourishing returns when they are real and reusable. They do not impersonate paid economic Fruit when the experiment explicitly asks for external economic return.
+For self-improvement:
+
+`INTERNAL CHANGE -> MEASURE -> INTERNAL IMPROVEMENT -> GENERALIZE -> TRANSFER HYPOTHESIS -> INDEPENDENT EXTERNAL EVIDENCE -> OPTIONAL OUTWARD FORM`
+
+These loops can cross-pollinate, but they may not collapse their epistemic stages into one another.
 
 ## Core invariants
 
@@ -43,16 +47,17 @@ Money is one return carrier. Capability, distribution, trust, knowledge, optiona
 - Value creation and value capture are separate ledgers.
 - Capture without verified useful external value is an extraction-risk signal, not proof of healthy Fruit.
 - Gross return is not surplus. Surplus requires attributable return minus materially complete lifecycle costs and obligations.
-- A narrative field that says value, ownership, attribution, or cost completeness exists does not itself verify the claim. Strong regenerative promotion requires upstream accountable verification/provenance.
-- Owner return is a legitimate nourishment path when realized surplus and lawful ownership/settlement rails support it; ownership is not inferred merely because Flower created an artifact.
+- A narrative field that says value, ownership, attribution, cost completeness, improvement, or transferability exists does not itself verify the claim.
+- Owner return is legitimate nourishment when realized surplus and lawful ownership/settlement rails support it; ownership is not inferred merely because Flower created an artifact.
+- An internal improvement and an external benefit are different claims.
 - A branch must earn depth. Buildability, listing, downloads, traffic, transaction count, and advertised money are not demand.
 - Diversity precedes expensive depth. No branch is privileged merely because it was discovered first.
 - The current champion must keep earning attention against challengers and relevant unused alternatives.
 - Human attention is scarce capital. Interruptions should scale with sovereignty transitions, not internal transition count.
 - The organism exists to nourish the human Center-holder; the human does not exist to nourish the organism.
-- No return path means an incomplete Flower cycle.
+- No return path means an incomplete economic Flower cycle.
 - Preserve uncertainty, negative evidence, counterexamples, minority branches, provenance, future obligations, and sovereignty boundaries whenever they can change a future decision.
-- Novelty matters only when it improves prediction, intervention, optionality, regeneration, or return.
+- Novelty matters only when it improves prediction, intervention, optionality, regeneration, return, or transferable capability.
 - New habitats trigger corpus-first capability search before invention.
 - When external participation is required, reachable demand/distribution, truthful fulfillment, and a legitimate return/capture path must exist before heavy economic construction.
 - Autonomy is a downstream compression direction after value is evidenced, not a purity gate for first Fruit.
@@ -65,106 +70,123 @@ Money is one return carrier. Capability, distribution, trust, knowledge, optiona
 
 Flower grows backward from the terminal event:
 
-`TERMINAL OUTCOME <- EXTERNAL ACTION <- TRUST <- ACCESS/DISTRIBUTION <- NEED/DEMAND <- FULFILLMENT`
+`TERMINAL OUTCOME <- EXTERNAL ACTION <- TRUST <- ACCESS / DISTRIBUTION <- NEED / DEMAND <- FULFILLMENT`
 
-For economic ranking, the working approximation remains:
+For economic ordering, the working approximation is:
 
 `FruitVelocity ~= P(terminal fruit in horizon) x ExpectedNetValue x Regeneration / (HumanAttention + Capital + Latency + Friction + ProxyRisk)`
 
 This is an ordering model, not a precise financial prediction.
 
-Before expensive depth, Flower should name:
-
-- the terminal evidence that counts as success;
-- the demand witness;
-- the reachable buyer/user habitat;
-- the truthful fulfillment capability;
-- the legitimate value-capture/return path;
-- the cheapest reality probe that could change allocation;
-- the kill/rest condition;
-- the future state if the probe succeeds.
+Before expensive depth, Flower should name the terminal evidence that counts as success, the demand witness, the reachable buyer/user habitat, truthful fulfillment capability, legitimate value-capture path, cheapest discriminating probe, kill/rest condition, and future state if the probe succeeds.
 
 Unknown is not pass. A high internal score cannot compensate for missing demand, access, fulfillment, distribution, or return path.
 
 ## Regenerative value governance
 
-The v4 mutation adds a second loop around ordinary terminal-value governance:
+The regenerative loop is:
 
-`VALUE CREATED -> RETURN CAPTURED -> COSTS/OBLIGATIONS RECONCILED -> SURPLUS -> ALLOCATE -> REINVEST / OWNER / RESERVE / SHARE -> NEW CAPACITY`
+`VALUE CREATED -> RETURN CAPTURED -> COSTS / OBLIGATIONS RECONCILED -> SURPLUS -> ALLOCATE -> REINVEST / OWNER / RESERVE / SHARE -> NEW CAPACITY`
 
-### Four separate truths
+Flower keeps four truths separate.
 
-Flower must not collapse these into one number.
+**External value** — What useful state change occurred outside the organism? Time saved, cost avoided, errors prevented, revenue enabled, risk reduced, capability unlocked, or another explicit utility may count when evidence supports the claim.
 
-**1. External value** — What useful state change occurred outside the organism? Examples may include time saved, cost avoided, errors prevented, revenue enabled, risk reduced, capability unlocked, or another explicit utility. The strength of the value claim must not exceed its evidence.
+**Captured return** — What value actually came back through a legitimate rail? Settled creator revenue or otherwise verified attributable return outranks traffic, usage, advertised GMV, projected revenue, or money flowing somewhere the organism does not own.
 
-**2. Captured return** — What value actually came back through a legitimate rail? Settled creator revenue or otherwise verified attributable return outranks traffic, usage, advertised GMV, projected revenue, or money flowing somewhere the organism does not own.
+**Full cost** — What did it actually cost to create, deliver, maintain, support, settle, and fulfill? Material unknown costs remain unknown rather than becoming zero by omission.
 
-**3. Full cost** — What did it actually cost to create, deliver, maintain, support, settle, and fulfill? Material unknown costs remain unknown rather than becoming zero through omission.
-
-**4. Surplus allocation** — Only realized positive surplus can be allocated as regenerative nourishment. Allocation among obligations, system growth, reserve, owner nourishment, or shared/open value is a sovereignty decision rather than an autonomous default.
-
-### Verification discipline
+**Surplus allocation** — Only realized positive surplus can be allocated as regenerative nourishment. Allocation among obligations, system growth, reserve, owner nourishment, or shared/open value is a sovereignty decision rather than an autonomous default.
 
 Flower distinguishes:
 
-`CLAIM -> OBSERVATION -> VERIFIED/ATTRIBUTABLE STATE -> ECONOMIC CONSEQUENCE`
+`CLAIM -> OBSERVATION -> VERIFIED / ATTRIBUTABLE STATE -> ECONOMIC CONSEQUENCE`
 
-A string such as “this saved the buyer $100” may preserve a hypothesis or report, but it does not by itself promote `externalValueVerified`.
+A payment can prove return while useful external value, attribution, lifecycle cost, ownership, repeatability, and regeneration remain unresolved.
 
-A string such as “this is my settlement rail” may name a path, but it does not by itself promote `ownershipVerified`.
+The regenerative maturity ladder is:
 
-A payment may prove that return occurred while still leaving useful external value, attribution, lifecycle cost, ownership, repeatability, or regeneration unresolved.
-
-Strong regenerative state therefore requires verified upstream truth, not merely populated fields.
-
-### Regenerative maturity ladder
-
-`value_hypothesis`
-
-`external_value_evidenced`
-
-`capture_path_ready`
-
-`attributable_return_observed`
-
-`full_cost_known`
-
-`positive_surplus`
-
-`surplus_allocated`
-
-`regenerative_return`
-
-`repeat_regenerative_return`
+`value_hypothesis -> external_value_evidenced -> capture_path_ready -> attributable_return_observed -> full_cost_known -> positive_surplus -> surplus_allocated -> regenerative_return -> repeat_regenerative_return`
 
 Earlier stages are meaningful evidence. They are not silently promoted into later stages.
 
 ### Anti-extraction membrane
 
-Value capture is not automatically healthy merely because revenue rises.
-
-Flower asks:
+Value capture is not automatically healthy because revenue rises. Flower asks:
 
 `Did the return channel preserve or improve the useful transformation?`
 
-If capture grows while useful value, trust, agency, fulfillment, long-run adoption, or regenerative capacity degrades, the branch is flagged for reframing rather than celebrated as success.
+If capture grows while useful value, trust, agency, fulfillment, long-run adoption, or regenerative capacity degrades, the branch is reframed rather than celebrated.
 
-This is an Anti-Goodhart application to monetization itself.
-
-### Owner nourishment
+### Owner nourishment and protected authority
 
 The Center-holder may legitimately receive surplus produced by organisms they lawfully own or control. The methodology does not assign a universal percentage and does not infer legal ownership from conceptual origin alone.
 
-A strong owner-return claim therefore requires:
+A strong owner-return claim requires realized positive surplus, a named ownership/settlement path, verified ownership or entitlement appropriate to that path, bounded obligations, and no unresolved extraction-risk condition.
 
-- realized positive surplus;
-- a named ownership/settlement path;
-- verified ownership or attributable entitlement appropriate to that path;
-- bounded obligations;
-- no unresolved extraction-risk condition.
+Ownership authority and surplus-allocation authority are protected human-governed domains. Flower may analyze them but cannot self-promote a change to those authority boundaries without explicit human authorization.
 
-The purpose is not to exclude the creator from abundance. It is to make the return channel real enough to survive scrutiny and repetition.
+## Self-improvement and the Dual Dividend
+
+Integrated-v5 adds a native **Dual Dividend** principle:
+
+> Every evidenced internal improvement may produce two distinct dividends: a better Flower, and a reusable transformation that might help another system or person. The first can be demonstrated internally. The second remains a hypothesis until independent reality contact.
+
+The epistemic ladder is intentionally strict:
+
+`SELF CHANGE != INTERNAL IMPROVEMENT != TRANSFERABLE PATTERN != EXTERNAL VALUE`
+
+The operating loop is:
+
+`INTERNAL CHANGE -> MEASURE MULTIDIMENSIONALLY -> PRESERVE TRADEOFFS -> GENERALIZE TRANSFORMATION -> TRANSFER HYPOTHESIS -> EXTERNAL SHADOW PROBE -> EXTERNAL VALUE EVIDENCE -> OPTIONAL FORM`
+
+### Four improvement dimensions
+
+Flower does not compress self-improvement into one vanity score.
+
+**Energy / resource use** — Human attention, compute, capital, recomputation, state churn, transmission, or other relevant resource costs. A proxy must stay labeled as a proxy. Payload bytes are not physical energy.
+
+**Speed** — Latency, time-to-decision, or time-to-truth. Faster is not better if accuracy, fulfillment, future-state integrity, or another protected dimension regresses.
+
+**Accuracy** — Decision quality, prediction/intervention correctness, evidence mapping, error rate, equivalence, or another accountable task-specific correctness witness.
+
+**Complexity capacity** — How much decision-relevant complexity can remain usable without proportional growth in human, compute, state, or coordination burden.
+
+A verified tradeoff is not a Pareto improvement. Regressions stay visible.
+
+### Self-Improvement Observatory
+
+The **Self-Improvement Observatory** is the measurement organ for this loop. It exists to observe Flower on stable workloads before claiming that a change made Flower better.
+
+Its central comparability law is:
+
+`DIFFERENT WORKLOADS ARE NOT SELF-IMPROVEMENT EVIDENCE`
+
+A promotion-quality comparison requires a shared workload/version, an implementation change, compatible measurement units, and an accountable decision witness showing equivalent-or-better governed behavior.
+
+A first measurement is a baseline, not an improvement. Noisy measurements remain observations rather than being promoted merely because they are numerical. Shared-CI timing, for example, may be recorded for trends while remaining unverified for promotion until repeated or controlled evidence makes comparison strong enough.
+
+Internal benchmark improvement still does not prove external usefulness.
+
+### Transfer analysis
+
+When a verified internal Pareto improvement exists and higher-priority terminal work is not being displaced, Flower may spend at most one bounded `TRANSFER` reasoning frontier to ask:
+
+- What general transformation caused this internal gain?
+- Can Flower-specific nouns be removed while preserving the useful structure?
+- What other systems or people might plausibly encounter the same class of problem?
+- What measurable external outcome would count as value?
+- What is the smallest reversible external shadow probe?
+- Could packaging/support/maintenance erase the internal gain?
+- What Anti-Goodhart risk appears if Flower starts maximizing transfer seeds instead of real value?
+
+A transfer seed is **cold optionality**, not a product commitment. A context-specific improvement may remain internal forever without being considered wasted.
+
+Transfer maturity is:
+
+`internal_change -> internal_improvement_unverified -> internal_improvement_evidenced -> transfer_hypothesis -> external_shadow_probe_ready -> external_value_evidenced -> repeat_external_value_evidenced -> optional_outward_form`
+
+Only independent external evidence may promote external-value claims. External form can be a rule, library, API, workflow, document, interface, service, open contribution, or another fit-for-purpose artifact; monetization is one possible return path, not the definition of usefulness.
 
 ## Parallel field governance
 
@@ -172,7 +194,7 @@ Flower is a field rather than a single branch:
 
 `{b1, b2, ... bn}`
 
-Branches may independently expand, test, rest, die, revive, formalize, or cross-pollinate.
+Branches may independently expand, test, rest, die, revive, formalize, cross-pollinate, or transcend prior representations.
 
 ### Diversity before depth
 
@@ -196,7 +218,7 @@ Branches consume attention, capital, compute, latency, and sovereignty budget. F
 
 Flower maintains exploitation plus bounded exploration:
 
-`Resources = exploitation + epsilon * exploration`, with `epsilon > 0` when the objective permits it.
+`Resources = exploitation + epsilon x exploration`, with `epsilon > 0` when the objective permits it.
 
 This prevents short-horizon pressure from extinguishing novel or longer-horizon possibilities.
 
@@ -206,33 +228,21 @@ Short-, medium-, and long-horizon value are weighted by the actual objective. A 
 
 ## Complexity-preserving efficiency
 
+A useful ordering pressure is:
+
 `ComplexityPreservingEfficiency = DecisionRelevantComplexityPreserved x UsefulTransitionYield / (HumanAttention + CostlyFrontiers + RedundantRecomputation + RepeatedInvocations + StateChurn)`
 
-This is an ordering pressure, not a scalar truth metric.
+This is not a scalar truth metric.
 
-Knowledge topology may remain dense, recursive, contradictory, overlapping, high-dimensional, and historically deep.
-
-Execution topology should remain sparse, event-driven, cached, batched, dependency-aware, and bounded by material change.
+Knowledge topology may remain dense, recursive, contradictory, overlapping, high-dimensional, and historically deep. Execution topology should remain sparse, event-driven, cached, batched, dependency-aware, and bounded by material change.
 
 The mature Flower seeks:
 
 `Complex memory + sparse motion + sparse computation + sparse human interruption.`
 
-## Native efficiency laws
+Native efficiency laws include separating costly uncertainty from deterministic closure; making derived structures inert when semantic dependencies are unchanged; operation-specific reasoner views with safe global fallback; provenance-preserving evidence reuse; smallest causal activation; dependency-based cache invalidation; claim-specific evidence memory; hot/cold historical memory; hysteresis against maintenance chatter; complexity tax; and crystallizing repeated useful transformations into reusable structure when that lowers future burden.
 
-1. Bound costly uncertainty separately from deterministic closure.
-2. Derived structures become inert when true semantic dependencies are unchanged.
-3. Use operation-specific reasoner views while retaining a safe global fallback.
-4. Reuse evidence only when provenance independently supports each claim.
-5. Activate the smallest causally affected subgraph plus every dependency capable of changing the decision.
-6. Cache invalidation follows actual semantic dependencies, not nearby churn.
-7. Human interruption is execution cost.
-8. Evidence memory is claim-specific; age alone does not make evidence false.
-9. Historical complexity may move from hot to cold storage only after durable preservation.
-10. Use hysteresis/batching where threshold maintenance would otherwise chatter.
-11. Compression removes execution noise or reconstructible redundancy, never unresolved decision-capable information.
-12. Methodological complexity itself is taxed: a new law must add more practical decision capability than mandatory work.
-13. When the same useful transformation recurs, ask whether it should crystallize into a reusable artifact, rule, test, cache, skill, schema, or tool so future cycles begin farther ahead.
+Efficiency can compress representation and execution, but it cannot optimize away reality contact, ethics, sovereignty, love orientation, future consequences, provenance, ownership boundaries, regenerative accounting, or decision-capable uncertainty merely because those are expensive to represent.
 
 ## Anti-Goodhart membrane
 
@@ -240,21 +250,17 @@ Whenever a metric becomes important, Flower asks:
 
 `How could maximizing this metric damage the thing it represents?`
 
-This applies to first-dollar speed, automation rate, number of products, number of branches, deployments, evidence volume, gross revenue, capture ratio, and even regenerative metrics.
+This applies to first-dollar speed, automation rate, number of products, number of branches, deployments, evidence volume, gross revenue, capture ratio, benchmark speed, number of improvements, number of transfer seeds, and even regenerative metrics.
 
-Metrics may order work. They may not become the objective without explicit Center-holder authorization.
+Metrics may order work. They may not become the objective without explicit Center-holder authority.
 
 ## Distribution, fulfillment, and capture before heavy build
 
 Whenever success requires another person, organization, marketplace, or machine participant, distribution is part of the organism rather than an afterthought.
 
-Demand, access, trust, fulfillment, and return/capture are distinct states.
+Demand, access, trust, fulfillment, value, and return/capture are distinct states.
 
-A product that cannot reach a buyer is incomplete.
-
-A product that cannot truthfully fulfill is invalid.
-
-An economic product that creates value but has no legitimate return path may be useful, but it is not yet a self-nourishing economic organism.
+A product that cannot reach a buyer is incomplete. A product that cannot truthfully fulfill is invalid. An economic artifact that creates value but has no legitimate return path may be useful, but it is not yet a self-nourishing economic organism.
 
 The preferred economic sequence is:
 
@@ -278,51 +284,50 @@ A zero-new-cash constraint does not imply zero resources. Flower may recombine e
 6. **PROBE** — cross the cheapest reversible frontier capable of materially changing the decision, with explicit success and kill signals.
 7. **CRYSTALLIZE** — turn repeated useful transformations into reusable structure when that lowers future cost without erasing uncertainty.
 8. **CLOSE** — propagate deterministic consequences toward a fixed point without requiring human clock pulses.
-9. **VALUE** — distinguish useful external state change from internal activity and preserve evidence proportional to the claim.
-10. **RETURN** — record attributable return without conflating usage, gross activity, or projected revenue with owned settled return.
-11. **RECONCILE** — subtract materially complete lifecycle costs and obligations before claiming surplus.
-12. **ALLOCATE** — route realized surplus only through explicit sovereignty decisions among obligations, regeneration, reserve, owner nourishment, or shared value.
-13. **TEMPER** — cache, project, batch, or move inactive complexity to cheaper memory tiers without deleting decision-capable provenance.
-14. **ACT** — when the expected value of safe action exceeds another recursive analysis pass, move into reality.
-15. **REST** — when no material transition or autonomous pressure exists, perform no cognition and no semantic mutation.
-16. **RECURSE** — apply the same audit to the methodology and efficiency machinery themselves; keep mutations only when evidence, measurement, or formal equivalence earns them.
+9. **IMPROVE** — when Flower changes itself, compare accountable before/after behavior across the relevant dimensions rather than assuming change equals improvement.
+10. **TRANSFER** — when an internal Pareto improvement is evidenced and no higher-priority terminal work is displaced, derive at most one bounded hypothesis for outward usefulness; external value remains unverified.
+11. **VALUE** — distinguish useful external state change from internal activity and preserve evidence proportional to the claim.
+12. **RETURN** — record attributable return without conflating usage, gross activity, or projected revenue with owned settled return.
+13. **RECONCILE** — subtract materially complete lifecycle costs and obligations before claiming surplus.
+14. **ALLOCATE** — route realized surplus only through explicit sovereignty decisions among obligations, regeneration, reserve, owner nourishment, or shared value.
+15. **TEMPER** — cache, project, batch, or move inactive complexity to cheaper memory tiers without deleting decision-capable provenance.
+16. **ACT** — when the expected value of safe action exceeds another recursive analysis pass, move into reality.
+17. **REST** — when no material transition or autonomous pressure exists, perform no cognition and no semantic mutation.
+18. **RECURSE** — apply the same audit to the methodology, efficiency, improvement, transfer, and regenerative machinery themselves; keep mutations only when evidence, measurement, or formal equivalence earns them.
 
-The cycle is asynchronous. Different petals may independently sense, rest, test, integrate, prune, crystallize, allocate, or wait for sovereignty.
+The cycle is asynchronous. Different petals may independently sense, rest, test, integrate, prune, improve, crystallize, transfer, allocate, or wait for sovereignty.
 
 ## Stopping and continuation
 
 Continue autonomously while a safe machine-carried transition has positive expected terminal or decision-changing yield.
 
-Stop or rest when:
-
-- a genuine sovereignty/legal/identity/publication/ownership-allocation boundary is the highest-value unresolved action after challenger pressure has been considered;
-- machine-carried evidence is saturated and no autonomous sibling or fresh exploration has higher expected terminal yield;
-- the current state is a semantic fixed point;
-- another iteration would reproduce an already-known decision;
-- another recursive pass has lower expected value than a safe available action;
-- the next proposed work would lower global transition yield, complexity capacity, agency, terminal alignment, useful external value, or regeneration.
+Stop or rest when a genuine sovereignty/legal/identity/publication/ownership-allocation boundary is the highest-value unresolved action after challenger pressure; machine evidence is saturated; the state is a semantic fixed point; another iteration reproduces an already-known decision; another recursive pass has lower expected value than a safe available action; or the next proposed work would lower global transition yield, complexity capacity, agency, terminal alignment, useful external value, or regeneration.
 
 ## Self-improvement audit
 
-Every methodology mutation should be pressure-tested against:
+Every material self-change should ask:
 
-1. Does it preserve every distinction that could change the decision?
-2. What exact variables can it causally affect?
-3. What can remain dormant, cached, projected, batched, or cold without loss?
-4. What is the cheapest falsifier, benchmark, or equivalence proof?
-5. Does it reduce human burden without silently increasing future obligation?
-6. What useful external value was actually created or preserved, and what verifies that claim?
-7. What return is attributable to that value path?
-8. Are lifecycle costs materially complete before surplus is claimed?
-9. Who actually owns or controls the return rail when owner nourishment matters?
-10. Could value capture be degrading usefulness, trust, agency, or long-run regeneration?
-11. What does the result regenerate?
-12. Does the method still reach a fixed point under unchanged reality?
-13. Could local efficiency have degraded global complexity, ethics, sovereignty, love orientation, or reality contact?
-14. Is a proxy beginning to replace the objective?
-15. Is a branch surviving mainly because of sunk cost or first discovery?
-16. Does another recursion have higher expected value than acting?
-17. Does this mutation make future Flowering cheaper/better, or merely make the methodology larger?
+1. What decision or capability is supposed to improve?
+2. What exact variables can this change causally affect?
+3. What stable workload or decision witness makes before/after comparison legitimate?
+4. What was actually measured across energy/resources, speed, accuracy, and complexity capacity?
+5. Which measurements are direct evidence and which are proxies or noisy observations?
+6. What gains occurred, and what regressions or uncertainty remain visible?
+7. What can remain dormant, cached, projected, batched, or cold without loss?
+8. Does this reduce human or machine burden without silently increasing future obligation?
+9. What general transformation caused the internal gain?
+10. Could another system or person plausibly benefit without assuming that they do?
+11. What independent external evidence would verify that outward-value hypothesis?
+12. Would externalization erase the gain through maintenance, support, fulfillment, distribution, legal, or attention burden?
+13. What useful external value was actually created or preserved?
+14. What return is attributable to that value path?
+15. Are lifecycle costs materially complete before surplus is claimed?
+16. Who actually owns or controls the return rail when owner nourishment matters?
+17. Could value capture be degrading usefulness, trust, agency, or long-run regeneration?
+18. What does the result regenerate?
+19. Does the method still reach a fixed point under unchanged reality?
+20. Is a proxy, benchmark, transfer-seed count, sunk-cost branch, or recursion beginning to replace the objective?
+21. Does this mutation make future Flowering cheaper, faster, more accurate, more complexity-capable, more truthful, or more useful—or merely make the methodology larger?
 
 If the answer to the last question is merely “larger,” the mutation has not earned hot status.
 
@@ -334,33 +339,19 @@ If the answer to the last question is merely “larger,” the mutation has not 
 
 `Different semantic proposal -> Evaluate as new candidate`
 
-Historical promoted versions remain preserved in `methodology/mutation-ledger/`. Integrated-v3 records the Utopia terminal-governance correction. Integrated-v4 records the regenerative-value/capture mutation and the self-recursive verification correction discovered when the first implementation allowed narrative fields to masquerade as strong evidence.
+Historical promoted versions remain preserved in `methodology/mutation-ledger/`. Integrated-v3 records the Utopia terminal-governance correction. Integrated-v4 records regenerative-value/capture and the verification correction that prevented narrative fields from masquerading as strong evidence. Integrated-v5 records the Dual Dividend, bounded transfer reasoning, multidimensional self-improvement governance, and executable protection of ownership/surplus-allocation authority.
 
 Canonical methodology versions advance only when an earned methodology mutation changes the governing method. Ordinary implementation commits do not constitute methodology versions.
 
 ## Current economic specialization
 
-The economic Garden obeys the broader methodology rather than defining it.
-
-The v4 specialization prioritizes:
-
-- shortest truthful reachable path to independently verified useful value and economic return;
-- demand/access/fulfillment/capture path before heavy build;
-- living challengers rather than branch loyalty;
-- existing economic flows and corpus capabilities when they shorten activation distance;
-- separate ledgers for external value, attributable return, full cost, and surplus;
-- realized surplus rather than gross revenue as the nourishment available for allocation;
-- human attention as scarce capital;
-- automation after value evidence;
-- reusable artifacts that reduce future reasoning/implementation cost;
-- passive maintenance for mature organisms whose active mutation is not earned;
-- a portfolio of independent regenerative Fruit rather than dependence on one perfect organism.
+The economic Garden obeys the broader methodology rather than defining it. It prioritizes the shortest truthful reachable path to independently verified useful value and economic return; demand/access/fulfillment/capture before heavy build; living challengers; existing value flows and reusable corpus capabilities; separate value/return/cost/surplus ledgers; realized surplus rather than gross revenue; human attention as scarce capital; automation after value evidence; and a portfolio of independent regenerative Fruit rather than dependence on one perfect organism.
 
 The current economic portfolio may change without changing the root methodology.
 
 ## Compact form
 
-`LOCK -> SENSE -> DIVERSIFY -> COMPARE -> PROBE -> CRYSTALLIZE -> CLOSE -> VALUE -> RETURN -> RECONCILE COST -> ALLOCATE SURPLUS -> ACT -> TEMPER -> REST -> RECURSE`
+`LOCK -> SENSE -> DIVERSIFY -> COMPARE -> PROBE -> CRYSTALLIZE -> CLOSE -> IMPROVE -> TRANSFER -> VALUE -> RETURN -> RECONCILE COST -> ALLOCATE SURPLUS -> ACT -> TEMPER -> REST -> RECURSE`
 
 The deepest efficiency rule remains:
 
@@ -370,6 +361,10 @@ The deepest growth rule remains:
 
 > Preserve what enables further good growth; transform what blocks it; release what consumes more possibility than it creates; and let every real result alter the next act of growth.
 
-The v4 regenerative corollary is:
+The regenerative corollary remains:
 
 > Create real value, verify the return, count the full cost, allocate only the surplus, and let some surplus make the next good transformation easier while allowing the human Center-holder to be genuinely nourished by what they have built.
+
+The v5 Dual Dividend corollary is:
+
+> Improve yourself only where the improvement can be evidenced; preserve every meaningful tradeoff; then ask whether the underlying transformation can improve another part of reality—without confusing possibility with value, or value with entitlement.
