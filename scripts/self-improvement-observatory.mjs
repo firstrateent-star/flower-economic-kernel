@@ -4,9 +4,12 @@ import { createHash } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { buildReasonerGardenView } from '../src/core/reasoner-view.js';
 import { classifyPressure } from '../src/core/pressure.js';
+import { compareImprovementObservations } from '../src/core/improvement-observatory.js';
 
 const OUTPUT_PATH = process.env.FLOWER_IMPROVEMENT_REPORT
   || 'reports/self-improvement-observatory-latest.json';
+const BASELINE_PATH = process.env.FLOWER_IMPROVEMENT_BASELINE
+  || 'benchmarks/self-improvement-baseline-v2.json';
 const REVISION_KEY = process.env.GITHUB_SHA
   || process.env.FLOWER_IMPLEMENTATION_KEY
   || 'working-tree';
@@ -33,6 +36,15 @@ async function causalImplementationFingerprint() {
     hash.update('\0');
   }
   return `causal_${hash.digest('hex').slice(0, 24)}`;
+}
+
+async function readBaseline() {
+  try {
+    return JSON.parse(await fs.readFile(BASELINE_PATH, 'utf8'));
+  } catch (error) {
+    if (error?.code === 'ENOENT') return null;
+    throw error;
+  }
 }
 
 function makeGarden(portfolioSize = 1) {
@@ -153,6 +165,68 @@ function measureTargetedProjection(portfolioSize, iterations = 150) {
   };
 }
 
+function observationFromReport(report) {
+  return {
+    workloadKey: report.workloadKey,
+    workloadVersion: report.workloadVersion,
+    implementationKey: report.implementationKey,
+    measuredAt: report.completedAt,
+    dimensions: report.dimensions,
+    decisionWitness: report.decisionWitness,
+    evidenceSources: [`revision:${report.revisionKey}`],
+    caveats: report.caveats,
+  };
+}
+
+function summarizeBaselineComparison(baseline, currentObservation) {
+  if (!baseline) {
+    return {
+      state: 'baseline_missing',
+      comparisonValid: false,
+      selfImprovementObserved: false,
+      reason: `No baseline exists at ${BASELINE_PATH}.`,
+    };
+  }
+
+  if (baseline.implementationKey === currentObservation.implementationKey) {
+    return {
+      state: 'same_causal_implementation',
+      comparisonValid: false,
+      selfImprovementObserved: false,
+      reason: 'Repository revision changed without changing this workload\'s declared causal implementation fingerprint.',
+      baselineImplementationKey: baseline.implementationKey,
+      currentImplementationKey: currentObservation.implementationKey,
+    };
+  }
+
+  const comparison = compareImprovementObservations(baseline, currentObservation, {
+    name: 'Fixture-scoped Flower causal implementation comparison',
+    description: 'Compares the current causal implementation against the canonical v2 observatory baseline on the declared stable workload only.',
+    sourceArtifact: OUTPUT_PATH,
+  });
+
+  return {
+    state: comparison.comparisonValid
+      ? comparison.assessment.internalState
+      : 'not_comparable',
+    comparisonValid: comparison.comparisonValid,
+    selfImprovementObserved: comparison.comparisonValid
+      && comparison.assessment.internalState === 'internal_improvement_evidenced',
+    sameWorkload: comparison.sameWorkload,
+    implementationChanged: comparison.implementationChanged,
+    witnessMode: comparison.witness.mode,
+    improvedDimensions: comparison.assessment.improvedDimensions,
+    regressedDimensions: comparison.assessment.regressedDimensions,
+    unitMismatches: comparison.unitMismatches,
+    baselineImplementationKey: baseline.implementationKey,
+    currentImplementationKey: currentObservation.implementationKey,
+    internalImprovementCandidate: comparison.comparisonValid
+      ? comparison.improvement
+      : null,
+    scopeNote: 'Any improvement state is scoped only to this declared workload and its decision witness. It is not a claim of global Flower improvement or external value.',
+  };
+}
+
 async function main() {
   const startedAt = new Date().toISOString();
   const implementationKey = await causalImplementationFingerprint();
@@ -166,7 +240,7 @@ async function main() {
     .reduce((max, value) => Math.max(max, value), 0);
 
   const report = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     probe: 'flower_self_improvement_observatory_v2',
     epistemicStatus: 'observation_only',
     startedAt,
@@ -220,9 +294,9 @@ async function main() {
     projections,
     decisionFixtures: decisions,
     physicalEnergyMeasured: false,
+    baselinePath: BASELINE_PATH,
     currentClaims: {
       selfImprovementObserved: false,
-      why: 'This run establishes an accountable observation. Improvement requires a comparable prior observation from the same workload/version and a different causal implementation fingerprint.',
       externalValueObserved: false,
     },
     caveats: [
@@ -233,6 +307,18 @@ async function main() {
       'A benchmark improvement would prove only an internal gain on this fixture; external usefulness requires separate evidence.',
     ],
   };
+
+  const baseline = await readBaseline();
+  const baselineComparison = summarizeBaselineComparison(baseline, observationFromReport(report));
+  report.baselineComparison = baselineComparison;
+  report.currentClaims.selfImprovementObserved = baselineComparison.selfImprovementObserved === true;
+  report.currentClaims.selfImprovementScope = baselineComparison.selfImprovementObserved
+    ? 'fixture_scoped_internal_only'
+    : null;
+  report.currentClaims.externalValueObserved = false;
+  report.currentClaims.why = baselineComparison.selfImprovementObserved
+    ? 'A comparable causal implementation improved this stable internal workload without a verified regression. External usefulness remains unverified.'
+    : baselineComparison.reason ?? baselineComparison.scopeNote ?? 'No promotion-quality internal improvement was observed.';
 
   await fs.mkdir(path.dirname(OUTPUT_PATH), { recursive: true });
   await fs.writeFile(OUTPUT_PATH, `${JSON.stringify(report, null, 2)}\n`);
