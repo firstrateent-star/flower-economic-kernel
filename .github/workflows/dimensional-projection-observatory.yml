@@ -14,6 +14,7 @@ on:
       - 'tests/activation-projection-audit.test.js'
       - 'tests/dimensional-projection-math.test.js'
       - 'tests/an-flower-shell.test.js'
+      - 'tests/an-growth.test.js'
       - 'docs/FLOWER_ORIGIN_PROVENANCE.md'
       - 'docs/DIMENSIONAL_INQUIRY_LOCAL_CHARTS_2026-08-30.md'
       - '.github/workflows/dimensional-projection-observatory.yml'
@@ -34,8 +35,9 @@ jobs:
           node --check src/core/activation-projection-audit.js
           node --check research/dimensional/projection-ambiguity.js
           node --check research/dimensional/an-flower-shell.js
+          node --check research/dimensional/an-growth.js
           node --check scripts/dimensional-projection-observatory.mjs
-          node --test tests/activation-projection-audit.test.js tests/dimensional-projection-math.test.js tests/an-flower-shell.test.js
+          node --test tests/activation-projection-audit.test.js tests/dimensional-projection-math.test.js tests/an-flower-shell.test.js tests/an-growth.test.js
       - name: Run real-Garden dimensional projection baseline
         run: node scripts/dimensional-projection-observatory.mjs
       - name: Validate epistemic membrane
