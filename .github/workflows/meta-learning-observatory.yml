@@ -1,0 +1,55 @@
+name: Flower Meta-Learning Observatory
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'methodology/meta-learning/**'
+      - 'methodology/mutation-ledger/**'
+      - 'src/core/meta-learning.js'
+      - 'scripts/meta-learning-observatory.mjs'
+      - 'tests/meta-learning.test.js'
+      - '.github/workflows/meta-learning-observatory.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  meta-learn:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate meta-learning code
+        run: |
+          node --check src/core/meta-learning.js
+          node --check scripts/meta-learning-observatory.mjs
+          node --test tests/meta-learning.test.js
+      - name: Run historical meta-learning Observatory
+        run: node scripts/meta-learning-observatory.mjs
+      - name: Validate epistemic boundaries
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('reports/meta-learning-observatory-latest.json', 'utf8'));
+          if (report.epistemicStatus !== 'historical_meta_learning_candidate_not_causal_proof') throw new Error('Meta-learning report overstated epistemic status.');
+          if (report.externalFlourishingClaim !== false) throw new Error('Internal lineage may not claim external flourishing.');
+          if (report.candidateRules.some((rule) => rule.eligibleForCanonicalPromotion === true)) throw new Error('Historical recurrence may not self-promote a canonical rule.');
+          if (!report.selfAudit?.risks?.some((risk) => risk.startsWith('survivor_bias'))) throw new Error('v1 history should expose missing negative controls.');
+          console.log(JSON.stringify({
+            nextPressure: report.nextPressure,
+            selfAudit: report.selfAudit,
+            topMechanisms: report.mechanismStats.slice(0, 8),
+            candidateRules: report.candidateRules,
+          }, null, 2));
+          NODE
+      - name: Upload meta-learning report
+        uses: actions/upload-artifact@v4
+        with:
+          name: flower-meta-learning-observatory
+          path: reports/meta-learning-observatory-latest.json
+          if-no-files-found: error
+          retention-days: 14
