@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import seed from '../garden/seed.json' with { type: 'json' };
+import seed from './fixtures/test-seed.js';
 import { FRUIT_OF_LIFE_CENTERS, refreshGeometry } from '../src/core/geometry.js';
 
 test('Fruit-of-Life geometry exposes exactly thirteen functional centers without making them thirteen mandatory tests', () => {
