@@ -141,6 +141,7 @@ await Actor.main(async () => {
       reasoner,
       maxBreaths,
       maxCostlyBreaths,
+      syncManifests: false,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
