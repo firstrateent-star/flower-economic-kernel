@@ -1,0 +1,40 @@
+name: Deploy Social Preview Drift Guard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'actors/social-preview-drift-guard/**'
+      - '.github/workflows/deploy-social-preview-drift-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: actors/social-preview-drift-guard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Actor dependencies
+        run: npm install --ignore-scripts
+      - name: Verify Actor
+        run: npm run check && npm test
+      - name: Require Apify token
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          if [ -z "$APIFY_TOKEN" ]; then
+            echo "APIFY_TOKEN repository secret is missing; refusing deploy."
+            exit 1
+          fi
+      - name: Push existing Actor to Apify
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: npx --yes apify-cli@latest actors push 7EskFvYOwxznhKYhj --force
