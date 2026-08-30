@@ -33,6 +33,7 @@ test('decision checkpoint is content-addressed, reproducible, and does not mutat
   const b = createDecisionCheckpoint(input);
   assert.equal(a.checkpointHash, b.checkpointHash);
   assert.equal(a.snapshotHash, b.snapshotHash);
+  assert.equal(a.evidenceManifestHash, b.evidenceManifestHash);
   assert.equal(a.id, b.id);
   assert.equal(a.capturedAt, FIXED_CAPTURE);
   assert.equal(a.captureClock, 'runtime_wall_clock');
@@ -71,6 +72,17 @@ test('tampering with a checkpoint snapshot is detected', () => {
   assert.deepEqual(verifyDecisionCheckpoint(checkpoint), { ok: false, reason: 'snapshot_hash_mismatch' });
 });
 
+test('tampering with admissible evidence manifest is detected independently of snapshot integrity', () => {
+  const checkpoint = createDecisionCheckpoint({
+    garden: structuredClone(seed),
+    pressure: { type: 'HUMAN', targetId: 'fruit_changed_method_navigator' },
+    asOf: '2026-08-30T18:29:00.000Z',
+    clock: fixedClock,
+  });
+  checkpoint.evidenceManifest.admissibleIds.push('invented:future_fact');
+  assert.deepEqual(verifyDecisionCheckpoint(checkpoint), { ok: false, reason: 'evidence_manifest_mismatch' });
+});
+
 test('persistence is cold-storage-first and checkpoint itself remains outside the Garden', async () => {
   const garden = structuredClone(seed);
   const before = JSON.stringify(garden);
@@ -86,6 +98,7 @@ test('persistence is cold-storage-first and checkpoint itself remains outside th
     sink: async (value) => saved.set(value.checkpointHash, structuredClone(value)),
   });
   assert.equal(result.persisted, true);
+  assert.equal(result.evidenceManifestHash, checkpoint.evidenceManifestHash);
   assert.equal(saved.size, 1);
   assert.equal(JSON.stringify(garden), before);
   assert.equal(garden.decisionCheckpoints, undefined);
