@@ -3,43 +3,52 @@ import assert from 'node:assert/strict';
 import seed from '../garden/seed.json' with { type: 'json' };
 import { classifyPressure } from '../src/core/pressure.js';
 
-test('seeded Garden does not let a legacy live Fruit block an autonomous experiment', () => {
+function blankGarden() {
   const g = structuredClone(seed);
-  assert.deepEqual(classifyPressure(g), {
-    type: 'EXPERIMENT',
-    targetId: 'opp_maps_website_pointer_guard',
-    why: 'The idea is plausible but lacks external evidence; design the cheapest discriminating reality test.'
-  });
+  g.opportunities = [];
+  g.experiments = [];
+  g.events = [];
+  g.approvals = [];
+  g.fruits = [];
+  g.humanActuationQueue = [];
+  return g;
+}
+
+test('canonical Garden surfaces the ranked Changed Method Navigator human membrane instead of speculative expansion', () => {
+  const g = structuredClone(seed);
+  const pressure = classifyPressure(g);
+  assert.equal(pressure.type, 'HUMAN');
+  assert.equal(pressure.targetId, 'fruit_changed_method_navigator');
+  assert.match(pressure.why, /Autonomous work is exhausted/);
 });
 
 test('pending explicit approval still stops autonomous cognition', () => {
-  const g = structuredClone(seed);
+  const g = blankGarden();
   g.approvals.push({ id: 'a1', status: 'pending' });
   assert.equal(classifyPressure(g).type, 'HUMAN');
   assert.equal(classifyPressure(g).targetId, 'a1');
 });
 
 test('validated autonomous branch outranks an unrelated parked human membrane', () => {
-  const g = structuredClone(seed);
+  const g = blankGarden();
   g.fruits.push({
     id: 'fruit_waiting_human',
     name: 'Waiting Human Fruit',
-    status: 'private_verified',
+    status: 'market_ready_private',
     sourcePath: 'actors/waiting-human',
   });
-  g.opportunities = [
-    {
-      ...structuredClone(seed.opportunities[0]),
-      id: 'opp_validated',
-      status: 'validated',
-      fruitId: null,
-    },
-    {
-      ...structuredClone(seed.opportunities[0]),
-      id: 'opp_reserve',
-      status: 'needs_test',
-    },
-  ];
+  g.humanActuationQueue.push({
+    rank: 1,
+    organismId: 'fruit_waiting_human',
+    state: 'awaiting_explicit_authorization',
+    why: 'A real user exposure decision remains.',
+  });
+  g.opportunities = [{
+    id: 'opp_validated',
+    name: 'Validated autonomous work',
+    status: 'validated',
+    fruitId: null,
+  }];
 
   assert.deepEqual(classifyPressure(g), {
     type: 'BUILD_PLAN',
@@ -48,23 +57,41 @@ test('validated autonomous branch outranks an unrelated parked human membrane', 
   });
 });
 
-test('publish-ready human boundary surfaces only after autonomous work is exhausted', () => {
-  const g = structuredClone(seed);
-  g.opportunities = g.opportunities.map((x) => ({ ...x, status: 'compost' }));
+test('ranked explicit human actuation outranks fallback Fruit status when autonomous work is exhausted', () => {
+  const g = blankGarden();
   g.fruits.push(
     { id: 'fruit_verified', name: 'Verified', status: 'private_verified', sourcePath: 'actors/verified' },
-    { id: 'fruit_publish', name: 'Publish', status: 'publish_ready', sourcePath: 'actors/publish' },
+    { id: 'fruit_market_ready', name: 'Market Ready', status: 'market_ready_private', sourcePath: 'actors/market-ready' },
   );
+  g.humanActuationQueue.push({
+    rank: 1,
+    organismId: 'fruit_verified',
+    state: 'awaiting_explicit_authorization',
+    why: 'This queued actuation has already won the portfolio ranking.',
+  });
 
   const pressure = classifyPressure(g);
   assert.equal(pressure.type, 'HUMAN');
-  assert.equal(pressure.targetId, 'fruit_publish');
-  assert.match(pressure.why, /Autonomous work is exhausted/);
+  assert.equal(pressure.targetId, 'fruit_verified');
+  assert.match(pressure.why, /portfolio ranking/);
+});
+
+test('market-ready private Fruit is recognized by legacy fallback when queue is absent', () => {
+  const g = blankGarden();
+  g.fruits = [{
+    id: 'fruit_market_ready',
+    name: 'Market Ready',
+    status: 'market_ready_private',
+  }];
+
+  const pressure = classifyPressure(g);
+  assert.equal(pressure.type, 'HUMAN');
+  assert.equal(pressure.targetId, 'fruit_market_ready');
+  assert.match(pressure.why, /market-ready private Fruit/);
 });
 
 test('live Fruit awaiting stranger usage is observation, not a human task', () => {
-  const g = structuredClone(seed);
-  g.opportunities = g.opportunities.map((x) => ({ ...x, status: 'compost' }));
+  const g = blankGarden();
   g.fruits = [{
     id: 'fruit_live_wait',
     name: 'Live Fruit',
