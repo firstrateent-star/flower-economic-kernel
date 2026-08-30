@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "id": "human_boundary_changed_method_navigator_hidden_probe",
+  "targetId": "fruit_changed_method_navigator",
+  "goal": "Cross only the minimum human-authority membrane required to submit the already-built Changed Method Navigator as a free hidden JetBrains Marketplace probe, while preserving private source and avoiding public discoverability until separately authorized.",
+  "evidenceObservedAt": "2026-08-30",
+  "decisions": [
+    {
+      "id": "authorize_hidden_initial_upload",
+      "kind": "publication_authority",
+      "authority": "human",
+      "required": true,
+      "prompt": "Authorize an initial JetBrains Marketplace upload with Hidden enabled, while keeping public/unhidden release unauthorized.",
+      "reversibility": "Hidden initial release can be removed while hidden; later unhiding is a separate irreversible discoverability decision.",
+      "recommendedPosture": "authorize hidden only",
+      "source": "https://plugins.jetbrains.com/docs/marketplace/hidden-plugin.html"
+    },
+    {
+      "id": "vendor_identity",
+      "kind": "identity_choice",
+      "authority": "human",
+      "required": true,
+      "prompt": "Choose the Vendor profile identity and immutable Vendor ID under which the plugin will be published.",
+      "reversibility": "Vendor ID is not editable later; public name/email/website can be updated later.",
+      "source": "https://plugins.jetbrains.com/docs/marketplace/organizations.html"
+    },
+    {
+      "id": "trader_status",
+      "kind": "legal_status",
+      "authority": "human",
+      "required": true,
+      "prompt": "Declare trader or non-trader status for the Vendor profile based on the Center-holder's actual legal/commercial status.",
+      "reversibility": "Treat as a legal-status declaration; do not infer automatically.",
+      "source": "https://plugins.jetbrains.com/docs/marketplace/organizations.html"
+    },
+    {
+      "id": "accept_developer_agreement",
+      "kind": "agreement_acceptance",
+      "authority": "human",
+      "required": true,
+      "prompt": "Review and accept the JetBrains Marketplace Developer Agreement if willing to proceed with upload.",
+      "reversibility": "Legal acceptance cannot be delegated to the machine.",
+      "source": "https://plugins.jetbrains.com/docs/marketplace/legal-agreements.html"
+    },
+    {
+      "id": "eula_license_posture",
+      "kind": "license_eula",
+      "authority": "human",
+      "required": true,
+      "prompt": "Choose/approve the Developer EULA or license posture for the plugin. Preserve private source unless the Center-holder deliberately chooses an open-source license and source-link obligation.",
+      "reversibility": "License/EULA changes can have legal and IP consequences; machine may prepare language but may not choose the posture.",
+      "recommendedPosture": "private-source/proprietary Developer EULA for the hidden probe unless deliberately changed",
+      "source": "https://plugins.jetbrains.com/docs/marketplace/uploading-a-new-plugin.html"
+    }
+  ],
+  "machineActions": [
+    {
+      "id": "set_final_vendor_metadata",
+      "dependsOn": ["vendor_identity"],
+      "action": "Insert the chosen Vendor identity into plugin metadata without inventing optional contact fields."
+    },
+    {
+      "id": "prepare_eula_artifact",
+      "dependsOn": ["eula_license_posture"],
+      "action": "Prepare the selected Developer EULA/license artifact for review/upload."
+    },
+    {
+      "id": "rebuild_and_verify_binary",
+      "dependsOn": ["vendor_identity", "eula_license_posture"],
+      "action": "Rebuild the plugin and rerun real PSI tests, IntelliJ SDK build, Plugin Verifier, and packaged-artifact inspection."
+    },
+    {
+      "id": "configure_free_hidden_release",
+      "dependsOn": ["authorize_hidden_initial_upload"],
+      "action": "Keep the probe free, omit paid/freemium product descriptor, and set Hidden for the initial upload."
+    },
+    {
+      "id": "prepare_upload_payload",
+      "dependsOn": ["vendor_identity", "eula_license_posture", "authorize_hidden_initial_upload"],
+      "action": "Assemble the verified ZIP plus Marketplace description, change notes, icon, tags, and hidden-release configuration."
+    },
+    {
+      "id": "perform_marketplace_upload_after_human_session",
+      "dependsOn": ["authorize_hidden_initial_upload", "vendor_identity", "trader_status", "accept_developer_agreement", "eula_license_posture"],
+      "action": "Once the Center-holder has completed identity/legal actions in the JetBrains account, upload the verified package as Hidden. Do not unhide or monetize without separate authority."
+    },
+    {
+      "id": "generate_direct_beta_link_and_observation_plan",
+      "dependsOn": ["authorize_hidden_initial_upload"],
+      "action": "After Marketplace approval, preserve the direct hidden-plugin link and define the smallest independent-user observation needed to resolve Market Truth."
+    }
+  ]
+}
