@@ -5,6 +5,8 @@ import { migrateLegacyRuntimeState } from './legacy-state-migrations.js';
 import { syncFruitManifests } from './fruit-forge.js';
 import { reconcileDistributionTruth } from './distribution-truth.js';
 import { reconcileHumanActuationGates } from './actuation-gates.js';
+import { reconcileImprovementEvidenceLedger } from './improvement-ledger.js';
+import { reconcileImprovementTransferSeeds } from './improvement-transfer.js';
 
 export async function prepareRuntimeState({
   garden,
@@ -20,6 +22,8 @@ export async function prepareRuntimeState({
 
   const manifestSync = await syncFruitManifests(garden, { rootDir });
   const distributionTruth = reconcileDistributionTruth(garden);
+  const improvementLedger = await reconcileImprovementEvidenceLedger(garden, { rootDir });
+  const transferSeeds = reconcileImprovementTransferSeeds(garden);
   const observationIngest = observation
     ? ingestFruitObservation(garden, observation)
     : null;
@@ -38,6 +42,8 @@ export async function prepareRuntimeState({
     legacy,
     manifestSync,
     distributionTruth,
+    improvementLedger,
+    transferSeeds,
     observationIngest,
     actuationGates,
   };
