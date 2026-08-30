@@ -22,6 +22,13 @@ if (command === 'reset') {
   process.exit(0);
 }
 
+let persistedBefore = null;
+try {
+  persistedBefore = JSON.stringify(await loadJson(stateFile));
+} catch (error) {
+  if (error?.code !== 'ENOENT') throw error;
+}
+
 const garden = await loadGarden({ stateFile, seedFile });
 
 if (command === 'status') {
@@ -56,15 +63,25 @@ if (command === 'pulse') {
 
   const pressure = classifyPressure(garden);
   const wake = classifyWake({ pressure, event: observationIngest?.event ?? null });
+  const stateChangedBeforeWake = persistedBefore == null || persistedBefore !== JSON.stringify(garden);
 
   if (!wake.wake) {
-    garden.status.lastWakeDecision = { ...wake, at: new Date().toISOString(), pressure };
-    await saveGarden(stateFile, garden);
+    let statePersisted = false;
+    if (stateChangedBeforeWake) {
+      await saveGarden(stateFile, garden);
+      statePersisted = true;
+    }
     console.log(JSON.stringify({
       skipped: true,
       wake,
       pressure,
-      observationIngest: observationIngest ? { changed: observationIngest.changed, reason: observationIngest.reason } : null,
+      stateChanged: stateChangedBeforeWake,
+      statePersisted,
+      observationIngest: observationIngest ? {
+        changed: observationIngest.changed,
+        stateChanged: observationIngest.stateChanged,
+        reason: observationIngest.reason,
+      } : null,
       manifestChanges: manifestSync.changes,
       distributionTruthChanges: distributionTruth.changes,
       pulseCount: garden.status.pulseCount,
@@ -76,12 +93,17 @@ if (command === 'pulse') {
   const reasoner = new OpenAIReasoner();
   const maxBreaths = Math.max(1, Math.min(12, Number(process.env.FLOWER_MAX_BREATHS_PER_PULSE ?? 12)));
   const result = await pulse({ garden, reasoner, maxBreaths, syncManifests: false });
-  garden.status.lastWakeDecision = { ...wake, at: new Date().toISOString(), pressure };
   await saveGarden(stateFile, garden);
   console.log(JSON.stringify({
     skipped: false,
     wake,
-    observationIngest: observationIngest ? { changed: observationIngest.changed, reason: observationIngest.reason } : null,
+    stateChanged: true,
+    statePersisted: true,
+    observationIngest: observationIngest ? {
+      changed: observationIngest.changed,
+      stateChanged: observationIngest.stateChanged,
+      reason: observationIngest.reason,
+    } : null,
     breaths: result.breaths.map((x) => ({ pressure: x.pressure.type, summary: x.result.summary })),
     nextPressure: classifyPressure(garden),
     manifestChanges: manifestSync.changes,
