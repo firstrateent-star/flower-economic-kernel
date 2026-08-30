@@ -64,9 +64,9 @@ function growthYield(before, after, costlyBreathsUsed) {
   };
 }
 
-async function writeOutput(output) {
+async function writeOutput(output, { pushDataset = true } = {}) {
   await Actor.setValue('OUTPUT', output);
-  await Actor.pushData(output);
+  if (pushDataset) await Actor.pushData(output);
 }
 
 await Actor.main(async () => {
@@ -76,6 +76,7 @@ await Actor.main(async () => {
 
   const stateStore = await Actor.openKeyValueStore(STORE_NAME);
   const existing = await stateStore.getValue(STORE_KEY);
+  const persistedBefore = existing == null ? null : JSON.stringify(existing);
   const canonical = reconcileCanonicalControlPlane(existing, seed);
   const garden = canonical.garden;
   const legacy = migrateLegacyRuntimeState(garden);
@@ -93,32 +94,34 @@ await Actor.main(async () => {
     pressure: startingPressure,
     event: observationIngest?.event ?? null,
   });
-
-  garden.status ??= {};
-  garden.status.lastWakeDecision = {
-    ...wake,
-    at: new Date().toISOString(),
-    pressure: startingPressure,
-  };
+  const stateChangedBeforeWake = persistedBefore == null || persistedBefore !== JSON.stringify(garden);
 
   log.info('Flower wake decision', {
     wake,
     pressure: startingPressure,
+    stateChangedBeforeWake,
     canonicalReconciliation: canonical.changes,
     legacyMigrations: legacy.stateMigrations,
     manifestChanges: manifestSync.changes,
     distributionTruthChanges: distributionTruth.changes,
     observationChanged: observationIngest?.changed ?? false,
+    observationStateChanged: observationIngest?.stateChanged ?? false,
   });
 
   if (!wake.wake) {
-    await stateStore.setValue(STORE_KEY, garden);
+    let statePersisted = false;
+    if (stateChangedBeforeWake) {
+      await stateStore.setValue(STORE_KEY, garden);
+      statePersisted = true;
+    }
     const output = {
       ok: true,
       skipped: true,
       wake,
       pressure: startingPressure,
       reasonerConstructed: false,
+      stateChanged: stateChangedBeforeWake,
+      statePersisted,
       pulseCount: Number(garden.status.pulseCount ?? 0),
       persistentStore: STORE_NAME,
       canonicalReconciliation: canonical.changes,
@@ -127,12 +130,18 @@ await Actor.main(async () => {
       manifestChanges: manifestSync.changes,
       distributionTruthChanges: distributionTruth.changes,
       observationIngest: observationIngest
-        ? { changed: observationIngest.changed, reason: observationIngest.reason }
+        ? {
+          changed: observationIngest.changed,
+          stateChanged: observationIngest.stateChanged,
+          reason: observationIngest.reason,
+        }
         : null,
       activeOpportunities: activeOpportunitySnapshot(garden),
       geometry: geometryBefore,
     };
-    await writeOutput(output);
+    // OUTPUT remains useful invocation telemetry. Dataset history is reserved for
+    // actual state transitions so repeated sleep checks do not manufacture activity.
+    await writeOutput(output, { pushDataset: stateChangedBeforeWake });
     log.info('Flower pulse skipped', output);
     return;
   }
@@ -156,6 +165,8 @@ await Actor.main(async () => {
       pressure: startingPressure,
       error: message,
       reasonerConstructed: true,
+      stateChanged: stateChangedBeforeWake,
+      statePersisted: false,
       pulseCount: Number(garden.status.pulseCount ?? 0),
       persistentStore: STORE_NAME,
       canonicalReconciliation: canonical.changes,
@@ -181,6 +192,8 @@ await Actor.main(async () => {
     skipped: false,
     wake,
     reasonerConstructed: true,
+    stateChanged: true,
+    statePersisted: true,
     breaths: result.breaths.map((x) => ({
       pressure: x.pressure,
       costClass: x.costClass,
@@ -203,7 +216,11 @@ await Actor.main(async () => {
     manifestChanges: manifestSync.changes,
     distributionTruthChanges: distributionTruth.changes,
     observationIngest: observationIngest
-      ? { changed: observationIngest.changed, reason: observationIngest.reason }
+      ? {
+        changed: observationIngest.changed,
+        stateChanged: observationIngest.stateChanged,
+        reason: observationIngest.reason,
+      }
       : null,
   };
 
