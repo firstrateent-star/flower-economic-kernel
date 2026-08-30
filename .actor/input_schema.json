@@ -6,11 +6,45 @@
     "maxBreaths": {
       "title": "Maximum micro-breaths this pulse",
       "type": "integer",
-      "description": "Maximum safe internal transitions in this manual pulse. The Kernel may traverse up to 12 deterministic/free micro-breaths, while the costly frontier remains capped at one per run.",
+      "description": "Maximum safe internal transitions in this pulse. The Kernel may traverse up to 12 deterministic/free micro-breaths, while the costly frontier remains capped at one per run.",
       "default": 12,
       "minimum": 1,
       "maximum": 12,
       "editor": "number"
+    },
+    "observation": {
+      "title": "Optional Fruit observation",
+      "type": "object",
+      "description": "Machine-provided sensor snapshot. Metric-only churn is stored quietly; only decision-relevant truth changes create a Garden event and wake Flower.",
+      "editor": "json",
+      "properties": {
+        "fruitId": {
+          "title": "Fruit ID",
+          "type": "string"
+        },
+        "source": {
+          "title": "Sensor source",
+          "type": "string"
+        },
+        "observedAt": {
+          "title": "Observed at",
+          "type": "string"
+        },
+        "truth": {
+          "title": "Decision-relevant truth",
+          "type": "object",
+          "editor": "json",
+          "additionalProperties": true
+        },
+        "metrics": {
+          "title": "Non-decisive metrics",
+          "type": "object",
+          "editor": "json",
+          "additionalProperties": true
+        }
+      },
+      "required": ["fruitId"],
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
