@@ -96,6 +96,25 @@ test('archival is behaviorally invisible to the economic pressure classifier', a
   assert.equal(garden.historyArchive.archivedTraceCount, 472);
 });
 
+test('hot/cold memory separation substantially reduces active Garden persistence size', async () => {
+  const garden = structuredClone(seed);
+  garden.traces = Array.from({ length: 600 }, (_, i) => trace(i));
+  const beforeBytes = Buffer.byteLength(JSON.stringify(garden));
+  let archiveBlock = null;
+
+  await archiveTraceHistory(garden, {
+    maxActiveTraces: 256,
+    retainActiveTraces: 128,
+    persistBlock: async (block) => { archiveBlock = structuredClone(block); },
+  });
+
+  const afterBytes = Buffer.byteLength(JSON.stringify(garden));
+  const fraction = Number((afterBytes / beforeBytes).toFixed(3));
+  assert.ok(archiveBlock?.traces?.length === 472);
+  assert.ok(fraction < 0.6, `expected active Garden below 60% of pre-archive size, got ${fraction}`);
+  console.log(JSON.stringify({ beforeBytes, afterBytes, activeFraction: fraction, archivedTraceCount: archiveBlock.traces.length }));
+});
+
 test('hysteresis prevents a new archive block until hot history crosses the high-water mark again', () => {
   const garden = structuredClone(seed);
   garden.traces = Array.from({ length: 300 }, (_, i) => trace(i));
