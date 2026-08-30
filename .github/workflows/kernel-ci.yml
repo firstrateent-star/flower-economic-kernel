@@ -55,8 +55,15 @@ jobs:
           rm -f garden/state.json
           node src/runtime/cli.js pulse > /tmp/flower-pulse-1.json
           node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/flower-pulse-1.json','utf8')); if(x.skipped!==true) throw new Error('Expected skipped first pulse: '+JSON.stringify(x)); if(x.wake?.reason!=='human_membrane') throw new Error('Expected human_membrane wake decision'); if(Number(x.pulseCount??0)!==0) throw new Error('No-op pulse must not increment pulseCount'); if(x.statePersisted!==true) throw new Error('First no-op should establish/reconcile persistent baseline');"
+          cp garden/state.json /tmp/flower-state-before.json
           before="$(sha256sum garden/state.json | cut -d' ' -f1)"
           node src/runtime/cli.js pulse > /tmp/flower-pulse-2.json
           after="$(sha256sum garden/state.json | cut -d' ' -f1)"
-          test "$before" = "$after"
+          echo "FIRST_PULSE=$(cat /tmp/flower-pulse-1.json)"
+          echo "SECOND_PULSE=$(cat /tmp/flower-pulse-2.json)"
+          if [ "$before" != "$after" ]; then
+            echo "Repeated sleep mutated persisted Garden: $before -> $after"
+            diff -u /tmp/flower-state-before.json garden/state.json || true
+            exit 1
+          fi
           node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/flower-pulse-2.json','utf8')); if(x.skipped!==true) throw new Error('Expected skipped second pulse'); if(x.stateChanged!==false) throw new Error('Repeated sleep must have no semantic state change'); if(x.statePersisted!==false) throw new Error('Repeated sleep must not rewrite Garden'); if(Number(x.pulseCount??0)!==0) throw new Error('Repeated sleep must not increment pulseCount');"
