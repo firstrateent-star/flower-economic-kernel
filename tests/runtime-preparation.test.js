@@ -3,14 +3,18 @@ import assert from 'node:assert/strict';
 import seed from '../garden/seed.json' with { type: 'json' };
 import { prepareRuntimeState } from '../src/core/runtime-preparation.js';
 
-test('shared runtime preparation reaches canonical fresh-challenger pressure without mutating through cognition', async () => {
+test('shared runtime preparation absorbs verified internal improvement evidence before choosing the next pressure', async () => {
   const garden = structuredClone(seed);
   const prepared = await prepareRuntimeState({ garden, rootDir: process.cwd() });
 
-  assert.equal(prepared.pressure.type, 'EXPAND');
-  assert.equal(prepared.pressure.targetId, null);
+  assert.equal(prepared.improvementLedger.changed, true);
+  assert.equal(prepared.improvementLedger.created.length, 1);
+  assert.equal(garden.internalImprovements.length, 1);
+  assert.equal(garden.internalImprovements[0].externalValueVerified, false);
+  assert.equal(prepared.pressure.type, 'TRANSFER');
+  assert.equal(prepared.pressure.targetId, garden.internalImprovements[0].id);
   assert.equal(prepared.wake.wake, true);
-  assert.match(prepared.wake.reason, /autonomous|pressure|expand/i);
+  assert.match(prepared.wake.reason, /autonomous|pressure|transfer/i);
   assert.equal(prepared.observationIngest, null);
 });
 
@@ -27,6 +31,7 @@ test('shared runtime preparation converges after current truth has been absorbed
   assert.deepEqual(second.legacy.repaired, []);
   assert.deepEqual(second.manifestSync.changes, []);
   assert.deepEqual(second.distributionTruth.changes, []);
+  assert.equal(second.improvementLedger.changed, false);
   assert.deepEqual(second.pressure, first.pressure);
   assert.deepEqual(second.wake, first.wake);
 });
@@ -44,4 +49,5 @@ test('equivalent Gardens receive equivalent prepared truth regardless of caller'
   assert.deepEqual(a.legacy, b.legacy);
   assert.deepEqual(a.manifestSync.changes, b.manifestSync.changes);
   assert.deepEqual(a.distributionTruth.changes, b.distributionTruth.changes);
+  assert.deepEqual(a.improvementLedger, b.improvementLedger);
 });
