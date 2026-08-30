@@ -53,6 +53,16 @@ test('resolved human actuation state is not resurrected by canonical pending sta
   assert.equal(garden.humanActuationQueue[0].state, 'authorized');
 });
 
+test('canonical reconciliation preserves runtime updatedAt instead of fabricating seed-time churn', () => {
+  const existing = structuredClone(seed);
+  existing.updatedAt = '2026-08-30T16:30:00.000Z';
+  const canonical = structuredClone(seed);
+  canonical.updatedAt = '2026-08-30T14:42:00.000Z';
+
+  const { garden } = reconcileCanonicalControlPlane(existing, canonical);
+  assert.equal(garden.updatedAt, existing.updatedAt);
+});
+
 test('missing persistent Garden initializes exactly from canonical Garden', () => {
   const { garden, changes } = reconcileCanonicalControlPlane(null, seed);
   assert.deepEqual(garden, seed);
