@@ -13,6 +13,12 @@ const QUERIES = [
   'social preview drift guard',
 ];
 
+async function getJson(url, headers = {}) {
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
+  return res.json();
+}
+
 async function searchStore(search, { includeUnrunnableActors = false } = {}) {
   const url = new URL('https://api.apify.com/v2/store');
   url.searchParams.set('search', search);
@@ -20,9 +26,7 @@ async function searchStore(search, { includeUnrunnableActors = false } = {}) {
   url.searchParams.set('limit', '100');
   url.searchParams.set('responseFormat', 'agent');
   url.searchParams.set('includeUnrunnableActors', String(includeUnrunnableActors));
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
-  return res.json();
+  return getJson(url);
 }
 
 function normalizeResult(search, body) {
@@ -64,18 +68,45 @@ async function main() {
     inclusive.push(normalizeResult(query, await searchStore(query, { includeUnrunnableActors: true })));
   }
 
+  const token = process.env.APIFY_TOKEN || null;
+  const actorRecord = token
+    ? (await getJson(`https://api.apify.com/v2/actors/${ACTOR_ID}`, { Authorization: `Bearer ${token}` })).data
+    : null;
+  const publicStoreActor = buyerVisible.find((x) => x.actorFound)?.actor ?? inclusive.find((x) => x.actorFound)?.actor ?? null;
+  const metadataAgreement = actorRecord && publicStoreActor ? {
+    titleMatches: actorRecord.title === publicStoreActor.title,
+    descriptionMatches: actorRecord.description === publicStoreActor.description,
+    actorRecordTitle: actorRecord.title ?? null,
+    publicStoreTitle: publicStoreActor.title ?? null,
+    actorRecordDescription: actorRecord.description ?? null,
+    publicStoreDescription: publicStoreActor.description ?? null,
+    actorRecordModifiedAt: actorRecord.modifiedAt ?? null,
+  } : null;
+
   const foundBuyerQueries = buyerVisible.filter((x) => x.actorFound);
   const foundInclusiveQueries = inclusive.filter((x) => x.actorFound);
   const output = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     observedAt: new Date().toISOString(),
     actorId: ACTOR_ID,
     source: 'https://api.apify.com/v2/store',
     truthPolicy: {
+      actorRecordTruth: 'Authenticated Actor resource metadata is observed independently from Store search metadata.',
       storeTruth: 'Actor exists publicly in Store.',
       discoveryTruth: 'Actor appears in a relevance-ranked public Store search for a plausible buyer query.',
       demandTruth: 'Discovery is exposure evidence only; it is not independent use, payment, or revenue.',
     },
+    actorRecord: actorRecord ? {
+      id: actorRecord.id,
+      name: actorRecord.name,
+      title: actorRecord.title,
+      description: actorRecord.description,
+      seoTitle: actorRecord.seoTitle ?? null,
+      seoDescription: actorRecord.seoDescription ?? null,
+      isPublic: actorRecord.isPublic,
+      modifiedAt: actorRecord.modifiedAt,
+    } : null,
+    metadataAgreement,
     buyerVisible: {
       queryCount: buyerVisible.length,
       foundQueryCount: foundBuyerQueries.length,
@@ -94,10 +125,12 @@ async function main() {
   fs.writeFileSync('artifacts/social-preview-discovery-witness.json', JSON.stringify(output, null, 2));
   process.stdout.write(JSON.stringify({
     observedAt: output.observedAt,
+    actorRecordTitle: output.actorRecord?.title ?? null,
+    publicStoreTitle: output.metadataAgreement?.publicStoreTitle ?? null,
+    titleMatches: output.metadataAgreement?.titleMatches ?? null,
+    descriptionMatches: output.metadataAgreement?.descriptionMatches ?? null,
     buyerVisibleFoundQueries: output.buyerVisible.foundQueryCount,
     buyerVisibleBestRank: output.buyerVisible.bestRank,
-    inclusiveFoundQueries: output.inclusive.foundQueryCount,
-    inclusiveBestRank: output.inclusive.bestRank,
   }));
 }
 
