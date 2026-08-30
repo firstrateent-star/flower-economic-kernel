@@ -1,0 +1,58 @@
+name: Flower Dimensional Projection Observatory
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'garden/**'
+      - 'src/core/geometry.js'
+      - 'src/core/reasoner-view.js'
+      - 'src/core/activation-projection-audit.js'
+      - 'scripts/dimensional-projection-observatory.mjs'
+      - 'tests/activation-projection-audit.test.js'
+      - 'docs/FLOWER_ORIGIN_PROVENANCE.md'
+      - 'docs/DIMENSIONAL_INQUIRY_LOCAL_CHARTS_2026-08-30.md'
+      - '.github/workflows/dimensional-projection-observatory.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  dimensional-projection:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate projection audit
+        run: |
+          node --check src/core/activation-projection-audit.js
+          node --check scripts/dimensional-projection-observatory.mjs
+          node --test tests/activation-projection-audit.test.js
+      - name: Run real-Garden dimensional projection baseline
+        run: node scripts/dimensional-projection-observatory.mjs
+      - name: Validate epistemic membrane
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('reports/dimensional-projection-observatory-latest.json', 'utf8'));
+          if (report.epistemicStatus !== 'real_garden_projection_baseline_not_causal_relevance_proof') throw new Error('Projection baseline overstated epistemic status.');
+          if (report.physicalAlternateDimensionClaim !== false) throw new Error('Computational projection analysis may not claim alternate physical dimensions.');
+          if (report.runtimeMutationAuthorized !== false) throw new Error('Representational divergence alone may not authorize runtime mutation.');
+          if (!Array.isArray(report.geometry?.fruitOfLifeCoverageDimensions) || report.geometry.fruitOfLifeCoverageDimensions.length !== 13) throw new Error('Expected 13 preserved Fruit-of-Life coverage dimensions.');
+          if (report.nextPressure?.type === 'OPERATION_SPECIFIC_DECISION_EQUIVALENCE_TEST' && Number(report.summary?.candidateHiddenDimensionRelationCount ?? 0) < 1) throw new Error('Decision-equivalence pressure requires at least one representational divergence.');
+          console.log(JSON.stringify({
+            geometry: report.geometry,
+            summary: report.summary,
+            nextPressure: report.nextPressure,
+          }, null, 2));
+          NODE
+      - name: Upload dimensional projection report
+        uses: actions/upload-artifact@v4
+        with:
+          name: flower-dimensional-projection-observatory
+          path: reports/dimensional-projection-observatory-latest.json
+          if-no-files-found: error
+          retention-days: 14
