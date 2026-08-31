@@ -1,0 +1,18 @@
+{
+  "actorSpecification":1,
+  "fields":{
+    "ok":{"type":"boolean"},
+    "comparisonCount":{"type":"integer"},
+    "regressionCount":{"type":"integer"},
+    "candidateImprovementCount":{"type":"integer"},
+    "decisionEquivalentCount":{"type":"integer"},
+    "insufficientEvidenceCount":{"type":"integer"},
+    "representativeWorkload":{"type":"boolean"},
+    "replaySetPass":{"type":"boolean"},
+    "chargedComparisons":{"type":"integer"},
+    "pricingModel":{"type":"string"},
+    "authority":{"type":"object"},
+    "epistemicBoundary":{"type":"string"},
+    "schemaVersion":{"type":"integer"}
+  }
+}
