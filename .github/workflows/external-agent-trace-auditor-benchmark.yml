@@ -1,0 +1,47 @@
+name: External AgentTrace Auditor Benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'actors/agent-trace-efficiency-auditor/**'
+      - 'scripts/external-agent-trace-auditor-benchmark.mjs'
+      - '.github/workflows/external-agent-trace-auditor-benchmark.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run public AgentTrace benchmark
+        run: node scripts/external-agent-trace-auditor-benchmark.mjs | tee /tmp/benchmark.json
+      - name: Validate benchmark shape
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const x = JSON.parse(fs.readFileSync('/tmp/benchmark.json', 'utf8'));
+          if (x.traceCount < 100) throw new Error(`Expected substantial public trace sample; got ${x.traceCount}`);
+          if (x.totalModelCallSpans <= 0) throw new Error('No model-call telemetry detected.');
+          if (x.totalToolCallSpans <= 0) throw new Error('No tool-call telemetry detected.');
+          if (x.authorityRegressionCount !== 0) throw new Error('Authority boundary regressed.');
+          if (x.falseSavingsClaimCount !== 0) throw new Error('False savings claim detected.');
+          console.log(JSON.stringify({
+            traceCount: x.traceCount,
+            totalModelCallSpans: x.totalModelCallSpans,
+            totalToolCallSpans: x.totalToolCallSpans,
+            totalObservedTokens: x.totalObservedTokens,
+            totalErrorSpans: x.totalErrorSpans,
+            tracesWithErrors: x.tracesWithErrors,
+            tracesWithHighInputTokenCalls: x.tracesWithHighInputTokenCalls,
+            tracesWithRepeatedToolShapes: x.tracesWithRepeatedToolShapes,
+            tracesWithExactRepeatedTransformations: x.tracesWithExactRepeatedTransformations,
+            hypothesisCounts: x.hypothesisCounts
+          }, null, 2));
+          NODE
