@@ -69,6 +69,6 @@ jobs:
             externalChargedEventCount: externalCharged.reduce((sum, r) => sum + Number(r.chargedEventCounts?.['trace-audited'] ?? 0), 0),
             selfChargedRunCount: selfCharged.length,
             externalRuns: external,
-            note: external charged events are evidence of paid use; self-owned runs are excluded from revenue evidence.
+            note: 'External charged events are evidence of paid use; self-owned runs are excluded from revenue evidence.'
           }, null, 2));
           NODE
