@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - 'research/methodology/reasoner-base-dedup-shadow.js'
+      - 'research/methodology/cache-aware-prompt-economics.js'
       - 'research/methodology/methodology-projection.js'
       - 'research/methodology/origin-pointer.js'
       - 'tests/reasoner-base-dedup-shadow.test.js'
+      - 'tests/cache-aware-prompt-economics.test.js'
       - 'src/reasoners/openai.js'
       - '.github/workflows/reasoner-base-dedup-shadow.yml'
   workflow_dispatch:
@@ -22,10 +24,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate base dedup shadow
+      - name: Validate base dedup and cache-aware economics shadows
         run: |
           node --check research/methodology/reasoner-base-dedup-shadow.js
-          node --test tests/reasoner-base-dedup-shadow.test.js
+          node --check research/methodology/cache-aware-prompt-economics.js
+          node --test tests/reasoner-base-dedup-shadow.test.js tests/cache-aware-prompt-economics.test.js
       - name: Report base reduction candidate
         run: |
           node --input-type=module - <<'NODE'
@@ -48,4 +51,12 @@ jobs:
           })), null, 2));
           if (!rows.every((x) => x.allRequiredConceptsCovered && x.originLineageCovered)) throw new Error('Candidate loses required doctrine or origin lineage.');
           if (!rows.every((x) => x.runtimeAuthority === false && x.decisionEquivalenceVerified === false)) throw new Error('Shadow candidate may not self-promote.');
+          NODE
+      - name: Guard cache-aware compression boundary
+        run: |
+          node --input-type=module - <<'NODE'
+          import { cacheAwareCompressionDecision } from './research/methodology/cache-aware-prompt-economics.js';
+          const next = cacheAwareCompressionDecision({ structuralReductionObserved: true, pairedTelemetryAvailable: false });
+          if (next !== 'measure_cache_aware_same_workload_cost') throw new Error('Structural reduction may not bypass cache-aware telemetry.');
+          console.log(JSON.stringify({ nextPressure: next, byteReductionAloneAuthorizesPromotion: false }, null, 2));
           NODE
