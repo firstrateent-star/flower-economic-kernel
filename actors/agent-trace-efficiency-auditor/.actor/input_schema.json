@@ -1,0 +1,36 @@
+{
+  "title": "Agent Trace Efficiency Audit",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "traces": {
+      "title": "Agent traces / runs",
+      "type": "array",
+      "description": "One or more trace/run objects. Each item may contain a spans array, or may itself be an OpenTelemetry-style span.",
+      "editor": "json"
+    },
+    "spans": {
+      "title": "OpenTelemetry / GenAI spans",
+      "type": "array",
+      "description": "Alternative flat span input. Supports common gen_ai.*, llm.*, and OpenInference-style attributes.",
+      "editor": "json"
+    },
+    "highInputTokenThreshold": {
+      "title": "High input-token threshold",
+      "type": "integer",
+      "description": "Only used to label token-heavy calls for review; it does not prove waste.",
+      "default": 10000,
+      "minimum": 1000,
+      "maximum": 1000000
+    },
+    "maxItems": {
+      "title": "Maximum traces to analyze",
+      "type": "integer",
+      "default": 1000,
+      "minimum": 1,
+      "maximum": 10000
+    }
+  },
+  "required": [],
+  "additionalProperties": true
+}
