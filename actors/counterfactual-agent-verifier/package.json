@@ -1,0 +1,1 @@
+{"name":"counterfactual-agent-verifier","version":"0.1.0","type":"module","private":true,"scripts":{"check":"node --check src/main.js && node --check src/core.js","test":"node --test test/*.test.js"},"dependencies":{"apify":"^3.7.2"}}
