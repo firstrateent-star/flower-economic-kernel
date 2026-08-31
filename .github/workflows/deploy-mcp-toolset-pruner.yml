@@ -71,13 +71,32 @@ jobs:
           echo "actor_id=$ACTOR_ID" >> "$GITHUB_OUTPUT"
           echo "Actor ID: $ACTOR_ID"
 
-      - name: Push Actor build
-        id: push
-        uses: apify/push-actor-action@v1
+      - name: Set up Apify CLI
+        uses: apify/setup-apify-cli-action@v1
         with:
           token: ${{ secrets.APIFY_TOKEN }}
-          actor-id: ${{ steps.actor.outputs.actor_id }}
-          working-directory: actors/mcp-toolset-pruner
+
+      - name: Push verified source of truth
+        id: push
+        working-directory: actors/mcp-toolset-pruner
+        env:
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          apify push "$ACTOR_ID" --force --json --wait-for-finish=999 > /tmp/build.json
+          node <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync('/tmp/build.json', 'utf8'));
+          const build = body?.build ?? body;
+          const id = build?.id ?? '';
+          const status = build?.status ?? '';
+          if (status && status !== 'SUCCEEDED') {
+            console.error(JSON.stringify({ id, status, error: body?.error ?? null }));
+            process.exit(2);
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `build_id=${id}\nbuild_status=${status || 'SUCCEEDED'}\n`);
+          console.log(JSON.stringify({ buildId: id, status: status || 'SUCCEEDED' }));
+          NODE
 
       - name: Smoke test build before publication
         env:
@@ -217,5 +236,5 @@ jobs:
       - name: Report
         run: |
           echo "Actor ID: ${{ steps.actor.outputs.actor_id }}"
-          echo "Apify build: ${{ steps.push.outputs.build-id }}"
-          echo "Build status: ${{ steps.push.outputs.build-status }}"
+          echo "Apify build: ${{ steps.push.outputs.build_id }}"
+          echo "Build status: ${{ steps.push.outputs.build_status }}"
