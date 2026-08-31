@@ -10,10 +10,24 @@ test('known operations project methodology while preserving protected spine', ()
     const result = diagnoseMethodologyProjection(operation);
     assert.equal(result.mode, 'operation_projection');
     assert.equal(result.protectedSpinePresent, true);
+    assert.equal(result.originIntegrity.present, true);
+    assert.equal(result.originIntegrity.preservesUnverifiedBoundary, true);
+    assert.equal(result.originIntegrity.preservesProjectionBoundary, true);
     assert.ok(result.projectedBytes < result.fullBytes);
     assert.ok(result.bytesSaved > 0);
     assert.equal(result.runtimeAuthority, false);
   }
+});
+
+test('projected methodology always preserves origin lineage without turning it into runtime authority', () => {
+  const result = projectMethodologyForOperation('SELECT');
+  assert.equal(result.projection.originPointer.lineageId, 'flower-of-life-dimensional-inquiry-origin-v1');
+  assert.match(result.projection.originPointer.generativeSeed, /FLOWER OF LIFE/);
+  assert.match(result.projection.originPointer.epistemicStatus, /unverified/i);
+  assert.match(result.projection.originPointer.projectionRule, /projections?/i);
+  assert.ok(result.projection.originPointer.provenancePaths.includes('docs/FLOWER_ORIGIN_PROVENANCE.md'));
+  assert.ok(result.projection.originPointer.provenancePaths.includes('methodology/meta-learning/origin-episodes-v1.json'));
+  assert.equal(result.runtimeAuthority, false);
 });
 
 test('projected methodology always preserves stop conditions and ACT/REST/RECURSE safeguards', () => {
@@ -42,9 +56,10 @@ test('TRANSFER retains transfer governance and mutation boundary', () => {
   assert.ok(result.projection.efficiency);
 });
 
-test('unknown operation safely falls back to full canon', () => {
+test('unknown operation safely falls back to full canon while preserving recoverable origin pointer', () => {
   const result = diagnoseMethodologyProjection('UNKNOWN_OPERATION');
   assert.equal(result.mode, 'full_fallback');
   assert.equal(result.bytesSaved, 0);
   assert.equal(result.reductionFraction, 0);
+  assert.equal(result.originIntegrity.present, true);
 });
