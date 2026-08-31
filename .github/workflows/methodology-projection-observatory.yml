@@ -1,0 +1,45 @@
+name: Flower Methodology Projection Observatory
+
+on:
+  push:
+    paths:
+      - 'research/methodology/methodology-projection.js'
+      - 'tests/methodology-projection.test.js'
+      - 'scripts/methodology-projection-observatory.mjs'
+      - '.github/workflows/methodology-projection-observatory.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  methodology-projection:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate methodology projection
+        run: |
+          node --check research/methodology/methodology-projection.js
+          node --check scripts/methodology-projection-observatory.mjs
+          node --test tests/methodology-projection.test.js
+      - name: Run methodology projection Observatory
+        run: node scripts/methodology-projection-observatory.mjs
+      - name: Guard promotion boundary
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('reports/methodology-projection-observatory-latest.json', 'utf8'));
+          if (!report.claims.structuralPayloadReductionObserved) throw new Error('No structural payload reduction observed.');
+          if (!report.summary.allProtectedSpinesPresent) throw new Error('Protected methodology spine missing.');
+          if (report.claims.decisionEquivalenceVerified !== false) throw new Error('Structural reduction may not self-verify decision equivalence.');
+          if (report.claims.runtimePromotionAuthorized !== false) throw new Error('Shadow projection may not self-promote.');
+          console.log(JSON.stringify(report.summary, null, 2));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flower-methodology-projection-observatory
+          path: reports/methodology-projection-observatory-latest.json
+          retention-days: 14
