@@ -1,0 +1,18 @@
+{
+  "actorSpecification": 1,
+  "name": "agent-trace-efficiency-auditor",
+  "title": "Agent Trace Efficiency Auditor",
+  "description": "Audit AI-agent traces for repeated cognition, model switching, retry/failure overhead, token-heavy loops, tool-pattern recurrence, and human-interruption pressure. Returns evidence-backed optimization experiments without inventing savings claims.",
+  "version": "0.1",
+  "buildTag": "latest",
+  "input": "./input_schema.json",
+  "output": "./output_schema.json",
+  "storages": {
+    "dataset": "./dataset_schema.json"
+  },
+  "readme": "../README.md",
+  "usesStandbyMode": false,
+  "defaultMemoryMbytes": 128,
+  "minMemoryMbytes": 128,
+  "maxMemoryMbytes": 512
+}
