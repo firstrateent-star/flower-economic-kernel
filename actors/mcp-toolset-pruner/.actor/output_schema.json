@@ -1,0 +1,19 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "MCP Toolset Pruner output",
+  "description": "The default dataset contains the candidate allowlist, task coverage, confused tool pairs, and the replay boundary. A compact aggregate is stored in OUTPUT.",
+  "properties": {
+    "results": {
+      "type":"string",
+      "title":"Pruning result",
+      "description":"Machine-readable candidate allowlist and evidence for every keep/drop decision.",
+      "template":"{{links.apiDefaultDatasetUrl}}/items?view=overview"
+    },
+    "summary": {
+      "type":"string",
+      "title":"Run summary",
+      "description":"Input/selected/dropped tool counts and coverage status.",
+      "template":"{{links.apiDefaultKeyValueStoreUrl}}/records/OUTPUT"
+    }
+  }
+}
