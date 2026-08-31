@@ -16,7 +16,7 @@ const REQUIRED_CONCEPTS = Object.freeze([
   { id: 'return_not_surplus', patterns: [/Gross return is not regenerative surplus/i] },
   { id: 'compression_equivalence', patterns: [/same or better decisions remain possible/i] },
   { id: 'center_nourishment', patterns: [/organism exists to nourish the human Center-holder/i] },
-  { id: 'origin_projection_boundary', patterns: [/projection of a richer generative lineage/i, /economic kernel is a local specialization/i] },
+  { id: 'origin_projection_boundary', patterns: [/projections of this lineage, not replacements/i, /economic kernel is a local measurable specialization/i] },
 ]);
 
 function bytes(text) {
