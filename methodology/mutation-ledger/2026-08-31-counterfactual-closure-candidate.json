@@ -1,0 +1,25 @@
+{
+  "id":"counterfactual-closure-2026-08-31",
+  "status":"evidence_backed_candidate_not_canonical",
+  "canonicalPromotionAuthorized":false,
+  "candidateLaw":"Diagnosis is not improvement until protected outcomes survive counterfactual replay.",
+  "formalization":{
+    "diagnosisNotEqualImprovement":true,
+    "candidateImprovementCondition":"matched baseline/challenger evidence preserves terminal success and all protected metrics while showing at least one evidenced improvement",
+    "regressionVeto":"terminal, quality-beyond-tolerance, or protected-metric regression cannot be averaged away by lower cost, latency, token use, errors, or human interruptions"
+  },
+  "evidence":[
+    "Counterfactual Agent Verifier deterministic unit tests: 5/5 passed.",
+    "Apify platform adversarial smoke test rejected a cheaper challenger that broke terminal success and classified a preserved cheaper challenger only as candidate_improvement.",
+    "Apify build Tg8HVUQ1r2laJ1IF9 succeeded; Actor published with limited permissions and $0.01 PPE.",
+    "Live Store discovery after publication: 3/5 intended semantic queries visible; best rank 1; agentic surface 3/5.",
+    "Prior external MCP-vs-CLI benchmark demonstrated configuration reversals across model/scaffold combinations, supporting same-workload comparison rather than static optimization claims."
+  ],
+  "falsifiers":[
+    "If matched replay verdicts fail to change or confirm real allocation decisions, keep this as redundant wording rather than a new law.",
+    "If the required replay burden routinely exceeds its information value for low-stakes changes, scope the law to material or uncertain changes rather than universal application.",
+    "If existing v5 evidence/terminal-governance laws already imply identical operational behavior in replay, do not promote a duplicate canonical law."
+  ],
+  "promotionGate":"Require at least one real non-self-generated decision where counterfactual replay prevents a false optimization or safely promotes a challenger, with lower verification burden than expected loss avoided.",
+  "epistemicBoundary":"A public Actor, successful tests, and Store discovery prove executable transfer and discoverability, not independent user value, demand, revenue, or canonical necessity."
+}
