@@ -1,0 +1,39 @@
+name: Flower Self-Recursive Optimization Stress
+
+on:
+  push:
+    paths:
+      - 'research/methodology/self-recursive-optimization-stress.js'
+      - 'research/methodology/methodology-projection.js'
+      - 'research/methodology/reasoner-base-dedup-shadow.js'
+      - 'research/methodology/phi-fibonacci-optimization.js'
+      - 'tests/self-recursive-optimization-stress.test.js'
+      - '.github/workflows/self-recursive-optimization-stress.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stress-recursion:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate recursive optimization stress audit
+        run: |
+          node --check research/methodology/self-recursive-optimization-stress.js
+          node --test tests/self-recursive-optimization-stress.test.js
+      - name: Run recursive stress and post-limit falsifier
+        run: |
+          node --input-type=module - <<'NODE'
+          import { runSelfRecursiveOptimizationStress } from './research/methodology/self-recursive-optimization-stress.js';
+          const result = runSelfRecursiveOptimizationStress();
+          console.log(JSON.stringify(result, null, 2));
+          if (!result.stressedLimitReached) throw new Error('Expected current-evidence stress boundary was not observed.');
+          if (!result.fixedPointUnderCurrentEvidence) throw new Error('Expected local fixed point was not established.');
+          if (result.pushPast.testResult !== 'rejected_protected_distinctions_lost') throw new Error('Post-limit falsifier did not reject unsafe compression.');
+          if (result.canonicalPromotionAuthorized !== false) throw new Error('Stress audit may not self-promote methodology.');
+          NODE
