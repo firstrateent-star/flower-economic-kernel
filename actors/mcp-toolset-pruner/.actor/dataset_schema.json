@@ -1,0 +1,45 @@
+{
+  "actorSpecification": 1,
+  "title": "MCP toolset pruning result",
+  "description": "One deterministic candidate allowlist with task coverage and confusion warnings.",
+  "fields": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "ok": {"type":"boolean"},
+      "inputToolCount": {"type":"integer","minimum":0},
+      "selectedToolCount": {"type":"integer","minimum":0},
+      "droppedToolCount": {"type":"integer","minimum":0},
+      "taskIntentCount": {"type":"integer","minimum":0},
+      "coverageComplete": {"type":["boolean","null"]},
+      "uncoveredIntents": {"type":"array","items":{"type":"string"}},
+      "selectedTools": {"type":"array","items":{"type":"object","additionalProperties":true}},
+      "droppedTools": {"type":"array","items":{"type":"object","additionalProperties":true}},
+      "taskCoverage": {"type":"array","items":{"type":"object","additionalProperties":true}},
+      "confusedPairs": {"type":"array","items":{"type":"object","additionalProperties":true}},
+      "selectedConfusedPairs": {"type":"array","items":{"type":"object","additionalProperties":true}},
+      "recommendation": {"type":"string"},
+      "authority": {"type":"object","additionalProperties":true},
+      "schemaVersion": {"type":"integer"}
+    },
+    "required": ["ok","inputToolCount","selectedToolCount","droppedToolCount","selectedTools","taskCoverage","recommendation","authority","schemaVersion"],
+    "additionalProperties": true
+  },
+  "views": {
+    "overview": {
+      "title": "Toolset pruning result",
+      "description": "Candidate MCP/agent tool allowlist and evidence boundaries.",
+      "transformation": {"fields":["inputToolCount","selectedToolCount","droppedToolCount","coverageComplete","uncoveredIntents","selectedTools","selectedConfusedPairs","recommendation"]},
+      "display": {"component":"table","properties":{
+        "inputToolCount":{"label":"Input tools","format":"number"},
+        "selectedToolCount":{"label":"Selected","format":"number"},
+        "droppedToolCount":{"label":"Dropped","format":"number"},
+        "coverageComplete":{"label":"Coverage complete","format":"boolean"},
+        "uncoveredIntents":{"label":"Uncovered intents","format":"array"},
+        "selectedTools":{"label":"Selected tools","format":"array"},
+        "selectedConfusedPairs":{"label":"Remaining confusion","format":"array"},
+        "recommendation":{"label":"Next step","format":"text"}
+      }}
+    }
+  }
+}
