@@ -23,6 +23,17 @@ const portfolio = [
       'tool allowlist',
     ],
   },
+  {
+    id: '7KeQJObJ5eqj6Crm5',
+    name: 'agent-retry-loop-auditor',
+    intents: [
+      'agent retry loop',
+      'AI agent retry debugging',
+      'repeated tool failure',
+      'LLM retry failure',
+      'agent failure trace',
+    ],
+  },
 ];
 
 async function query(search, agentic = false) {
