@@ -1,0 +1,53 @@
+name: Flower External Crystallization Shadow
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/external-crystallization-shadow.mjs'
+      - 'tests/external-crystallization-shadow.test.js'
+      - 'research/value-transfer/**'
+      - '.github/workflows/external-crystallization-shadow.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  external-shadow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate analyzer
+        run: |
+          node --check scripts/external-crystallization-shadow.mjs
+          node --test tests/external-crystallization-shadow.test.js tests/crystallization-shadow.test.js tests/optimization-control-plane.test.js
+      - name: Run against public AgentTrace NL2Bash traces
+        run: node scripts/external-crystallization-shadow.mjs
+      - name: Validate epistemic boundary
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('reports/external-crystallization-shadow-latest.json', 'utf8'));
+          if (report.epistemicStatus !== 'external_open_trace_shadow_observation_not_external_value_proof') throw new Error('Incorrect epistemic status.');
+          if (report.currentClaims.safeCompilationObserved !== false) throw new Error('Repetition may not self-verify compilation safety.');
+          if (report.currentClaims.decisionEquivalenceObserved !== false) throw new Error('Repetition may not self-verify decision equivalence.');
+          if (report.currentClaims.externalValueObserved !== false) throw new Error('External trace analysis may not claim external value.');
+          if (!Number.isFinite(report.analysis.traceCount) || report.analysis.traceCount < 1) throw new Error('External dataset produced no traces.');
+          console.log(JSON.stringify({
+            traceCount: report.analysis.traceCount,
+            toolBearingTraceCount: report.analysis.toolBearingTraceCount,
+            repeatedSequenceCount: report.analysis.repeatedSequenceCount,
+            topRepeatedSequences: report.analysis.topRepeatedSequences.slice(0, 10),
+          }, null, 2));
+          NODE
+      - name: Upload external shadow report
+        uses: actions/upload-artifact@v4
+        with:
+          name: flower-external-crystallization-shadow
+          path: reports/external-crystallization-shadow-latest.json
+          if-no-files-found: error
+          retention-days: 14
