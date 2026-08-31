@@ -1,0 +1,24 @@
+name: External Agent Retry Loop Benchmark
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'actors/agent-retry-loop-auditor/**'
+      - 'scripts/external-agent-retry-loop-benchmark.mjs'
+      - '.github/workflows/external-agent-retry-loop-benchmark.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run public AgentTrace benchmark
+        run: node scripts/external-agent-retry-loop-benchmark.mjs
