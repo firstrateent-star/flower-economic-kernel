@@ -1,0 +1,9 @@
+{
+  "actorOutputSchemaVersion":1,
+  "title":"Agent Retry Loop Auditor output",
+  "description":"The dataset contains per-trace failure clusters, retry patterns, recovery transitions, and replay experiments. OUTPUT contains aggregate counts.",
+  "properties":{
+    "results":{"type":"string","title":"Retry audits","description":"Machine-readable per-trace retry/failure analysis.","template":"{{links.apiDefaultDatasetUrl}}/items?view=overview"},
+    "summary":{"type":"string","title":"Run summary","description":"Aggregate failure/retry counts.","template":"{{links.apiDefaultKeyValueStoreUrl}}/records/OUTPUT"}
+  }
+}
