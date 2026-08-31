@@ -1,0 +1,41 @@
+{
+  "experiment": "agent_trace_efficiency_auditor_public_transfer_benchmark",
+  "source": {
+    "repository": "pagarsky/agent-trace",
+    "dataset": "nl2bash_0_6B_20260328T133144Z.jsonl",
+    "license": "Apache-2.0"
+  },
+  "measuredAtUtc": "2026-08-31T03:26:11Z",
+  "traceCount": 200,
+  "totalModelCallSpans": 516,
+  "totalToolCallSpans": 465,
+  "totalInputTokens": 1059732,
+  "totalOutputTokens": 341710,
+  "totalObservedTokens": 1401442,
+  "totalErrorSpans": 161,
+  "tracesWithErrors": 110,
+  "tracesWithHighInputTokenCalls": 1,
+  "tracesWithRepeatedToolShapes": 51,
+  "tracesWithExactRepeatedTransformations": 28,
+  "tracesWithHumanBoundaries": 0,
+  "tracesWithModelSwitches": 0,
+  "hypothesisCounts": {
+    "failure_retry_overhead": 110,
+    "no_obvious_headroom": 82,
+    "crystallization_candidate": 28,
+    "structural_recurrence_only": 23,
+    "context_projection_headroom": 1
+  },
+  "authorityRegressionCount": 0,
+  "falseSavingsClaimCount": 0,
+  "interpretation": [
+    "The auditor abstained with no_obvious_headroom on 82/200 traces rather than manufacturing an optimization recommendation.",
+    "Repeated tool-name structure appeared in 51/200 traces, but only 28/200 contained an exact repeated tool+normalized-input signature, preserving the distinction same tool sequence != same transformation.",
+    "Failure/retry investigation was the dominant hypothesis on this NL2Bash workload because 110/200 traces contained nonzero tool exit codes or other failure signals.",
+    "The 10,000-token context threshold was rarely crossed on this small-model workload; context compression is therefore not the dominant optimization hypothesis for this dataset.",
+    "This benchmark establishes parser/decision usefulness on public traces, not customer demand, verified savings, creator revenue, or universal generalization."
+  ],
+  "canonicalPromotionAuthorized": false,
+  "externalValueVerified": false,
+  "economicReturnVerifiedUsd": 0
+}
