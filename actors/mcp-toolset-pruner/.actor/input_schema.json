@@ -1,0 +1,57 @@
+{
+  "title": "MCP Toolset Pruner input",
+  "description": "Provide MCP/agent tool definitions plus the tasks your agent must perform. The Actor returns a smaller candidate allowlist, uncovered intents, and confusion warnings. No LLM calls are used.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "tools": {
+      "title": "Tool definitions",
+      "type": "array",
+      "description": "MCP-style tool definitions. Each item should include name, description, and optionally inputSchema.",
+      "editor": "json",
+      "default": [
+        {"name":"search_docs","description":"Search internal documentation by keyword.","inputSchema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}},
+        {"name":"search_web","description":"Search the public web for current information.","inputSchema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}},
+        {"name":"delete_document","description":"Delete a document by ID after explicit approval.","inputSchema":{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}},
+        {"name":"find_documents","description":"Find internal documents matching a query.","inputSchema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}}
+      ]
+    },
+    "toolsJson": {
+      "title": "Tools JSON (alternative)",
+      "type": "string",
+      "description": "Optional raw JSON string containing a single tool, array of tools, or tools/list response. Used only when tools is empty.",
+      "editor": "textarea"
+    },
+    "taskIntents": {
+      "title": "Task intents",
+      "type": "array",
+      "description": "Short descriptions of tasks the agent must still be able to perform, e.g. 'search internal documentation' or 'find current web information'.",
+      "editor": "stringList",
+      "default": ["search internal documentation", "search current web information"]
+    },
+    "maxTools": {
+      "title": "Maximum selected tools",
+      "type": "integer",
+      "description": "Maximum candidate allowlist size. Coverage warnings remain visible when the cap is too small.",
+      "default": 12,
+      "minimum": 1,
+      "maximum": 50
+    },
+    "minIntentScore": {
+      "title": "Minimum intent evidence score",
+      "type": "number",
+      "description": "Minimum lexical/schema evidence required to say an intent has a matching tool. Higher is stricter.",
+      "default": 0.2,
+      "minimum": 0,
+      "maximum": 1
+    },
+    "confusionThreshold": {
+      "title": "Tool confusion threshold",
+      "type": "number",
+      "description": "Jaccard similarity threshold for flagging tool pairs with overlapping routing signals.",
+      "default": 0.55,
+      "minimum": 0.1,
+      "maximum": 1
+    }
+  }
+}
