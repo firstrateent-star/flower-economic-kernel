@@ -1,19 +1,19 @@
 {
-  "actorSpecification": 1,
-  "fields": {
-    "requestedTraceGroups": { "type": "integer" },
-    "emittedTraceAudits": { "type": "integer" },
-    "chargedTraceAudits": { "type": "integer" },
-    "chargeLimitReached": { "type": "boolean" },
-    "pricingModel": { "type": "string" },
-    "chargeEventConfigured": { "type": "boolean" },
-    "totalModelCallSpans": { "type": "integer" },
-    "totalToolCallSpans": { "type": "integer" },
-    "totalInputTokensObserved": { "type": "integer" },
-    "totalOutputTokensObserved": { "type": "integer" },
-    "totalErrorSpans": { "type": "integer" },
-    "totalHumanBoundarySpans": { "type": "integer" },
-    "note": { "type": "string" },
-    "schemaVersion": { "type": "integer" }
+  "actorOutputSchemaVersion": 1,
+  "title": "Agent Trace Efficiency Auditor output",
+  "description": "Per-trace audits are written to the default dataset. A compact aggregate summary is stored in the OUTPUT record of the default key-value store.",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "Trace audit results",
+      "description": "One machine-readable audit item per trace group, including observed structure, bounded optimization hypotheses, and authority boundaries.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items?view=overview"
+    },
+    "summary": {
+      "type": "string",
+      "title": "Run summary",
+      "description": "Aggregate trace/model/tool/token/error/human-boundary counts for the run.",
+      "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/OUTPUT"
+    }
   }
 }
