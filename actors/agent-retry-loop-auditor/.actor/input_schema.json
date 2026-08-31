@@ -1,0 +1,12 @@
+{
+  "title":"Agent Retry Loop Auditor input",
+  "description":"Provide AI-agent traces or flat OpenTelemetry-like spans. The Actor detects repeated failure signatures, immediate same-input retries, error streaks, terminal failures, and recovery transitions without using an LLM.",
+  "type":"object",
+  "schemaVersion":1,
+  "properties":{
+    "traces":{"title":"Traces","type":"array","description":"Trace objects. Supports objects with spans and AgentTrace-style llm_steps, or direct event/span-like objects.","editor":"json","default":[{"traceId":"example-retry","spans":[{"name":"tool:search","tool_name":"search","tool_input":{"q":"alpha"},"statusCode":"ERROR"},{"name":"tool:search","tool_name":"search","tool_input":{"q":"alpha"},"statusCode":"ERROR"},{"name":"tool:search","tool_name":"search","tool_input":{"q":"alpha revised"},"statusCode":"OK"}]}]},
+    "spans":{"title":"Flat spans","type":"array","description":"Alternative flat span array. traceId/sessionId attributes are used to group spans.","editor":"json"},
+    "repeatThreshold":{"title":"Repeated failure threshold","type":"integer","description":"Minimum occurrences of the same failure signature before it is reported as a repeated failure cluster.","default":2,"minimum":2,"maximum":20},
+    "maxItems":{"title":"Maximum traces","type":"integer","description":"Maximum trace groups to audit in one run.","default":1000,"minimum":1,"maximum":10000}
+  }
+}
