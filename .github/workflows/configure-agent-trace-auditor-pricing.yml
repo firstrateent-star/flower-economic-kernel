@@ -1,0 +1,149 @@
+name: Configure Agent Trace Auditor Pricing
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/configure-agent-trace-auditor-pricing.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-and-configure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require Apify token
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          if [ -z "$APIFY_TOKEN" ]; then
+            echo "APIFY_TOKEN repository secret is missing; refusing pricing change."
+            exit 1
+          fi
+
+      - name: Inspect known working PPE Actor pricing shape
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --location \
+            'https://api.apify.com/v2/actors/7EskFvYOwxznhKYhj' \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" > /tmp/reference.json
+          node <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync('/tmp/reference.json', 'utf8'));
+          const actor = body?.data ?? {};
+          console.log(JSON.stringify({
+            referenceActor: actor.name,
+            isPublic: actor.isPublic,
+            pricingInfos: actor.pricingInfos ?? [],
+          }, null, 2));
+          NODE
+
+      - name: Configure one visible-result PPE event
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/pricing.json <<'JSON'
+          {
+            "pricingInfos": [
+              {
+                "pricingModel": "PAY_PER_EVENT",
+                "pricingPerEvent": {
+                  "actorChargeEvents": {
+                    "trace-audited": {
+                      "eventTitle": "Trace audited",
+                      "eventDescription": "One successfully emitted agent-trace audit with observed telemetry, bounded optimization hypotheses, and matched-replay verification steps.",
+                      "eventPriceUsd": 0.01,
+                      "isPrimaryEvent": true,
+                      "isOneTimeEvent": false
+                    }
+                  }
+                },
+                "minimalMaxTotalChargeUsd": 0.01
+              }
+            ]
+          }
+          JSON
+
+          set +e
+          HTTP=$(curl --silent --show-error --location --request PUT \
+            'https://api.apify.com/v2/actors/BKGUeMqIiFcaELH8d' \
+            -H 'Content-Type: application/json' \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" \
+            --data-binary @/tmp/pricing.json \
+            --output /tmp/pricing-response.json \
+            --write-out '%{http_code}')
+          CURL_EXIT=$?
+          set -e
+
+          echo "Pricing update HTTP status: $HTTP"
+          if [ "$CURL_EXIT" -ne 0 ]; then
+            cat /tmp/pricing-response.json || true
+            exit "$CURL_EXIT"
+          fi
+
+          node <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync('/tmp/pricing-response.json', 'utf8'));
+          const actor = body?.data;
+          if (!actor?.id) {
+            console.error(JSON.stringify(body, null, 2));
+            process.exit(2);
+          }
+          console.log(JSON.stringify({
+            id: actor.id,
+            isPublic: actor.isPublic,
+            pricingInfos: actor.pricingInfos ?? [],
+          }, null, 2));
+          const infos = actor.pricingInfos ?? [];
+          const ppe = infos.find((x) => x?.pricingModel === 'PAY_PER_EVENT');
+          const event = ppe?.pricingPerEvent?.actorChargeEvents?.['trace-audited'];
+          if (!ppe || Number(event?.eventPriceUsd) !== 0.01) {
+            throw new Error('Apify did not confirm the requested trace-audited PPE event at $0.01.');
+          }
+          NODE
+
+      - name: Run self-owned PPE compatibility smoke test
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/input.json <<'JSON'
+          {
+            "traces": [{
+              "traceId": "ppe-compatibility-smoke",
+              "spans": [
+                {"name":"chat","attributes":{"gen_ai.request.model":"model-a","gen_ai.usage.input_tokens":14000,"gen_ai.usage.output_tokens":300}},
+                {"name":"human approval"}
+              ]
+            }]
+          }
+          JSON
+          curl --fail-with-body --silent --show-error --location --request POST \
+            'https://api.apify.com/v2/acts/BKGUeMqIiFcaELH8d/runs?waitForFinish=180&maxTotalChargeUsd=0.05' \
+            -H 'Content-Type: application/json' \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" \
+            --data-binary @/tmp/input.json > /tmp/run.json
+          node <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync('/tmp/run.json', 'utf8'));
+          const run = body?.data;
+          if (!run?.id || run.status !== 'SUCCEEDED') {
+            console.error(JSON.stringify(run ?? body, null, 2));
+            process.exit(2);
+          }
+          console.log(JSON.stringify({
+            id: run.id,
+            status: run.status,
+            pricingInfo: run.pricingInfo ?? null,
+            chargedEventCounts: run.chargedEventCounts ?? null,
+            usageTotalUsd: run.usageTotalUsd ?? null
+          }, null, 2));
+          NODE
