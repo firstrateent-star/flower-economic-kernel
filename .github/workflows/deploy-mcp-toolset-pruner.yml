@@ -1,0 +1,221 @@
+name: Deploy MCP Toolset Pruner
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'actors/mcp-toolset-pruner/**'
+      - '.github/workflows/deploy-mcp-toolset-pruner.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-publish-price-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install and test
+        working-directory: actors/mcp-toolset-pruner
+        run: npm install --ignore-scripts && npm run check && npm test
+
+      - name: Require Apify token
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          if [ -z "$APIFY_TOKEN" ]; then
+            echo "APIFY_TOKEN repository secret is missing; refusing deploy."
+            exit 1
+          fi
+
+      - name: Resolve or create Actor
+        id: actor
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --location \
+            'https://api.apify.com/v2/acts?my=true&limit=1000' \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" > /tmp/actors.json
+          ACTOR_ID=$(node <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync('/tmp/actors.json','utf8'));
+          const items = body?.data?.items ?? body?.data ?? [];
+          const hit = Array.isArray(items) ? items.find((x) => x?.name === 'mcp-toolset-pruner') : null;
+          if (hit?.id) process.stdout.write(hit.id);
+          NODE
+          )
+          if [ -z "$ACTOR_ID" ]; then
+            cat > /tmp/create.json <<'JSON'
+          {
+            "name":"mcp-toolset-pruner",
+            "title":"MCP Toolset Pruner",
+            "description":"Reduce a large MCP or AI-agent tool catalog to the smallest evidence-based shortlist for stated task intents. Detect redundant/confusing tools, preserve coverage, and explain keep/drop decisions without an LLM.",
+            "isPublic":false,
+            "seoTitle":"MCP Tool Selection & Toolset Pruner for AI Agents",
+            "seoDescription":"Prune bloated MCP tools/list catalogs into evidence-based agent tool allowlists. Detect routing confusion, preserve task coverage, and reduce tool context safely."
+          }
+          JSON
+            curl --fail-with-body --silent --show-error --location --request POST \
+              'https://api.apify.com/v2/acts' \
+              -H 'Content-Type: application/json' -H 'Accept: application/json' \
+              -H "Authorization: Bearer $APIFY_TOKEN" --data-binary @/tmp/create.json > /tmp/created.json
+            ACTOR_ID=$(node -e "const x=require('/tmp/created.json'); if(!x?.data?.id)process.exit(2); process.stdout.write(x.data.id)")
+          fi
+          echo "actor_id=$ACTOR_ID" >> "$GITHUB_OUTPUT"
+          echo "Actor ID: $ACTOR_ID"
+
+      - name: Push Actor build
+        id: push
+        uses: apify/push-actor-action@v1
+        with:
+          token: ${{ secrets.APIFY_TOKEN }}
+          actor-id: ${{ steps.actor.outputs.actor_id }}
+          working-directory: actors/mcp-toolset-pruner
+
+      - name: Smoke test build before publication
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/input.json <<'JSON'
+          {
+            "tools":[
+              {"name":"search_docs","description":"Search internal documentation by keyword.","inputSchema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}},
+              {"name":"find_documents","description":"Find internal documents matching a query.","inputSchema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}},
+              {"name":"search_web","description":"Search the public web for current information.","inputSchema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}},
+              {"name":"delete_document","description":"Delete a document by ID after explicit approval.","inputSchema":{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}}
+            ],
+            "taskIntents":["search internal documentation","search current web information"],
+            "maxTools":3,
+            "confusionThreshold":0.2
+          }
+          JSON
+          curl --fail-with-body --silent --show-error --location --request POST \
+            "https://api.apify.com/v2/acts/$ACTOR_ID/runs?waitForFinish=180" \
+            -H 'Content-Type: application/json' -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" --data-binary @/tmp/input.json > /tmp/run.json
+          RUN_ID=$(node -e "const x=require('/tmp/run.json'); if(x?.data?.status!=='SUCCEEDED') {console.error(x?.data);process.exit(2)} process.stdout.write(x.data.id)")
+          curl --fail-with-body --silent --show-error --location \
+            "https://api.apify.com/v2/actor-runs/$RUN_ID/dataset/items?clean=true" \
+            -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" > /tmp/items.json
+          node <<'NODE'
+          const items = require('/tmp/items.json');
+          const row = items?.[0];
+          if (!row) throw new Error('No dataset output.');
+          if (row.coverageComplete !== true) throw new Error('Smoke test failed to preserve stated task coverage.');
+          if (row.authority?.productionRemovalAuthorized !== false) throw new Error('Authority boundary regressed.');
+          if (!row.selectedTools?.some((x) => x.name === 'search_web')) throw new Error('Expected search_web to survive.');
+          console.log(JSON.stringify({input:row.inputToolCount,selected:row.selectedToolCount,dropped:row.droppedToolCount,coverage:row.coverageComplete,confusedPairs:row.confusedPairs?.length},null,2));
+          NODE
+
+      - name: Publish with limited permissions and PPE pricing
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/public.json <<'JSON'
+          {
+            "isPublic":true,
+            "title":"MCP Toolset Pruner",
+            "description":"Reduce bloated MCP or AI-agent tool catalogs to a smaller evidence-based allowlist for stated tasks. Detect routing confusion, preserve task coverage, and identify what can stay dormant — without using an LLM or pretending lexical similarity proves behavioral equivalence.",
+            "seoTitle":"MCP Tool Selection & Toolset Pruner for AI Agents",
+            "seoDescription":"Reduce MCP tools/list catalogs, detect confusing tool pairs, preserve task coverage, and produce replay-ready AI agent tool allowlists with deterministic evidence.",
+            "categories":["AI","DEVELOPER_TOOLS"],
+            "actorPermissionLevel":"LIMITED_PERMISSIONS",
+            "defaultRunOptions":{"build":"latest","timeoutSecs":300,"memoryMbytes":128,"restartOnError":false},
+            "pricingInfos":[{
+              "pricingModel":"PAY_PER_EVENT",
+              "pricingPerEvent":{"actorChargeEvents":{"toolset-pruned":{
+                "eventTitle":"Toolset pruned",
+                "eventDescription":"One deterministic MCP/agent toolset audit with candidate allowlist, task-coverage evidence, confusion warnings, and replay boundary.",
+                "eventPriceUsd":0.01,
+                "isPrimaryEvent":true,
+                "isOneTimeEvent":false
+              }}},
+              "minimalMaxTotalChargeUsd":0.01
+            }],
+            "exampleRunInput":{
+              "contentType":"application/json; charset=utf-8",
+              "body":"{\"tools\":[{\"name\":\"search_docs\",\"description\":\"Search internal documentation by keyword.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}},{\"name\":\"search_web\",\"description\":\"Search the public web for current information.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}}],\"taskIntents\":[\"search internal documentation\",\"search current web information\"],\"maxTools\":12}"
+            }
+          }
+          JSON
+          curl --fail-with-body --silent --show-error --location --request PUT \
+            "https://api.apify.com/v2/actors/$ACTOR_ID" \
+            -H 'Content-Type: application/json' -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" --data-binary @/tmp/public.json > /tmp/actor.json
+          node <<'NODE'
+          const actor = require('/tmp/actor.json')?.data;
+          if (!actor?.id || actor.isPublic !== true) throw new Error('Actor did not become public.');
+          if (actor.actorPermissionLevel !== 'LIMITED_PERMISSIONS') throw new Error('Actor is not limited permission.');
+          const ppe = (actor.pricingInfos ?? []).find((x) => x?.pricingModel === 'PAY_PER_EVENT');
+          const event = ppe?.pricingPerEvent?.actorChargeEvents?.['toolset-pruned'];
+          if (Number(event?.eventPriceUsd) !== 0.01) throw new Error('PPE event not confirmed at $0.01.');
+          console.log(JSON.stringify({id:actor.id,name:actor.name,isPublic:actor.isPublic,permission:actor.actorPermissionLevel,pricingModel:ppe?.pricingModel,eventPrice:event?.eventPriceUsd},null,2));
+          NODE
+
+      - name: PPE compatibility run
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/ppe-input.json <<'JSON'
+          {"tools":[{"name":"search_docs","description":"Search internal documentation.","inputSchema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}},{"name":"search_web","description":"Search current public web information.","inputSchema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}}],"taskIntents":["search current web information"],"maxTools":1}
+          JSON
+          curl --fail-with-body --silent --show-error --location --request POST \
+            "https://api.apify.com/v2/acts/$ACTOR_ID/runs?waitForFinish=180&maxTotalChargeUsd=0.05" \
+            -H 'Content-Type: application/json' -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" --data-binary @/tmp/ppe-input.json > /tmp/ppe-run.json
+          node <<'NODE'
+          const run = require('/tmp/ppe-run.json')?.data;
+          if (!run?.id || run.status !== 'SUCCEEDED') throw new Error('PPE smoke run failed.');
+          console.log(JSON.stringify({id:run.id,status:run.status,pricingInfo:run.pricingInfo,chargedEventCounts:run.chargedEventCounts,usageTotalUsd:run.usageTotalUsd},null,2));
+          NODE
+
+      - name: Verify Store and agent-facing eligibility state
+        env:
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          FOUND=0
+          for i in 1 2 3 4 5 6; do
+            curl --fail-with-body --silent --show-error --location \
+              'https://api.apify.com/v2/store?search=MCP%20Toolset%20Pruner&limit=20&responseFormat=agent' \
+              -H 'Accept: application/json' > /tmp/store.json
+            if ACTOR_ID="$ACTOR_ID" node <<'NODE'
+          const items = require('/tmp/store.json')?.data?.items ?? [];
+          const id = process.env.ACTOR_ID;
+          if (!items.some((x) => x?.id === id || x?.name === 'mcp-toolset-pruner')) process.exit(1);
+          NODE
+            then FOUND=1; break; fi
+            sleep 10
+          done
+          if [ "$FOUND" -ne 1 ]; then
+            echo 'Actor publication succeeded but Store propagation is not visible yet.'
+          else
+            echo 'Actor is visible in Store search.'
+          fi
+          curl --fail-with-body --silent --show-error --location \
+            'https://api.apify.com/v2/store?search=MCP%20Toolset%20Pruner&limit=20&allowsAgenticUsers=true&responseFormat=agent' \
+            -H 'Accept: application/json' > /tmp/agentic.json
+          ACTOR_ID="$ACTOR_ID" node <<'NODE'
+          const items = require('/tmp/agentic.json')?.data?.items ?? [];
+          const eligible = items.some((x) => x?.id === process.env.ACTOR_ID || x?.name === 'mcp-toolset-pruner');
+          console.log(JSON.stringify({agenticStoreEligible:eligible,note:eligible?'Eligible for autonomous agent discovery/payment surface.':'PPE/limited-permission requirements may be met, but developer KYC or propagation can still gate allowsAgenticUsers.'},null,2));
+          NODE
+
+      - name: Report
+        run: |
+          echo "Actor ID: ${{ steps.actor.outputs.actor_id }}"
+          echo "Apify build: ${{ steps.push.outputs.build-id }}"
+          echo "Build status: ${{ steps.push.outputs.build-status }}"
