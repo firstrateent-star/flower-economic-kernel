@@ -69,3 +69,60 @@ test('flat spans group by trace id', () => {
   assert.equal(results.find((x) => x.traceId === 'one')?.spanCount, 2);
   assert.equal(results.find((x) => x.traceId === 'two')?.spanCount, 1);
 });
+
+test('AgentTrace native shape adds llm_steps and direct tool telemetry', () => {
+  const [result] = auditInput({
+    highInputTokenThreshold: 1500,
+    traces: [{
+      trace_id: 'agenttrace-native',
+      model: 'Qwen/Qwen3-0.6B',
+      spans: [
+        {
+          type: 'TOOL',
+          tool_name: 'bash',
+          tool_input: "kwargs={'command':'grep foo /testdata'}",
+          duration_ms: 15.5,
+          exit_code: 1,
+        },
+        {
+          type: 'TOOL',
+          tool_name: 'final_answer',
+          tool_input: "kwargs={'answer':'none'}",
+          duration_ms: 0.01,
+          exit_code: 0,
+        },
+      ],
+      llm_steps: [
+        { step_number: 1, input_tokens: 1510, output_tokens: 944 },
+        { step_number: 2, input_tokens: 1612, output_tokens: 495 },
+      ],
+    }],
+  });
+
+  assert.equal(result.traceId, 'agenttrace-native');
+  assert.equal(result.spanCount, 4);
+  assert.equal(result.toolCallSpans, 2);
+  assert.equal(result.modelCallSpans, 2);
+  assert.equal(result.totalInputTokens, 3122);
+  assert.equal(result.totalOutputTokens, 1439);
+  assert.equal(result.errorSpans, 1);
+  assert.equal(result.highInputTokenCalls, 2);
+  assert.deepEqual(result.modelsObserved, ['Qwen/Qwen3-0.6B']);
+  assert.ok(result.hypotheses.some((x) => x.id === 'failure_retry_overhead'));
+  assert.ok(result.hypotheses.some((x) => x.id === 'context_projection_headroom'));
+});
+
+test('AgentTrace repeated tool names with different direct tool_input remain structural only', () => {
+  const [result] = auditInput({
+    traces: [{
+      trace_id: 'agenttrace-diverse',
+      spans: [
+        { type: 'TOOL', tool_name: 'bash', tool_input: "kwargs={'command':'ls'}", exit_code: 0 },
+        { type: 'TOOL', tool_name: 'bash', tool_input: "kwargs={'command':'grep foo'}", exit_code: 0 },
+      ],
+    }],
+  });
+  assert.equal(result.repeatedToolShapes, 1);
+  assert.equal(result.exactRepeatedTransformations, 0);
+  assert.ok(result.hypotheses.some((x) => x.id === 'structural_recurrence_only'));
+});
