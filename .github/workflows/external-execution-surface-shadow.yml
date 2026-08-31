@@ -1,0 +1,52 @@
+name: Flower External Execution Surface Shadow
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/external-execution-surface-shadow.mjs'
+      - 'tests/external-execution-surface-shadow.test.js'
+      - 'research/value-transfer/**'
+      - '.github/workflows/external-execution-surface-shadow.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  external-surface:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate analyzer
+        run: |
+          node --check scripts/external-execution-surface-shadow.mjs
+          node --test tests/external-execution-surface-shadow.test.js tests/optimization-control-plane.test.js
+      - name: Analyze public MCP-vs-CLI benchmark
+        run: node scripts/external-execution-surface-shadow.mjs
+      - name: Validate epistemic boundary
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('reports/external-execution-surface-shadow-latest.json', 'utf8'));
+          if (report.epistemicStatus !== 'external_benchmark_shadow_observation_not_flower_policy_proof') throw new Error('Incorrect epistemic status.');
+          if (report.currentClaims.flowerRouterValidated !== false) throw new Error('External reversal evidence may not self-validate Flower routing.');
+          if (report.currentClaims.externalValueObserved !== false) throw new Error('External benchmark analysis may not claim external value.');
+          if (report.analysis.comparablePairCount < 2) throw new Error('Insufficient comparable surface pairs.');
+          console.log(JSON.stringify({
+            comparablePairCount: report.analysis.comparablePairCount,
+            counts: report.analysis.counts,
+            reversalScaffolds: report.analysis.reversalScaffolds,
+            staticSurfaceWinnerExists: report.analysis.staticSurfaceWinnerExists,
+          }, null, 2));
+          NODE
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: flower-external-execution-surface-shadow
+          path: reports/external-execution-surface-shadow-latest.json
+          if-no-files-found: error
+          retention-days: 14
