@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Probe Skyfire payment challenge without credentials
+        id: skyfire
+        continue-on-error: true
         run: |
           set -euo pipefail
           HTTP=$(curl --silent --show-error --location \
@@ -25,12 +27,15 @@ jobs:
             --write-out '%{http_code}')
           echo "Skyfire challenge HTTP status: $HTTP"
           cat /tmp/skyfire.json || true
+          echo "http_status=$HTTP" >> "$GITHUB_OUTPUT"
           if [ "$HTTP" != "402" ]; then
             echo "Actor is not yet exposing the expected agentic-payment challenge."
             exit 1
           fi
 
       - name: Check agentic Store discovery surface
+        id: store
+        continue-on-error: true
         run: |
           set -euo pipefail
           curl --fail-with-body --silent --show-error --location \
@@ -54,3 +59,18 @@ jobs:
           }, null, 2));
           if (!hit) process.exit(2);
           NODE
+
+      - name: Classify eligibility state
+        if: always()
+        env:
+          SKYFIRE_OUTCOME: ${{ steps.skyfire.outcome }}
+          STORE_OUTCOME: ${{ steps.store.outcome }}
+          SKYFIRE_HTTP: ${{ steps.skyfire.outputs.http_status }}
+        run: |
+          echo "Skyfire outcome: $SKYFIRE_OUTCOME (HTTP ${SKYFIRE_HTTP:-unknown})"
+          echo "Agentic Store outcome: $STORE_OUTCOME"
+          if [ "$SKYFIRE_OUTCOME" = "success" ] && [ "$STORE_OUTCOME" = "success" ]; then
+            echo "Agentic payment eligibility is externally evidenced."
+          else
+            echo "Ordinary Store PPE may be live while agentic-payment discovery remains unverified/not propagated."
+          fi
