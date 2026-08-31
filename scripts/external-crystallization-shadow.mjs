@@ -1,12 +1,14 @@
 import fs from 'node:fs';
 import https from 'node:https';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 
 const DEFAULT_URL = 'https://raw.githubusercontent.com/pagarsky/agent-trace/main/datasets/nl2bash_0_6B_20260328T133144Z.jsonl';
 const outputPath = process.env.FLOWER_EXTERNAL_CRYSTALLIZATION_REPORT || 'reports/external-crystallization-shadow-latest.json';
 const sourceUrl = process.env.FLOWER_AGENTTRACE_URL || DEFAULT_URL;
 const ngramSize = Number(process.env.FLOWER_CRYSTALLIZATION_NGRAM || 2);
 const minOccurrences = Number(process.env.FLOWER_CRYSTALLIZATION_MIN_OCCURRENCES || 3);
+const BOUNDARY_NAMES = new Set(['final_answer', 'answer', 'response', 'respond']);
 
 function fetchText(url) {
   return new Promise((resolve, reject) => {
@@ -34,15 +36,27 @@ function finite(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-function toolSequence(trace) {
-  return (trace?.spans ?? [])
-    .map((span) => span?.tool_name ?? span?.name ?? null)
-    .filter((name) => typeof name === 'string' && name.trim().length > 0)
-    .map((name) => name.trim());
+function stable(value) {
+  if (Array.isArray(value)) return value.map(stable);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable(value[key])]));
+  }
+  return value;
 }
 
-function spanDuration(span) {
-  return finite(span?.duration_ms ?? span?.wall_time_ms ?? span?.elapsed_ms);
+function fingerprint(value) {
+  return createHash('sha256').update(JSON.stringify(stable(value ?? null))).digest('hex').slice(0, 16);
+}
+
+function normalizedSpans(trace) {
+  return (trace?.spans ?? [])
+    .map((span) => ({
+      name: span?.tool_name ?? span?.name ?? null,
+      input: span?.tool_input ?? span?.input ?? null,
+      durationMs: finite(span?.duration_ms ?? span?.wall_time_ms ?? span?.elapsed_ms),
+    }))
+    .filter((span) => typeof span.name === 'string' && span.name.trim().length > 0)
+    .map((span) => ({ ...span, name: span.name.trim() }));
 }
 
 export function analyzeAgentTraceRows(rows, { n = 2, minCount = 3 } = {}) {
@@ -53,23 +67,32 @@ export function analyzeAgentTraceRows(rows, { n = 2, minCount = 3 } = {}) {
 
   for (const trace of rows) {
     traceCount += 1;
-    const seq = toolSequence(trace);
-    if (seq.length > 0) toolBearingTraceCount += 1;
-    totalToolCalls += seq.length;
+    const spans = normalizedSpans(trace);
+    if (spans.length > 0) toolBearingTraceCount += 1;
+    totalToolCalls += spans.length;
 
-    const spans = trace?.spans ?? [];
-    for (let i = 0; i <= seq.length - n; i += 1) {
-      const key = seq.slice(i, i + n).join(' -> ');
+    for (let i = 0; i <= spans.length - n; i += 1) {
+      const window = spans.slice(i, i + n);
+      const sequence = window.map((span) => span.name);
+      const key = sequence.join(' -> ');
+      const inputSignature = fingerprint(window.map((span) => span.input));
       const entry = index.get(key) ?? {
-        sequence: seq.slice(i, i + n),
+        sequence,
         occurrenceCount: 0,
         traceIds: new Set(),
         observedDurationMs: [],
+        inputSignatures: new Map(),
+        containsBoundary: sequence.some((name) => BOUNDARY_NAMES.has(name.toLowerCase())),
       };
       entry.occurrenceCount += 1;
-      if (trace?.trace_id != null) entry.traceIds.add(String(trace.trace_id));
+      const traceId = trace?.trace_id != null ? String(trace.trace_id) : `row_${traceCount}`;
+      entry.traceIds.add(traceId);
+      const inputEntry = entry.inputSignatures.get(inputSignature) ?? { occurrenceCount: 0, traceIds: new Set() };
+      inputEntry.occurrenceCount += 1;
+      inputEntry.traceIds.add(traceId);
+      entry.inputSignatures.set(inputSignature, inputEntry);
 
-      const localDurations = spans.slice(i, i + n).map(spanDuration).filter((x) => x !== null);
+      const localDurations = window.map((span) => span.durationMs).filter((x) => x !== null);
       if (localDurations.length === n) entry.observedDurationMs.push(localDurations.reduce((a, b) => a + b, 0));
       index.set(key, entry);
     }
@@ -82,20 +105,35 @@ export function analyzeAgentTraceRows(rows, { n = 2, minCount = 3 } = {}) {
       const meanObservedDurationMs = durations.length
         ? durations.reduce((a, b) => a + b, 0) / durations.length
         : null;
+      const signatureStats = [...entry.inputSignatures.values()];
+      const strongestExactInputReuseTraceCount = signatureStats.length
+        ? Math.max(...signatureStats.map((item) => item.traceIds.size))
+        : 0;
+      const exactTransformationRecurrenceObserved = !entry.containsBoundary
+        && strongestExactInputReuseTraceCount >= minCount;
       return {
         sequence: entry.sequence,
         occurrenceCount: entry.occurrenceCount,
         independentTraceCount: entry.traceIds.size,
+        distinctInputSequenceCount: entry.inputSignatures.size,
+        inputDiversityRatio: Number((entry.inputSignatures.size / entry.occurrenceCount).toFixed(6)),
+        strongestExactInputReuseTraceCount,
+        containsBoundary: entry.containsBoundary,
         meanObservedDurationMs: meanObservedDurationMs === null ? null : Number(meanObservedDurationMs.toFixed(3)),
-        crystallizationCandidate: true,
+        recurringToolShapeObserved: true,
+        exactTransformationRecurrenceObserved,
+        crystallizationCandidate: exactTransformationRecurrenceObserved,
         compilationSafetyVerified: false,
         decisionEquivalenceVerified: false,
         externalValueVerified: false,
       };
     })
-    .sort((a, b) => b.independentTraceCount - a.independentTraceCount
-      || b.occurrenceCount - a.occurrenceCount
+    .sort((a, b) => Number(b.crystallizationCandidate) - Number(a.crystallizationCandidate)
+      || b.strongestExactInputReuseTraceCount - a.strongestExactInputReuseTraceCount
+      || b.independentTraceCount - a.independentTraceCount
       || a.sequence.join(' -> ').localeCompare(b.sequence.join(' -> ')));
+
+  const crystallizationCandidates = repeated.filter((entry) => entry.crystallizationCandidate);
 
   return {
     traceCount,
@@ -103,8 +141,10 @@ export function analyzeAgentTraceRows(rows, { n = 2, minCount = 3 } = {}) {
     totalToolCalls,
     ngramSize: n,
     minimumOccurrences: minCount,
-    repeatedSequenceCount: repeated.length,
+    repeatedToolShapeCount: repeated.length,
+    exactTransformationCandidateCount: crystallizationCandidates.length,
     topRepeatedSequences: repeated.slice(0, 25),
+    topExactTransformationCandidates: crystallizationCandidates.slice(0, 25),
   };
 }
 
@@ -123,7 +163,7 @@ async function main() {
   const rows = parseJsonl(text);
   const analysis = analyzeAgentTraceRows(rows, { n: ngramSize, minCount: minOccurrences });
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     epistemicStatus: 'external_open_trace_shadow_observation_not_external_value_proof',
     source: {
       project: 'pagarsky/agent-trace',
@@ -131,22 +171,24 @@ async function main() {
       datasetLicenseClaimFromProject: 'Apache-2.0 subject to upstream task terms',
     },
     question:
-      'Do repeated procedural tool subsequences occur across independent non-Flower agent traces often enough to justify further validated-crystallization research?',
+      'Do repeated transformations, not merely repeated tool names, occur across independent non-Flower agent traces often enough to justify further validated-crystallization research?',
     analysis,
     currentClaims: {
-      repeatedProceduralStructureObserved: analysis.repeatedSequenceCount > 0,
+      recurringToolShapesObserved: analysis.repeatedToolShapeCount > 0,
+      exactTransformationRecurrenceObserved: analysis.exactTransformationCandidateCount > 0,
       safeCompilationObserved: false,
       decisionEquivalenceObserved: false,
       externalValueObserved: false,
     },
     nextEvidenceRequired: [
+      'For any exact-transformation candidate, inspect whether the repeated inputs represent the same semantic operation rather than an incidental literal duplicate.',
       'Replay a nominated sequence with a deterministic compiled equivalent on the same task inputs.',
       'Verify identical or improved terminal task outcome with an accountable decision/result witness.',
       'Measure latency, model calls, token use, error rate, and resource cost before and after.',
-      'Reject any candidate whose sequence contains a semantic fork or whose compiled form hides material uncertainty.',
+      'Reject any candidate whose sequence contains a semantic/terminal boundary or whose compiled form hides material uncertainty.',
     ],
     epistemicBoundary:
-      'Cross-trace repetition is evidence of recurring structure only. It does not prove that the sequence is semantically redundant, safe to compile, decision-equivalent, valuable to the source project, or economically valuable.',
+      'Tool-name recurrence is only a shape recurrence. Even exact input recurrence does not prove semantic redundancy, safe compilation, decision equivalence, value to the source project, or economic value.',
   };
 
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
