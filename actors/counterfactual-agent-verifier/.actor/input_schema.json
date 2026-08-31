@@ -1,0 +1,22 @@
+{
+  "title":"Counterfactual Agent Verifier input",
+  "type":"object",
+  "schemaVersion":1,
+  "properties":{
+    "comparisons":{
+      "title":"Matched baseline/challenger comparisons",
+      "description":"One or more matched workload cases. Provide terminalSuccess for both sides; optional quality and efficiency metrics improve the comparison.",
+      "type":"array",
+      "editor":"json",
+      "default":[{
+        "caseId":"task-1",
+        "baseline":{"terminalSuccess":true,"quality":0.9,"costUsd":0.05,"latencyMs":1200,"inputTokens":6000},
+        "challenger":{"terminalSuccess":true,"quality":0.9,"costUsd":0.02,"latencyMs":850,"inputTokens":3200},
+        "protectedMetrics":[{"name":"accuracy","direction":"higher","baseline":0.95,"challenger":0.95,"tolerance":0.01}]
+      }]
+    },
+    "qualityTolerance":{"title":"Allowed quality decrease","description":"Absolute tolerated decrease before quality is classified as a regression.","type":"number","minimum":0,"default":0},
+    "representativeWorkload":{"title":"Replay set is representative","description":"Set true only when the supplied cases are genuinely representative of the deployment workload. This still does not authorize production promotion.","type":"boolean","default":false}
+  },
+  "required":["comparisons"]
+}
