@@ -1,0 +1,96 @@
+name: Publish Agent Trace Efficiency Auditor
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-agent-trace-efficiency-auditor.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  publish-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require Apify token
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          if [ -z "$APIFY_TOKEN" ]; then
+            echo "APIFY_TOKEN repository secret is missing; refusing publication."
+            exit 1
+          fi
+
+      - name: Publish verified Actor
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/public.json <<'JSON'
+          {
+            "isPublic": true,
+            "title": "Agent Trace Efficiency Auditor",
+            "description": "Audit AI-agent traces for token-heavy context, retries, model switching, repeated tool transformations, and human-interruption pressure. Returns the smallest matched-replay experiments needed to verify whether cognition can be removed safely — without inventing savings claims.",
+            "seoTitle": "AI Agent Trace Efficiency Auditor",
+            "seoDescription": "Audit AI agent traces for context, routing, retries, exact tool repeats, and human-boundary optimization experiments without fake savings claims.",
+            "categories": ["AI", "DEVELOPER_TOOLS"],
+            "actorPermissionLevel": "LIMITED_PERMISSIONS",
+            "defaultRunOptions": {
+              "build": "latest",
+              "timeoutSecs": 300,
+              "memoryMbytes": 128,
+              "restartOnError": false
+            },
+            "exampleRunInput": {
+              "contentType": "application/json; charset=utf-8",
+              "body": "{\"traces\":[{\"traceId\":\"example-agent-run\",\"spans\":[{\"name\":\"chat\",\"attributes\":{\"gen_ai.request.model\":\"model-a\",\"gen_ai.usage.input_tokens\":14000,\"gen_ai.usage.output_tokens\":300}},{\"name\":\"tool:search\",\"attributes\":{\"gen_ai.tool.name\":\"search\",\"gen_ai.tool.call.arguments\":{\"q\":\"same-query\"}}},{\"name\":\"chat\",\"attributes\":{\"gen_ai.request.model\":\"model-b\",\"gen_ai.usage.input_tokens\":16000,\"gen_ai.usage.output_tokens\":500}},{\"name\":\"tool:search\",\"attributes\":{\"gen_ai.tool.name\":\"search\",\"gen_ai.tool.call.arguments\":{\"q\":\"same-query\"}}},{\"name\":\"human approval\"}]}],\"highInputTokenThreshold\":10000}"
+            }
+          }
+          JSON
+
+          curl --fail-with-body --silent --show-error --location --request PUT \
+            'https://api.apify.com/v2/actors/BKGUeMqIiFcaELH8d' \
+            -H 'Content-Type: application/json' \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" \
+            --data-binary @/tmp/public.json \
+            > /tmp/actor.json
+
+          node <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync('/tmp/actor.json', 'utf8'));
+          const actor = body?.data;
+          if (!actor?.id) throw new Error('Update returned no Actor.');
+          if (actor.isPublic !== true) throw new Error('Actor did not become public.');
+          if (actor.actorPermissionLevel !== 'LIMITED_PERMISSIONS') throw new Error('Permission level is not limited.');
+          console.log(JSON.stringify({
+            id: actor.id,
+            name: actor.name,
+            username: actor.username,
+            isPublic: actor.isPublic,
+            categories: actor.categories,
+            actorPermissionLevel: actor.actorPermissionLevel,
+            pricingInfos: actor.pricingInfos ?? []
+          }, null, 2));
+          NODE
+
+      - name: Verify Store API discovery
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --location \
+            'https://api.apify.com/v2/store?search=Agent%20Trace%20Efficiency%20Auditor&limit=20' \
+            -H 'Accept: application/json' \
+            > /tmp/store.json
+          node <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync('/tmp/store.json', 'utf8'));
+          const items = body?.data?.items ?? [];
+          const hit = items.find((x) => x?.id === 'BKGUeMqIiFcaELH8d' || x?.name === 'agent-trace-efficiency-auditor');
+          if (!hit) {
+            console.error(JSON.stringify({ storeResults: items.map((x) => ({id:x.id,name:x.name,title:x.title})) }, null, 2));
+            throw new Error('Public Actor was not returned by Store search yet.');
+          }
+          console.log(JSON.stringify({ discovered: true, id: hit.id, name: hit.name, title: hit.title, pricingModel: hit.currentPricingInfo?.pricingModel ?? hit.pricingInfos?.[0]?.pricingModel ?? null }, null, 2));
+          NODE
