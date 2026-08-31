@@ -1,0 +1,23 @@
+name: Apify AI Intent Landscape
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/apify-ai-intent-landscape.mjs'
+      - '.github/workflows/apify-ai-intent-landscape.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scan live Apify AI optimization intents
+        run: node scripts/apify-ai-intent-landscape.mjs
