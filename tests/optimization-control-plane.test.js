@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   assessAdaptiveHeadroom,
+  assessTerminalProgressRoute,
   classifyExecutionShape,
+  compareTerminalProgressRoutes,
   detectSharedConstraints,
   shadowOptimizationControlPlane,
 } from '../research/value-transfer/optimization-control-plane.js';
@@ -50,6 +52,38 @@ test('missing task-shape evidence does not manufacture an execution recommendati
   assert.ok(result.evidenceCoverage < 1);
 });
 
+test('terminal progress requires a named scale, verified evidence, and protected outcome', () => {
+  const missing = assessTerminalProgressRoute({
+    id: 'route-a',
+    expectedProgressDelta: 0.4,
+    incrementalCost: 2,
+  });
+  assert.equal(missing.comparable, false);
+  assert.equal(missing.terminalProgressDensity, null);
+
+  const valid = assessTerminalProgressRoute({
+    id: 'route-b',
+    progressScale: 'external-evidence-gate-closure',
+    expectedProgressDelta: 0.4,
+    incrementalCost: 2,
+    progressEvidenceVerified: true,
+    outcomeProtected: true,
+  });
+  assert.equal(valid.comparable, true);
+  assert.equal(valid.terminalProgressDensity, 0.2);
+});
+
+test('terminal progress routes rank only inside the same named scale', () => {
+  const result = compareTerminalProgressRoutes([
+    { id: 'cheap', progressScale: 'gate-closure', expectedProgressDelta: 0.4, incrementalCost: 2, progressEvidenceVerified: true, outcomeProtected: true },
+    { id: 'costly', progressScale: 'gate-closure', expectedProgressDelta: 0.6, incrementalCost: 6, progressEvidenceVerified: true, outcomeProtected: true },
+    { id: 'other-chart', progressScale: 'prediction-quality', expectedProgressDelta: 0.9, incrementalCost: 1, progressEvidenceVerified: true, outcomeProtected: true },
+  ]);
+  assert.equal(result.frontiers.length, 2);
+  assert.equal(result.frontiers.find((x) => x.progressScale === 'gate-closure').bestRouteId, 'cheap');
+  assert.equal(result.deterministicCrossScaleChoiceAuthorized, false);
+});
+
 test('stable equivalent policy suppresses unnecessary adaptive cognition in shadow mode', () => {
   const result = assessAdaptiveHeadroom({
     policyStable: true,
@@ -86,11 +120,14 @@ test('shared constraint detector finds overlap but does not claim leverage', () 
   assert.ok(result.every((x) => x.leverageVerified === false));
 });
 
-test('control plane keeps action charts separate and remains shadow-only', () => {
+test('control plane keeps action and progress charts separate and remains shadow-only', () => {
   const result = shadowOptimizationControlPlane({
     actions: [
       { id: 'probe', decisionChangeProbability: 0.5, decisionStakes: 1000, incrementalCost: 10 },
       { id: 'act', expectedValueDelta: 100, incrementalCost: 10 },
+    ],
+    progressRoutes: [
+      { id: 'route', progressScale: 'external-evidence-gate-closure', expectedProgressDelta: 0.5, incrementalCost: 2, progressEvidenceVerified: true, outcomeProtected: true },
     ],
     stage: {
       deterministicChainLength: 2,
@@ -112,6 +149,7 @@ test('control plane keeps action charts separate and remains shadow-only', () =>
 
   assert.equal(result.marginalFrontier.bestInformationActionId, 'probe');
   assert.equal(result.marginalFrontier.bestDirectValueActionId, 'act');
+  assert.equal(result.terminalProgressFrontier.frontiers[0].bestRouteId, 'route');
   assert.equal(result.adaptiveHeadroom.recommendation, 'preserve_stable_policy');
   assert.equal(result.authority, 'shadow_only');
   assert.equal(result.externalValueVerified, false);
