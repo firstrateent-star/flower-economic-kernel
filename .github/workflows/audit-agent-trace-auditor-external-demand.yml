@@ -1,0 +1,74 @@
+name: Audit Agent Trace Auditor External Demand
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/audit-agent-trace-auditor-external-demand.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require Apify token
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          if [ -z "$APIFY_TOKEN" ]; then
+            echo "APIFY_TOKEN repository secret is missing."
+            exit 1
+          fi
+
+      - name: Distinguish self runs from external runs
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --location \
+            'https://api.apify.com/v2/users/me' \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" > /tmp/me.json
+          curl --fail-with-body --silent --show-error --location \
+            'https://api.apify.com/v2/acts/BKGUeMqIiFcaELH8d/runs?limit=100&desc=1' \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" > /tmp/runs.json
+
+          node <<'NODE'
+          const fs = require('node:fs');
+          const meBody = JSON.parse(fs.readFileSync('/tmp/me.json', 'utf8'));
+          const runsBody = JSON.parse(fs.readFileSync('/tmp/runs.json', 'utf8'));
+          const me = meBody?.data ?? meBody;
+          const selfId = me?.id;
+          if (!selfId) throw new Error('Could not resolve authenticated Apify user id.');
+          const runs = runsBody?.data?.items ?? [];
+          const normalized = runs.map((r) => ({
+            id: r.id,
+            status: r.status,
+            startedAt: r.startedAt,
+            finishedAt: r.finishedAt,
+            userId: r.userId ?? null,
+            isSelf: r.userId ? r.userId === selfId : null,
+            pricingInfo: r.pricingInfo ?? null,
+            chargedEventCounts: r.chargedEventCounts ?? {},
+            usageTotalUsd: r.usageTotalUsd ?? null,
+          }));
+          const external = normalized.filter((r) => r.userId && r.userId !== selfId);
+          const externalCharged = external.filter((r) => Number(r.chargedEventCounts?.['trace-audited'] ?? 0) > 0);
+          const selfCharged = normalized.filter((r) => r.isSelf && Number(r.chargedEventCounts?.['trace-audited'] ?? 0) > 0);
+          console.log(JSON.stringify({
+            authenticatedUserId: selfId,
+            runCount: normalized.length,
+            selfRunCount: normalized.filter((r) => r.isSelf).length,
+            unresolvedOwnerRunCount: normalized.filter((r) => r.isSelf === null).length,
+            externalRunCount: external.length,
+            externalChargedRunCount: externalCharged.length,
+            externalChargedEventCount: externalCharged.reduce((sum, r) => sum + Number(r.chargedEventCounts?.['trace-audited'] ?? 0), 0),
+            selfChargedRunCount: selfCharged.length,
+            externalRuns: external,
+            note: external charged events are evidence of paid use; self-owned runs are excluded from revenue evidence.
+          }, null, 2));
+          NODE
