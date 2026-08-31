@@ -1,0 +1,49 @@
+{
+  "actorSpecification": 1,
+  "fields": {
+    "traceId": { "type": "string" },
+    "spanCount": { "type": "integer" },
+    "modelCallSpans": { "type": "integer" },
+    "toolCallSpans": { "type": "integer" },
+    "totalInputTokens": { "type": "integer" },
+    "totalOutputTokens": { "type": "integer" },
+    "totalTokens": { "type": "integer" },
+    "totalObservedDurationMs": { "type": "number" },
+    "modelSwitches": { "type": "integer" },
+    "errorSpans": { "type": "integer" },
+    "humanBoundarySpans": { "type": "integer" },
+    "highInputTokenCalls": { "type": "integer" },
+    "repeatedToolShapes": { "type": "integer" },
+    "exactRepeatedTransformations": { "type": "integer" },
+    "modelsObserved": { "type": "array", "items": { "type": "string" } },
+    "toolsObserved": { "type": "array" },
+    "exactTransformationRepeats": { "type": "array" },
+    "hypotheses": { "type": "array" },
+    "authority": { "type": "object" },
+    "epistemicBoundary": { "type": "string" },
+    "schemaVersion": { "type": "integer" }
+  },
+  "views": {
+    "overview": {
+      "title": "Trace audits",
+      "transformation": {
+        "fields": ["traceId", "modelCallSpans", "toolCallSpans", "totalTokens", "modelSwitches", "errorSpans", "humanBoundarySpans", "highInputTokenCalls", "exactRepeatedTransformations", "hypotheses"]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "traceId": { "label": "Trace" },
+          "modelCallSpans": { "label": "Model calls" },
+          "toolCallSpans": { "label": "Tool calls" },
+          "totalTokens": { "label": "Tokens observed" },
+          "modelSwitches": { "label": "Model switches" },
+          "errorSpans": { "label": "Errors" },
+          "humanBoundarySpans": { "label": "Human boundaries" },
+          "highInputTokenCalls": { "label": "High-input calls" },
+          "exactRepeatedTransformations": { "label": "Exact repeats" },
+          "hypotheses": { "label": "Experiments" }
+        }
+      }
+    }
+  }
+}
