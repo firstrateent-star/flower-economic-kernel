@@ -1,0 +1,50 @@
+name: Flower Phi Fibonacci Optimization Shadow
+
+on:
+  push:
+    paths:
+      - 'research/methodology/phi-fibonacci-optimization.js'
+      - 'research/methodology/PHI_FIBONACCI_OPTIMIZATION_2026-08-30.md'
+      - 'tests/phi-fibonacci-optimization.test.js'
+      - '.github/workflows/phi-fibonacci-optimization-shadow.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  phi-fibonacci-shadow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate phi/Fibonacci shadow
+        run: |
+          node --check research/methodology/phi-fibonacci-optimization.js
+          node --test tests/phi-fibonacci-optimization.test.js
+      - name: Guard authority boundary
+        run: |
+          node --input-type=module - <<'NODE'
+          import { assessFlowerPhiFibonacciUse } from './research/methodology/phi-fibonacci-optimization.js';
+          const invalid = assessFlowerPhiFibonacciUse({
+            dimensionCount: 4,
+            lowerBound: 0,
+            upperBound: 1,
+            objectiveObservable: true,
+            evaluationCostMeaningful: true,
+            unimodalityStatus: 'verified',
+          });
+          if (invalid.runtimeUse !== 'do_not_route_by_phi_or_fibonacci') throw new Error('Phi may not govern multi-dimensional optimization by default.');
+          const assumed = assessFlowerPhiFibonacciUse({
+            dimensionCount: 1,
+            lowerBound: 0,
+            upperBound: 1,
+            objectiveObservable: true,
+            evaluationCostMeaningful: true,
+            unimodalityStatus: 'assumed',
+          });
+          if (assumed.runtimeUse !== 'do_not_route_by_phi_or_fibonacci') throw new Error('Unverified unimodality may not grant phi authority.');
+          console.log(JSON.stringify({ invalid: invalid.runtimeUse, assumed: assumed.runtimeUse }, null, 2));
+          NODE
