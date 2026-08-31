@@ -88,8 +88,8 @@ for(const spec of tasks){
   } else {
     await req(`/actor-tasks/${task.id}/input`,{method:'PUT',body:JSON.stringify(spec.input)});
   }
-  const updated=await req(`/actor-tasks/${task.id}`,{method:'PUT',body:JSON.stringify({title:spec.title,description:spec.description,isPublic:true,publicConfig:{seoTitle:spec.seoTitle,seoDescription:spec.seoDescription,inputSchemaFields:spec.fields,datasetView:'overview'}})});
-  const t=updated?.data;
-  out.push({id:t?.id,name:t?.name,actorId:t?.actId,isPublic:t?.isPublic,publishedAt:t?.publicConfig?.publishedAt??null,seoTitle:t?.publicConfig?.seoTitle??null,datasetView:t?.publicConfig?.datasetView??null});
+  await req(`/actor-tasks/${task.id}`,{method:'PUT',body:JSON.stringify({title:spec.title,description:spec.description,isPublic:true,publicConfig:{seoTitle:spec.seoTitle,seoDescription:spec.seoDescription,inputSchemaFields:spec.fields,datasetView:'overview'}})});
+  const reread=(await req(`/actor-tasks/${task.id}`))?.data;
+  out.push({id:reread?.id,name:reread?.name,actorId:reread?.actId,isPublic:reread?.isPublic,publishedAt:reread?.publicConfig?.publishedAt??null,seoTitle:reread?.publicConfig?.seoTitle??null,datasetView:reread?.publicConfig?.datasetView??null});
 }
 console.log(JSON.stringify({published:out.length,tasks:out,authority:'distribution_surface_expansion_only',epistemicBoundary:'Published example tasks increase machine-readable discovery surfaces. They do not prove independent agent selection, usefulness, return use, or economic value.'},null,2));
