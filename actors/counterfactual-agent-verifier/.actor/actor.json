@@ -1,0 +1,16 @@
+{
+  "actorSpecification":1,
+  "name":"counterfactual-agent-verifier",
+  "title":"Counterfactual Agent Verifier",
+  "description":"Compare matched baseline and challenger AI-agent results. Detect terminal, quality, or protected-metric regressions before accepting lower cost, latency, token use, errors, or human interruptions as an improvement.",
+  "version":"0.1",
+  "buildTag":"latest",
+  "input":"./input_schema.json",
+  "output":"./output_schema.json",
+  "storages":{"dataset":"./dataset_schema.json"},
+  "readme":"../README.md",
+  "usesStandbyMode":false,
+  "defaultMemoryMbytes":128,
+  "minMemoryMbytes":128,
+  "maxMemoryMbytes":512
+}
