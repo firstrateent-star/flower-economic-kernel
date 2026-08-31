@@ -22,7 +22,7 @@ export function diagnoseMinimalReasonerDoctrine() {
       humanAuthorityBoundary: /Do not decide human values, ownership, or permissions/i.test(minimal),
       uncertaintyBoundary: /Preserve unknowns/i.test(minimal),
       jsonOnly: /Return ONLY valid JSON/i.test(minimal),
-      originPointer: minimal.includes(origin.lineageId) && /richer preserved lineage/i.test(minimal),
+      originPointer: minimal.includes(FLOWER_ORIGIN_POINTER.lineageId) && /richer preserved lineage/i.test(minimal),
     },
     runtimeAuthority: false,
     decisionEquivalenceVerified: false,
