@@ -16,6 +16,16 @@ test('known operations project methodology while preserving protected spine', ()
   }
 });
 
+test('projected methodology always preserves stop conditions and ACT/REST/RECURSE safeguards', () => {
+  const result = projectMethodologyForOperation('FALSIFY');
+  assert.ok(Array.isArray(result.projection.stopConditions));
+  assert.ok(result.projection.stopConditions.some((item) => item.includes('lower expected value than a safe available action')));
+  assert.deepEqual(
+    result.projection.operatingSafeguards.map((item) => item.split(':')[0]),
+    ['ACT', 'REST', 'RECURSE'],
+  );
+});
+
 test('SELECT retains terminal, regenerative, field, and efficiency governance', () => {
   const result = projectMethodologyForOperation('SELECT');
   for (const key of ['terminalGovernance', 'regenerativeValueGovernance', 'fieldGovernance', 'efficiency']) {
