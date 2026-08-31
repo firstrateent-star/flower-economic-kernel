@@ -4,6 +4,7 @@ const portfolio = [
   { id: 'BKGUeMqIiFcaELH8d', name: 'agent-trace-efficiency-auditor', query: 'Agent Trace Efficiency Auditor' },
   { id: 'negCd0HzBapwGxr7U', name: 'mcp-toolset-pruner', query: 'MCP Toolset Pruner' },
   { id: '7KeQJObJ5eqj6Crm5', name: 'agent-retry-loop-auditor', query: 'Agent Retry Loop Auditor' },
+  { id: 'q31WQSvCAJd9rPQ2q', name: 'counterfactual-agent-verifier', query: 'Counterfactual Agent Verifier' },
 ];
 
 async function findActor(actor) {
