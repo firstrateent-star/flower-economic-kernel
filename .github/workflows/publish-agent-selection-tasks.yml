@@ -1,0 +1,39 @@
+name: Publish Agent Selection Tasks
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/publish-agent-selection-tasks.mjs'
+      - '.github/workflows/publish-agent-selection-tasks.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require Apify token
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: '[ -n "$APIFY_TOKEN" ]'
+      - name: Publish specific AI-readable use-case tasks
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: node scripts/publish-agent-selection-tasks.mjs | tee /tmp/published-tasks.json
+      - name: Verify publication state
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const r=JSON.parse(fs.readFileSync('/tmp/published-tasks.json','utf8'));
+          if(r.published!==8) throw new Error(`Expected 8 tasks, got ${r.published}`);
+          const bad=r.tasks.filter(x=>x.isPublic!==true||!x.publishedAt||x.datasetView!=='overview');
+          if(bad.length) throw new Error(`Unpublished/invalid tasks: ${JSON.stringify(bad)}`);
+          console.log(`Published ${r.tasks.length} AI-readable task landing pages.`);
+          NODE
