@@ -1,0 +1,39 @@
+name: Flower Minimal Reasoner Doctrine Shadow
+
+on:
+  push:
+    paths:
+      - 'research/methodology/minimal-reasoner-doctrine.js'
+      - 'research/methodology/doctrine-source-map.js'
+      - 'research/methodology/origin-pointer.js'
+      - 'tests/minimal-reasoner-doctrine.test.js'
+      - '.github/workflows/minimal-reasoner-doctrine-shadow.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  doctrine-shadow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate doctrine shadows
+        run: |
+          node --check research/methodology/doctrine-source-map.js
+          node --check research/methodology/minimal-reasoner-doctrine.js
+          node --test tests/minimal-reasoner-doctrine.test.js
+      - name: Report structural reduction
+        run: |
+          node --input-type=module - <<'NODE'
+          import { diagnoseMinimalReasonerDoctrine } from './research/methodology/minimal-reasoner-doctrine.js';
+          import { doctrineSourceSummary } from './research/methodology/doctrine-source-map.js';
+          const result = diagnoseMinimalReasonerDoctrine();
+          if (result.decisionEquivalenceVerified !== false) throw new Error('Shadow doctrine may not self-verify equivalence.');
+          if (result.runtimeAuthority !== false) throw new Error('Shadow doctrine may not self-promote.');
+          if (!Object.values(result.preservesMechanics).every(Boolean)) throw new Error('Protected mechanics or origin lineage missing.');
+          console.log(JSON.stringify({ doctrine: result, sourceMap: doctrineSourceSummary() }, null, 2));
+          NODE
