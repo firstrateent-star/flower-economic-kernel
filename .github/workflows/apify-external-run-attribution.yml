@@ -1,0 +1,25 @@
+name: Apify External Run Attribution
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/apify-external-run-attribution.mjs'
+      - '.github/workflows/apify-external-run-attribution.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  attribute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Attribute non-owner runs without exposing account IDs
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: node scripts/apify-external-run-attribution.mjs
