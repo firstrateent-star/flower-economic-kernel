@@ -51,6 +51,50 @@ export function classifyExecutionShape(stage = {}) {
   };
 }
 
+/**
+ * Shadow-only gate for whether adaptive cognition has demonstrated headroom over a
+ * cheaper stable policy. The gate is deliberately conservative: stable verified
+ * equivalence favors stillness, while non-stationarity/conflict only creates a
+ * candidate for adaptive cognition rather than authorizing it.
+ */
+export function assessAdaptiveHeadroom(state = {}) {
+  const policyStable = state.policyStable === true;
+  const decisionEquivalent = state.decisionEquivalentWitness === true;
+  const nonStationarityDetected = state.nonStationarityDetected === true;
+  const unresolvedConflict = state.unresolvedConflict === true;
+  const materialUncertainty = state.materialUncertainty === true;
+  const expectedAdaptationGain = finiteNonNegative(state.expectedAdaptationGain);
+  const adaptiveCost = finiteNonNegative(state.adaptiveCost);
+
+  let recommendation = 'insufficient_evidence';
+  if (policyStable && decisionEquivalent && !nonStationarityDetected && !unresolvedConflict && !materialUncertainty) {
+    recommendation = 'preserve_stable_policy';
+  } else if (nonStationarityDetected || unresolvedConflict || materialUncertainty) {
+    recommendation = 'adaptive_cognition_candidate';
+  }
+
+  const gainComparable = expectedAdaptationGain !== null && adaptiveCost !== null && adaptiveCost > 0;
+  const expectedGainDensity = gainComparable
+    ? Number((expectedAdaptationGain / adaptiveCost).toFixed(6))
+    : null;
+
+  return {
+    recommendation,
+    policyStable,
+    decisionEquivalent,
+    nonStationarityDetected,
+    unresolvedConflict,
+    materialUncertainty,
+    expectedAdaptationGain,
+    adaptiveCost,
+    expectedGainDensity,
+    gainComparable,
+    runtimeAuthority: false,
+    epistemicBoundary:
+      'Adaptive cognition must demonstrate decision headroom over a cheaper stable policy. Non-stationarity or uncertainty can justify a shadow challenger, but does not itself prove that an LLM/control layer improves the outcome.',
+  };
+}
+
 function normalizedConstraint(constraint) {
   if (typeof constraint !== 'string') return null;
   const value = constraint.trim().toLowerCase();
@@ -91,10 +135,11 @@ export function detectSharedConstraints(branches = []) {
 /**
  * Run the emerging optimization mechanisms together in shadow mode.
  */
-export function shadowOptimizationControlPlane({ actions = [], stage = {}, branches = [] } = {}) {
+export function shadowOptimizationControlPlane({ actions = [], stage = {}, branches = [], headroom = {} } = {}) {
   return {
     marginalFrontier: compareMarginalActions(actions),
     executionShape: classifyExecutionShape(stage),
+    adaptiveHeadroom: assessAdaptiveHeadroom(headroom),
     sharedConstraints: detectSharedConstraints(branches),
     authority: 'shadow_only',
     externalValueVerified: false,
