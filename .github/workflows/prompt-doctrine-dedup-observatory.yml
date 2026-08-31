@@ -1,0 +1,39 @@
+name: Flower Prompt Doctrine Dedup Observatory
+
+on:
+  push:
+    paths:
+      - 'src/core/methodology-core.js'
+      - 'src/reasoners/openai.js'
+      - 'research/methodology/prompt-doctrine-dedup-audit.js'
+      - 'tests/prompt-doctrine-dedup-audit.test.js'
+      - '.github/workflows/prompt-doctrine-dedup-observatory.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  doctrine-dedup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate doctrine duplication audit
+        run: |
+          node --check research/methodology/prompt-doctrine-dedup-audit.js
+          node --test tests/prompt-doctrine-dedup-audit.test.js
+      - name: Report current duplicate concepts
+        run: |
+          node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          import { auditDoctrineDuplication } from './research/methodology/prompt-doctrine-dedup-audit.js';
+          const result = auditDoctrineDuplication({
+            methodologySource: fs.readFileSync('src/core/methodology-core.js', 'utf8'),
+            reasonerSource: fs.readFileSync('src/reasoners/openai.js', 'utf8'),
+          });
+          console.log(JSON.stringify(result, null, 2));
+          if (result.runtimeAuthority !== false) throw new Error('Shadow dedup audit may not mutate runtime authority.');
+          NODE
