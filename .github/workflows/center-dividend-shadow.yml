@@ -1,0 +1,42 @@
+name: Flower Center Dividend Shadow
+
+on:
+  push:
+    paths:
+      - 'research/value-transfer/center-dividend-audit.js'
+      - 'tests/center-dividend-audit.test.js'
+      - '.github/workflows/center-dividend-shadow.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  center-dividend-shadow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate Center Dividend shadow audit
+        run: |
+          node --check research/value-transfer/center-dividend-audit.js
+          node --test tests/center-dividend-audit.test.js
+      - name: Guard epistemic boundary
+        run: |
+          node --input-type=module - <<'NODE'
+          import { assessCenterDividend } from './research/value-transfer/center-dividend-audit.js';
+          const result = assessCenterDividend({
+            numericEvidence: [
+              { dimension: 'financialUtility', before: 0, after: 1000000, direction: 'higher', unit: 'projected-usd', verified: false },
+            ],
+            selfReportedEvidence: [
+              { dimension: 'meaningWellbeing', state: 'improved', verifiedByCenterHolder: false },
+            ],
+          });
+          if (result.state !== 'center_dividend_unverified') throw new Error('Unverified personal value may not self-promote.');
+          if (result.score !== null) throw new Error('Center Dividend may not collapse life value to one score.');
+          if (result.authority !== 'shadow_only') throw new Error('Center Dividend is not canonical yet.');
+          console.log(JSON.stringify({ state: result.state, score: result.score, authority: result.authority }, null, 2));
+          NODE
