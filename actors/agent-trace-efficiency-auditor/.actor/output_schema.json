@@ -1,0 +1,19 @@
+{
+  "actorSpecification": 1,
+  "fields": {
+    "requestedTraceGroups": { "type": "integer" },
+    "emittedTraceAudits": { "type": "integer" },
+    "chargedTraceAudits": { "type": "integer" },
+    "chargeLimitReached": { "type": "boolean" },
+    "pricingModel": { "type": "string" },
+    "chargeEventConfigured": { "type": "boolean" },
+    "totalModelCallSpans": { "type": "integer" },
+    "totalToolCallSpans": { "type": "integer" },
+    "totalInputTokensObserved": { "type": "integer" },
+    "totalOutputTokensObserved": { "type": "integer" },
+    "totalErrorSpans": { "type": "integer" },
+    "totalHumanBoundarySpans": { "type": "integer" },
+    "note": { "type": "string" },
+    "schemaVersion": { "type": "integer" }
+  }
+}
