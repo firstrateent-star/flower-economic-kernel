@@ -1,0 +1,33 @@
+{
+  "candidate": "center-dividend-audit",
+  "status": "shadow_candidate_not_canonical",
+  "proposedAt": "2026-08-30",
+  "thesis": "Flower canonically states that the organism exists to nourish the human Center-holder, but it lacks a dedicated evidence organ for whether that nourishment is occurring. Economic value and self-improvement are measured more rigorously than personal benefit. Add a Center Dividend membrane that keeps human attention, decision quality, completion/closure, financial utility, capability/optionality, and self-reported meaning/wellbeing separate, refusing a single life score or inferred wellbeing claim.",
+  "affectedDecisions": [
+    "whether another Flower recursion is worth the Center-holder's attention",
+    "whether methodology growth is creating personal benefit or merely internal sophistication",
+    "which Flower mechanisms deserve continued investment",
+    "whether external/economic work is reducing or increasing unresolved personal burden"
+  ],
+  "causalInputs": [
+    "observable before/after burden or outcome evidence",
+    "task-specific decision witnesses",
+    "settled financial observations where applicable",
+    "explicit Center-holder testimony for meaning/wellbeing dimensions"
+  ],
+  "complexityToPreserve": [
+    "benefit and burden may coexist",
+    "projected financial value is not realized financial utility",
+    "meaning, love, identity, fulfillment, and wellbeing cannot be inferred from system activity",
+    "different personal-value dimensions are not fungible without human authority"
+  ],
+  "falsifier": "If the audit adds recurring reporting burden, encourages life-score optimization, duplicates existing terminal/human-attention governance without changing decisions, or pressures the Center-holder to quantify experiences they prefer to leave qualitative, do not promote it.",
+  "rollback": "Delete the Center Dividend shadow module/tests and retain the existing invariant that the organism exists to nourish the human Center-holder without adding a dedicated measurement layer.",
+  "stoppingCondition": "Do not promote until at least one real Center-holder audit changes or confirms an allocation decision with lower burden than the value of the information obtained.",
+  "protectedDomainAssessment": {
+    "touchesProtectedHumanIdentity": false,
+    "touchesLoveOrientation": false,
+    "requiresExplicitCenterHolderTestimonyForSubjectiveDimensions": true,
+    "canonicalPromotionAuthorized": false
+  }
+}
