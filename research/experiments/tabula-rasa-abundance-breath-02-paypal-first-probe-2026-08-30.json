@@ -1,0 +1,94 @@
+{
+  "experiment": "tabula_rasa_abundance_germination",
+  "breath": 2,
+  "canonicalAuthority": false,
+  "verifiedMaterialReturnUsd": 0,
+  "centerConstraints": {
+    "upfrontCapitalUsd": 0,
+    "preferredSettlement": "PayPal",
+    "banking": "unavailable_or_avoid",
+    "humanTechnicalBurden": "very_low",
+    "humanTimeBurden": "very_low",
+    "taxPreference": "defer non-required setup, but do not bypass legally/platform-required tax or identity steps"
+  },
+  "candidateRails": [
+    {
+      "id": "fiverr_marketplace_service",
+      "demandSurface": "built_in_marketplace",
+      "paypalPayout": true,
+      "minimumPaypalWithdrawalUsd": 1,
+      "upfrontFeeStatus": "usually_none_but_new_freelancer_identity_verification_may_require_one_time_fee",
+      "identityOrKyc": "may_be_required",
+      "taxInfoBeforePayout": "not established as universal from current evidence",
+      "humanBurden": "low_if_offer_is_machine_completable",
+      "strength": "existing buyer demand plus low PayPal withdrawal threshold",
+      "weakness": "cold-start competition and possible verification fee",
+      "status": "first_probe_candidate_conditional_on_no_fee_and_existing_verified_paypal"
+    },
+    {
+      "id": "kofi_direct_paypal",
+      "demandSurface": "owned_creator_page; weak native discovery",
+      "paypalPayout": true,
+      "minimumPaypalWithdrawalUsd": 0,
+      "upfrontFeeStatus": "zero_monthly_and_zero_listing_fee",
+      "identityOrKyc": "PayPal requirements apply",
+      "humanBurden": "very_low_to_publish_and_deliver_digital_item",
+      "strength": "instant direct PayPal settlement and $0 setup",
+      "weakness": "does not provide strong built-in demand discovery",
+      "status": "fallback_settlement_rail_not_primary_demand_rail"
+    },
+    {
+      "id": "payhip_direct_paypal",
+      "demandSurface": "owned_storefront; distribution remains separate",
+      "paypalPayout": true,
+      "minimumPaypalWithdrawalUsd": 0,
+      "upfrontFeeStatus": "free_plan_5_percent_transaction_fee",
+      "humanBurden": "very_low_after_listing",
+      "strength": "free storefront and immediate sale deposit",
+      "weakness": "weak demand discovery",
+      "status": "fallback_settlement_rail_not_primary_demand_rail"
+    },
+    {
+      "id": "upwork_marketplace_work",
+      "demandSurface": "built_in_marketplace",
+      "paypalPayout": true,
+      "taxInfoBeforePaypal": true,
+      "upfrontFeeStatus": "proposal economics may require platform connects; not selected for zero-capital first probe",
+      "status": "pruned_for_current_constraints"
+    },
+    {
+      "id": "freelancer_marketplace_work",
+      "demandSurface": "built_in_jobs",
+      "paypalPayout": true,
+      "minimumPaypalWithdrawalUsd": 50,
+      "kycRequired": true,
+      "status": "pruned_for_first_fruit_due_to_high_withdrawal_threshold_and_verification_burden"
+    }
+  ],
+  "firstProbe": {
+    "rail": "fiverr_marketplace_service",
+    "offerClass": "machine_completable_decision_brief",
+    "offerHypothesis": "Convert a buyer's messy notes/problem/context into a concise prioritized action plan or decision brief using AI-assisted research/reasoning, with transparent scope and no regulated professional advice.",
+    "whyThisOffer": [
+      "fulfillment can occur almost entirely inside ChatGPT",
+      "does not require Sean to possess coding expertise",
+      "input/output can be routed by copy/paste",
+      "marginal human burden remains low if order volume grows",
+      "can be priced low enough to target first material fruit rather than maximum margin"
+    ],
+    "killConditions": [
+      "Fiverr requires any upfront payment or paid identity verification",
+      "existing PayPal is not sufficiently verified for payout and verifying it requires a banking step Sean will not use",
+      "gig creation requires material technical work or recurring manual service beyond routing",
+      "platform rules prohibit the truthful AI-assisted fulfillment model"
+    ],
+    "fallback": "Ko-fi or Payhip direct-PayPal page plus a separate zero-cost demand-discovery probe; do not confuse the storefront with demand."
+  },
+  "stillness": {
+    "stage": "capture_rail_candidate_selected_for_reversible_probe",
+    "successHierarchyLevel": 2,
+    "nextHumanBoundary": "Attempt free Fiverr seller/gig setup only until the first fee, unsupported verification, or high-burden requirement appears; do not pay. If clean, publish one minimal offer and observe demand.",
+    "materialFruitDefinition": "Only settled/withdrawable buyer payment attributable to completed useful work counts.",
+    "antiLockIn": "Fiverr is a probe surface, not Flower's business model or ontology."
+  }
+}
