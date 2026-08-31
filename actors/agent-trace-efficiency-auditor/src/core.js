@@ -30,21 +30,8 @@ const OUTPUT_TOKEN_KEYS = [
   'completion_tokens',
 ];
 
-const TOOL_KEYS = [
-  'gen_ai.tool.name',
-  'tool.name',
-  'tool_name',
-  'openinference.tool.name',
-];
-
-const TOOL_INPUT_KEYS = [
-  'gen_ai.tool.call.arguments',
-  'tool.input',
-  'tool.arguments',
-  'tool_input',
-  'openinference.tool.input',
-];
-
+const TOOL_KEYS = ['gen_ai.tool.name', 'tool.name', 'tool_name', 'openinference.tool.name'];
+const TOOL_INPUT_KEYS = ['gen_ai.tool.call.arguments', 'tool.input', 'tool.arguments', 'tool_input', 'openinference.tool.input'];
 const TRACE_ID_KEYS = ['traceId', 'trace_id', 'sessionId', 'session_id', 'conversation.id'];
 
 function objectish(value) {
@@ -96,6 +83,9 @@ function hash(value) {
 function durationMs(span) {
   const direct = Number(span?.durationMs ?? span?.duration_ms ?? span?.duration);
   if (Number.isFinite(direct) && direct >= 0) return direct;
+  const startNs = Number(span?.start_ns);
+  const endNs = Number(span?.end_ns);
+  if (Number.isFinite(startNs) && Number.isFinite(endNs) && endNs >= startNs) return (endNs - startNs) / 1e6;
   const start = Date.parse(span?.startTime ?? span?.start_time ?? span?.startTimeUnixNano ?? '');
   const end = Date.parse(span?.endTime ?? span?.end_time ?? span?.endTimeUnixNano ?? '');
   if (Number.isFinite(start) && Number.isFinite(end) && end >= start) return end - start;
@@ -104,11 +94,12 @@ function durationMs(span) {
 
 function statusIsError(span, a) {
   const status = String(span?.status?.code ?? span?.statusCode ?? a['error.type'] ?? a['exception.type'] ?? '').toLowerCase();
-  return status.includes('error') || status.includes('fail') || Boolean(span?.error);
+  const exitCode = Number(span?.exit_code ?? span?.exitCode);
+  return status.includes('error') || status.includes('fail') || Boolean(span?.error) || (Number.isFinite(exitCode) && exitCode !== 0);
 }
 
 function inferToolName(span, a) {
-  const explicit = pick(a, TOOL_KEYS);
+  const explicit = pick(a, TOOL_KEYS) ?? span?.tool_name ?? span?.toolName;
   if (explicit) return String(explicit);
   const name = String(span?.name ?? span?.operationName ?? '');
   if (/tool/i.test(name)) return name.replace(/^.*tool[:.\s/-]*/i, '').trim() || name;
@@ -116,7 +107,7 @@ function inferToolName(span, a) {
 }
 
 function inferModel(span, a) {
-  const explicit = pick(a, MODEL_KEYS);
+  const explicit = pick(a, MODEL_KEYS) ?? span?.model ?? span?.modelName;
   if (explicit) return String(explicit);
   const name = String(span?.name ?? span?.operationName ?? '');
   if (/chat|completion|llm|model|generate/i.test(name) && !/tool/i.test(name)) return 'unknown-model';
@@ -124,13 +115,24 @@ function inferModel(span, a) {
 }
 
 function inferHumanBoundary(span, a) {
-  const text = `${span?.name ?? ''} ${a['event.name'] ?? ''} ${a['operation.name'] ?? ''}`.toLowerCase();
+  const text = `${span?.name ?? ''} ${span?.type ?? ''} ${a['event.name'] ?? ''} ${a['operation.name'] ?? ''}`.toLowerCase();
   return /(human|approval|approve|confirmation|confirm|manual review|review required|handoff)/.test(text);
 }
 
 function traceIdOf(span, fallback) {
   const a = attrs(span);
   return String(pick(span, TRACE_ID_KEYS) ?? pick(a, TRACE_ID_KEYS) ?? fallback);
+}
+
+function llmStepAsSpan(step, traceModel) {
+  return {
+    name: `llm_step_${step?.step_number ?? step?.stepNumber ?? 'unknown'}`,
+    model: step?.model ?? traceModel ?? 'unknown-model',
+    input_tokens: step?.input_tokens ?? step?.inputTokens ?? 0,
+    output_tokens: step?.output_tokens ?? step?.outputTokens ?? 0,
+    duration_ms: step?.duration_ms ?? step?.durationMs ?? 0,
+    type: 'LLM_STEP',
+  };
 }
 
 export function normalizeInput(input = {}) {
@@ -141,8 +143,17 @@ export function normalizeInput(input = {}) {
 
   for (let i = 0; i < rawTraces.slice(0, maxItems).length; i += 1) {
     const item = rawTraces[i];
-    const itemSpans = Array.isArray(item?.spans) ? item.spans : [item];
-    groups.push({ id: String(item?.traceId ?? item?.trace_id ?? item?.sessionId ?? item?.session_id ?? `trace-${i + 1}`), spans: itemSpans });
+    const directSpans = Array.isArray(item?.spans) ? item.spans : [item];
+    const llmStepSpans = Array.isArray(item?.llm_steps)
+      ? item.llm_steps.map((step) => llmStepAsSpan(step, item?.model))
+      : Array.isArray(item?.llmSteps)
+        ? item.llmSteps.map((step) => llmStepAsSpan(step, item?.model))
+        : [];
+    const itemSpans = [...directSpans, ...llmStepSpans];
+    groups.push({
+      id: String(item?.traceId ?? item?.trace_id ?? item?.sessionId ?? item?.session_id ?? `trace-${i + 1}`),
+      spans: itemSpans,
+    });
   }
 
   if (rawSpans.length) {
@@ -167,7 +178,7 @@ function analyzeSpan(span, highInputTokenThreshold) {
   const outputTokens = numberOrZero(pick(a, OUTPUT_TOKEN_KEYS) ?? span?.outputTokens ?? span?.output_tokens);
   const toolInput = pick(a, TOOL_INPUT_KEYS) ?? span?.toolInput ?? span?.tool_input ?? null;
   return {
-    name: String(span?.name ?? span?.operationName ?? 'unnamed-span'),
+    name: String(span?.name ?? span?.operationName ?? span?.type ?? 'unnamed-span'),
     model,
     toolName,
     toolInputHash: toolName && toolInput !== null ? hash(toolInput) : null,
@@ -178,16 +189,6 @@ function analyzeSpan(span, highInputTokenThreshold) {
     humanBoundary: inferHumanBoundary(span, a),
     highInputTokens: inputTokens >= highInputTokenThreshold,
   };
-}
-
-function sequenceRuns(values) {
-  const out = [];
-  for (const value of values) {
-    const last = out[out.length - 1];
-    if (last?.value === value) last.count += 1;
-    else out.push({ value, count: 1 });
-  }
-  return out;
 }
 
 function exactTransformationCounts(spans) {
@@ -217,7 +218,14 @@ function toolShapeCounts(spans) {
 
 function buildHypotheses(summary) {
   const hypotheses = [];
-  const add = (id, title, evidence, test, confidence = 'directional') => hypotheses.push({ id, title, evidence, test, confidence, savingsVerified: false });
+  const add = (id, title, evidence, replayTest, confidence = 'directional') => hypotheses.push({
+    id,
+    title,
+    evidence,
+    test: replayTest,
+    confidence,
+    savingsVerified: false,
+  });
 
   if (summary.highInputTokenCalls > 0) {
     add(
