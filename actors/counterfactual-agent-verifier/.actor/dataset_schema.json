@@ -1,0 +1,19 @@
+{
+  "actorSpecification":1,
+  "fields":{
+    "caseId":{"type":"string"},
+    "verdict":{"type":"string"},
+    "terminal":{"type":"object"},
+    "quality":{"type":"object"},
+    "protectedMetrics":{"type":"array","items":{"type":"object"}},
+    "protectedRegressionCount":{"type":"integer"},
+    "efficiency":{"type":"object"},
+    "knownEfficiencyMetricCount":{"type":"integer"},
+    "efficiencyImprovementCount":{"type":"integer"},
+    "efficiencyRegressionCount":{"type":"integer"},
+    "materialRegression":{"type":"boolean"},
+    "promotionCandidate":{"type":"boolean"},
+    "authority":{"type":"object"},
+    "schemaVersion":{"type":"integer"}
+  }
+}
