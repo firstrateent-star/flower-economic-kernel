@@ -1,0 +1,56 @@
+name: Verify Agent Trace Auditor Agentic Payments
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-agent-trace-auditor-agentic-payments.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe Skyfire payment challenge without credentials
+        run: |
+          set -euo pipefail
+          HTTP=$(curl --silent --show-error --location \
+            'https://api.apify.com/v2/actors/BKGUeMqIiFcaELH8d/run-sync-get-dataset-items' \
+            -H 'X-APIFY-PAYMENT-PROTOCOL: SKYFIRE' \
+            -H 'Accept: application/json' \
+            --output /tmp/skyfire.json \
+            --write-out '%{http_code}')
+          echo "Skyfire challenge HTTP status: $HTTP"
+          cat /tmp/skyfire.json || true
+          if [ "$HTTP" != "402" ]; then
+            echo "Actor is not yet exposing the expected agentic-payment challenge."
+            exit 1
+          fi
+
+      - name: Check agentic Store discovery surface
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --location \
+            'https://api.apify.com/v2/store?allowsAgenticUsers=true&search=Agent%20Trace%20Efficiency%20Auditor&limit=50' \
+            -H 'Accept: application/json' > /tmp/store.json
+          node <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync('/tmp/store.json', 'utf8'));
+          const items = body?.data?.items ?? [];
+          const hit = items.find((x) => x?.id === 'BKGUeMqIiFcaELH8d' || x?.name === 'agent-trace-efficiency-auditor');
+          console.log(JSON.stringify({
+            discoveredInAgenticSearch: Boolean(hit),
+            hit: hit ? {
+              id: hit.id,
+              name: hit.name,
+              title: hit.title,
+              isWhiteListedForAgenticPayments: hit.isWhiteListedForAgenticPayments ?? null,
+              currentPricingInfo: hit.currentPricingInfo ?? hit.pricingInfos?.[0] ?? null
+            } : null,
+            resultCount: items.length
+          }, null, 2));
+          if (!hit) process.exit(2);
+          NODE
