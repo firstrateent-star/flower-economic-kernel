@@ -1,0 +1,178 @@
+name: Deploy Agent Trace Efficiency Auditor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'actors/agent-trace-efficiency-auditor/**'
+      - '.github/workflows/deploy-agent-trace-efficiency-auditor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-and-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: actors/agent-trace-efficiency-auditor
+        run: npm install --ignore-scripts
+
+      - name: Verify package
+        working-directory: actors/agent-trace-efficiency-auditor
+        run: npm run check && npm test
+
+      - name: Require Apify token
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          if [ -z "$APIFY_TOKEN" ]; then
+            echo "APIFY_TOKEN repository secret is missing; refusing deploy."
+            exit 1
+          fi
+
+      - name: Resolve or create private Actor
+        id: actor
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --location \
+            'https://api.apify.com/v2/acts?my=true&limit=1000' \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" \
+            > /tmp/actors.json
+
+          ACTOR_ID=$(node <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync('/tmp/actors.json', 'utf8'));
+          const items = body?.data?.items ?? body?.data ?? [];
+          const actor = Array.isArray(items) ? items.find((x) => x?.name === 'agent-trace-efficiency-auditor') : null;
+          if (actor?.id) process.stdout.write(actor.id);
+          NODE
+          )
+
+          if [ -z "$ACTOR_ID" ]; then
+            cat > /tmp/create-actor.json <<'JSON'
+          {
+            "name": "agent-trace-efficiency-auditor",
+            "title": "Agent Trace Efficiency Auditor",
+            "description": "Audit AI-agent traces for token-heavy loops, retries, model switching, repeated tool transformations, and human-interruption pressure. Returns evidence-backed optimization experiments without inventing savings.",
+            "isPublic": false,
+            "seoTitle": "AI Agent Trace Efficiency Auditor",
+            "seoDescription": "Audit agent traces for context, routing, retry, tool-repeat, and human-boundary optimization opportunities with deterministic replay-ready evidence."
+          }
+          JSON
+            curl --fail-with-body --silent --show-error --location --request POST \
+              'https://api.apify.com/v2/acts' \
+              -H 'Content-Type: application/json' \
+              -H 'Accept: application/json' \
+              -H "Authorization: Bearer $APIFY_TOKEN" \
+              --data-binary @/tmp/create-actor.json \
+              > /tmp/created.json
+            ACTOR_ID=$(node <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync('/tmp/created.json', 'utf8'));
+          if (!body?.data?.id) process.exit(2);
+          process.stdout.write(body.data.id);
+          NODE
+            )
+            echo "Created private Actor $ACTOR_ID"
+          else
+            echo "Reusing Actor $ACTOR_ID"
+          fi
+
+          echo "actor_id=$ACTOR_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Push Actor build
+        id: push
+        uses: apify/push-actor-action@v1
+        with:
+          token: ${{ secrets.APIFY_TOKEN }}
+          actor-id: ${{ steps.actor.outputs.actor_id }}
+          working-directory: actors/agent-trace-efficiency-auditor
+
+      - name: Run platform smoke test
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/input.json <<'JSON'
+          {
+            "highInputTokenThreshold": 10000,
+            "traces": [
+              {
+                "traceId": "flower-smoke-test",
+                "spans": [
+                  {"name":"chat","attributes":{"gen_ai.request.model":"small-model","gen_ai.usage.input_tokens":14000,"gen_ai.usage.output_tokens":300}},
+                  {"name":"tool:search","attributes":{"gen_ai.tool.name":"search","gen_ai.tool.call.arguments":{"q":"same-query"}}},
+                  {"name":"chat","attributes":{"gen_ai.request.model":"large-model","gen_ai.usage.input_tokens":16000,"gen_ai.usage.output_tokens":500}},
+                  {"name":"tool:search","attributes":{"gen_ai.tool.name":"search","gen_ai.tool.call.arguments":{"q":"same-query"}}},
+                  {"name":"human approval"}
+                ]
+              }
+            ]
+          }
+          JSON
+
+          curl --fail-with-body --silent --show-error --location --request POST \
+            "https://api.apify.com/v2/acts/$ACTOR_ID/runs?waitForFinish=180" \
+            -H 'Content-Type: application/json' \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" \
+            --data-binary @/tmp/input.json \
+            > /tmp/run.json
+
+          RUN_ID=$(node <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync('/tmp/run.json', 'utf8'));
+          if (!body?.data?.id) process.exit(2);
+          if (body.data.status !== 'SUCCEEDED') {
+            console.error(JSON.stringify({ id: body.data.id, status: body.data.status, statusMessage: body.data.statusMessage }));
+            process.exit(3);
+          }
+          process.stdout.write(body.data.id);
+          NODE
+          )
+
+          curl --fail-with-body --silent --show-error --location \
+            "https://api.apify.com/v2/actor-runs/$RUN_ID/dataset/items?clean=true" \
+            -H 'Accept: application/json' \
+            -H "Authorization: Bearer $APIFY_TOKEN" \
+            > /tmp/items.json
+
+          node <<'NODE'
+          const fs = require('node:fs');
+          const items = JSON.parse(fs.readFileSync('/tmp/items.json', 'utf8'));
+          const row = items?.[0];
+          if (!row) throw new Error('Smoke test emitted no dataset row.');
+          const ids = new Set((row.hypotheses ?? []).map((x) => x.id));
+          for (const expected of ['context_projection_headroom', 'model_routing_headroom', 'crystallization_candidate', 'human_attention_boundary']) {
+            if (!ids.has(expected)) throw new Error(`Missing expected hypothesis: ${expected}`);
+          }
+          if (row?.authority?.optimizationAuthorized !== false) throw new Error('Authority boundary regressed.');
+          if ((row.hypotheses ?? []).some((x) => x.savingsVerified !== false)) throw new Error('Unverified savings were promoted.');
+          console.log(JSON.stringify({
+            traceId: row.traceId,
+            modelCallSpans: row.modelCallSpans,
+            toolCallSpans: row.toolCallSpans,
+            totalTokens: row.totalTokens,
+            modelSwitches: row.modelSwitches,
+            exactRepeatedTransformations: row.exactRepeatedTransformations,
+            hypotheses: [...ids],
+            optimizationAuthorized: row.authority.optimizationAuthorized
+          }, null, 2));
+          NODE
+
+      - name: Report deployment
+        run: |
+          echo "Actor ID: ${{ steps.actor.outputs.actor_id }}"
+          echo "Apify build: ${{ steps.push.outputs.build-id }}"
+          echo "Build status: ${{ steps.push.outputs.build-status }}"
