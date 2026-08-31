@@ -1,0 +1,116 @@
+name: Deploy Counterfactual Agent Verifier
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'actors/counterfactual-agent-verifier/**'
+      - '.github/workflows/deploy-counterfactual-agent-verifier.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-publish-price-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and test
+        working-directory: actors/counterfactual-agent-verifier
+        run: npm install --ignore-scripts && npm run check && npm test
+      - name: Require Apify token
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          [ -n "$APIFY_TOKEN" ] || { echo 'APIFY_TOKEN missing'; exit 1; }
+      - name: Resolve or create Actor
+        id: actor
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --location 'https://api.apify.com/v2/acts?my=true&limit=1000' -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" > /tmp/actors.json
+          ACTOR_ID=$(node <<'NODE'
+          const x=require('/tmp/actors.json');const items=x?.data?.items??x?.data??[];const a=Array.isArray(items)?items.find(v=>v?.name==='counterfactual-agent-verifier'):null;if(a?.id)process.stdout.write(a.id);
+          NODE
+          )
+          if [ -z "$ACTOR_ID" ]; then
+            cat > /tmp/create.json <<'JSON'
+          {"name":"counterfactual-agent-verifier","title":"Counterfactual Agent Verifier","description":"Compare matched baseline and challenger AI-agent results. Reject cheaper configurations when terminal success, quality, or protected metrics regress.","isPublic":false,"seoTitle":"AI Agent Counterfactual Replay & Regression Verifier","seoDescription":"Compare baseline vs challenger AI-agent runs. Verify terminal outcomes before accepting lower cost, latency, tokens, errors, or human interruptions."}
+          JSON
+            curl --fail-with-body --silent --show-error --location --request POST 'https://api.apify.com/v2/acts' -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" --data-binary @/tmp/create.json > /tmp/created.json
+            ACTOR_ID=$(node -e "const x=require('/tmp/created.json');if(!x?.data?.id)process.exit(2);process.stdout.write(x.data.id)")
+          fi
+          echo "actor_id=$ACTOR_ID" >> "$GITHUB_OUTPUT"
+      - name: Set up Apify CLI
+        uses: apify/setup-apify-cli-action@v1
+        with:
+          token: ${{ secrets.APIFY_TOKEN }}
+      - name: Push verified source of truth
+        id: push
+        working-directory: actors/counterfactual-agent-verifier
+        env:
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          apify push "$ACTOR_ID" --force --json --wait-for-finish=999 > /tmp/build.json
+          node <<'NODE'
+          const fs=require('node:fs');const x=JSON.parse(fs.readFileSync('/tmp/build.json','utf8'));const b=x?.build??x;if(b?.status&&b.status!=='SUCCEEDED')process.exit(2);fs.appendFileSync(process.env.GITHUB_OUTPUT,`build_id=${b?.id??''}\nbuild_status=${b?.status??'SUCCEEDED'}\n`);
+          NODE
+      - name: Smoke test before publication
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/input.json <<'JSON'
+          {"comparisons":[{"caseId":"cheaper-but-broken","baseline":{"terminalSuccess":true,"quality":0.9,"costUsd":0.05},"challenger":{"terminalSuccess":false,"quality":0.9,"costUsd":0.01}},{"caseId":"preserved-cheaper","baseline":{"terminalSuccess":true,"quality":0.9,"costUsd":0.05},"challenger":{"terminalSuccess":true,"quality":0.9,"costUsd":0.02}}]}
+          JSON
+          curl --fail-with-body --silent --show-error --location --request POST "https://api.apify.com/v2/acts/$ACTOR_ID/runs?waitForFinish=180" -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" --data-binary @/tmp/input.json > /tmp/run.json
+          RUN_ID=$(node -e "const x=require('/tmp/run.json');if(x?.data?.status!=='SUCCEEDED')process.exit(2);process.stdout.write(x.data.id)")
+          curl --fail-with-body --silent --show-error --location "https://api.apify.com/v2/actor-runs/$RUN_ID/dataset/items?clean=true" -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" > /tmp/items.json
+          node <<'NODE'
+          const r=require('/tmp/items.json');if(r?.length!==2)throw new Error('Expected two comparisons');if(r[0]?.verdict!=='regression')throw new Error('Failed to veto broken cheaper challenger');if(r[1]?.verdict!=='candidate_improvement')throw new Error('Failed to recognize preserved cheaper challenger');if(r.some(x=>x.authority?.productionPromotionAuthorized!==false))throw new Error('Authority regression');console.log(JSON.stringify(r.map(x=>({id:x.caseId,verdict:x.verdict}))));
+          NODE
+      - name: Publish with limited permissions and PPE
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/public.json <<'JSON'
+          {"isPublic":true,"title":"Counterfactual Agent Verifier","description":"Compare matched baseline and challenger AI-agent runs before accepting an optimization. Terminal success and protected quality come first; lower cost, latency, token use, errors, or human interruptions cannot compensate for a material regression.","seoTitle":"AI Agent Counterfactual Replay & Regression Verifier","seoDescription":"Verify baseline vs challenger AI-agent configurations on matched workloads. Catch regressions before accepting cost, latency, token, error, or human-effort savings.","categories":["AI","DEVELOPER_TOOLS"],"actorPermissionLevel":"LIMITED_PERMISSIONS","defaultRunOptions":{"build":"latest","timeoutSecs":300,"memoryMbytes":128,"restartOnError":false},"pricingInfos":[{"pricingModel":"PAY_PER_EVENT","pricingPerEvent":{"actorChargeEvents":{"comparison-verified":{"eventTitle":"Comparison verified","eventDescription":"One matched baseline/challenger agent case checked for terminal, quality, protected-metric, and efficiency changes.","eventPriceUsd":0.01,"isPrimaryEvent":true,"isOneTimeEvent":false}}},"minimalMaxTotalChargeUsd":0.01}],"exampleRunInput":{"contentType":"application/json; charset=utf-8","body":"{\"comparisons\":[{\"caseId\":\"task-1\",\"baseline\":{\"terminalSuccess\":true,\"quality\":0.9,\"costUsd\":0.05},\"challenger\":{\"terminalSuccess\":true,\"quality\":0.9,\"costUsd\":0.02}}]}"}}
+          JSON
+          curl --fail-with-body --silent --show-error --location --request PUT "https://api.apify.com/v2/actors/$ACTOR_ID" -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" --data-binary @/tmp/public.json > /tmp/actor.json
+          node <<'NODE'
+          const a=require('/tmp/actor.json')?.data;if(a?.isPublic!==true||a?.actorPermissionLevel!=='LIMITED_PERMISSIONS')throw new Error('Publication boundary failed');const p=(a.pricingInfos??[]).find(x=>x.pricingModel==='PAY_PER_EVENT');if(Number(p?.pricingPerEvent?.actorChargeEvents?.['comparison-verified']?.eventPriceUsd)!==0.01)throw new Error('PPE missing');console.log(JSON.stringify({id:a.id,public:a.isPublic,permission:a.actorPermissionLevel}));
+          NODE
+      - name: PPE compatibility run
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          echo '{"comparisons":[{"caseId":"ppe","baseline":{"terminalSuccess":true,"latencyMs":100},"challenger":{"terminalSuccess":true,"latencyMs":80}}]}' > /tmp/in.json
+          curl --fail-with-body --silent --show-error --location --request POST "https://api.apify.com/v2/acts/$ACTOR_ID/runs?waitForFinish=180&maxTotalChargeUsd=0.05" -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" --data-binary @/tmp/in.json > /tmp/ppe.json
+          node -e "const r=require('/tmp/ppe.json')?.data;if(r?.status!=='SUCCEEDED'||r?.pricingInfo?.pricingModel!=='PAY_PER_EVENT')process.exit(2);console.log(JSON.stringify({id:r.id,status:r.status,pricing:r.pricingInfo,usageTotalUsd:r.usageTotalUsd}))"
+      - name: Verify Store and agentic search
+        env:
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          sleep 10
+          curl --fail-with-body --silent --show-error --location 'https://api.apify.com/v2/store?search=counterfactual%20agent%20evaluation&limit=50&responseFormat=agent' -H 'Accept: application/json' > /tmp/store.json
+          curl --fail-with-body --silent --show-error --location 'https://api.apify.com/v2/store?search=counterfactual%20agent%20evaluation&limit=50&allowsAgenticUsers=true&responseFormat=agent' -H 'Accept: application/json' > /tmp/agentic.json
+          ACTOR_ID="$ACTOR_ID" node <<'NODE'
+          const s=require('/tmp/store.json')?.data?.items??[];const a=require('/tmp/agentic.json')?.data?.items??[];const hit=x=>x.findIndex(v=>v?.id===process.env.ACTOR_ID||v?.name==='counterfactual-agent-verifier');console.log(JSON.stringify({storeRank:hit(s)>=0?hit(s)+1:null,agenticRank:hit(a)>=0?hit(a)+1:null}));
+          NODE
+      - name: Report
+        run: |
+          echo "Actor ID: ${{ steps.actor.outputs.actor_id }}"
+          echo "Apify build: ${{ steps.push.outputs.build_id }}"
+          echo "Build status: ${{ steps.push.outputs.build_status }}"
