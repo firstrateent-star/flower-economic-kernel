@@ -1,0 +1,30 @@
+name: Agent Trace Efficiency Auditor CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'actors/agent-trace-efficiency-auditor/**'
+      - '.github/workflows/agent-trace-efficiency-auditor-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        working-directory: actors/agent-trace-efficiency-auditor
+        run: npm install --ignore-scripts
+      - name: Syntax check
+        working-directory: actors/agent-trace-efficiency-auditor
+        run: npm run check
+      - name: Tests
+        working-directory: actors/agent-trace-efficiency-auditor
+        run: npm test
