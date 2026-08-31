@@ -1,0 +1,32 @@
+name: Apify Actor Discovery Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/apify-actor-discovery-audit.mjs'
+      - '.github/workflows/apify-actor-discovery-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Observe public Store discovery
+        run: node scripts/apify-actor-discovery-audit.mjs | tee /tmp/discovery.json
+      - name: Summarize
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const r = JSON.parse(fs.readFileSync('/tmp/discovery.json','utf8'));
+          for (const a of r.actors) {
+            console.log(`${a.name}: ${a.visibleQueries}/${a.intendedQueries} intended queries visible; best rank ${a.bestRank ?? 'n/a'}; agentic ${a.agenticVisibleQueries}/${a.intendedQueries}`);
+          }
+          NODE
