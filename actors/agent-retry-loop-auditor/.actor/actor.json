@@ -1,0 +1,16 @@
+{
+  "actorSpecification":1,
+  "name":"agent-retry-loop-auditor",
+  "title":"Agent Retry Loop Auditor",
+  "description":"Find AI-agent retry loops, repeated failed tool calls, terminal failures, and recovery patterns in execution traces. Returns failure clusters and the smallest replay experiment to test a fix without inventing savings.",
+  "version":"0.1",
+  "buildTag":"latest",
+  "input":"./input_schema.json",
+  "output":"./output_schema.json",
+  "storages":{"dataset":"./dataset_schema.json"},
+  "readme":"../README.md",
+  "usesStandbyMode":false,
+  "defaultMemoryMbytes":128,
+  "minMemoryMbytes":128,
+  "maxMemoryMbytes":512
+}
