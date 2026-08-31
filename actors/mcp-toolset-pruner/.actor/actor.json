@@ -1,0 +1,16 @@
+{
+  "actorSpecification": 1,
+  "name": "mcp-toolset-pruner",
+  "title": "MCP Toolset Pruner",
+  "description": "Reduce a large MCP or AI-agent tool catalog to the smallest evidence-based shortlist for stated task intents. Detects redundant/confusing tools, preserves coverage, and explains every keep/drop decision without calling an LLM.",
+  "version": "0.1",
+  "buildTag": "latest",
+  "input": "./input_schema.json",
+  "output": "./output_schema.json",
+  "storages": { "dataset": "./dataset_schema.json" },
+  "readme": "../README.md",
+  "usesStandbyMode": false,
+  "defaultMemoryMbytes": 128,
+  "minMemoryMbytes": 128,
+  "maxMemoryMbytes": 512
+}
