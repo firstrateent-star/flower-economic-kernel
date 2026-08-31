@@ -5,6 +5,10 @@ function finiteNonNegative(value) {
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
+function named(value) {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
 /**
  * Shadow-only task-shape router. It does not execute anything.
  * Evidence for the thresholds must be established on Flower workloads before runtime use.
@@ -48,6 +52,72 @@ export function classifyExecutionShape(stage = {}) {
     runtimeAuthority: false,
     epistemicBoundary:
       'These task-shape thresholds are shadow heuristics derived from current external benchmark patterns, not verified Flower-optimal thresholds. Runtime promotion requires same-workload replay with decision, cost, latency, and error witnesses.',
+  };
+}
+
+/**
+ * Compare candidate routes on a named terminal-progress scale. Progress is not activity:
+ * the caller must name what terminal/evidence state the delta measures, and routes with
+ * different progress units/scales are intentionally not compared.
+ */
+export function assessTerminalProgressRoute(route = {}) {
+  const progressScale = named(route.progressScale ?? route.terminalProgressScale);
+  const expectedProgressDelta = finiteNonNegative(
+    route.expectedProgressDelta ?? route.expectedTerminalProgressDelta,
+  );
+  const incrementalCost = finiteNonNegative(route.incrementalCost ?? route.routeCost);
+  const outcomeProtected = route.outcomeProtected === true || route.terminalOutcomeNonRegression === true;
+  const progressEvidenceVerified = route.progressEvidenceVerified === true;
+
+  const comparable = progressScale !== null
+    && expectedProgressDelta !== null
+    && incrementalCost !== null
+    && incrementalCost > 0
+    && progressEvidenceVerified
+    && outcomeProtected;
+
+  return {
+    id: route.id ?? null,
+    progressScale,
+    expectedProgressDelta,
+    incrementalCost,
+    progressEvidenceVerified,
+    outcomeProtected,
+    terminalProgressDensity: comparable
+      ? Number((expectedProgressDelta / incrementalCost).toFixed(6))
+      : null,
+    comparable,
+    runtimeAuthority: false,
+    epistemicBoundary:
+      'Terminal progress must refer to a named evidence/terminal-state scale, not internal activity. Cost efficiency may rank only routes with verified progress evidence and protected terminal-outcome non-regression.',
+  };
+}
+
+export function compareTerminalProgressRoutes(routes = []) {
+  const assessed = routes.map(assessTerminalProgressRoute);
+  const groups = new Map();
+  for (const route of assessed.filter((item) => item.comparable)) {
+    const list = groups.get(route.progressScale) ?? [];
+    list.push(route);
+    groups.set(route.progressScale, list);
+  }
+
+  const frontiers = [...groups.entries()].map(([progressScale, group]) => {
+    const ranked = [...group].sort((a, b) => b.terminalProgressDensity - a.terminalProgressDensity);
+    return {
+      progressScale,
+      comparableRouteCount: ranked.length,
+      bestRouteId: ranked[0]?.id ?? null,
+      ranked,
+    };
+  });
+
+  return {
+    assessed,
+    frontiers,
+    deterministicCrossScaleChoiceAuthorized: false,
+    epistemicBoundary:
+      'Routes are ranked only within the same named progress scale. Different terminal-progress scales remain separate charts and require a higher-level objective rather than arbitrary scalarization.',
   };
 }
 
@@ -135,9 +205,10 @@ export function detectSharedConstraints(branches = []) {
 /**
  * Run the emerging optimization mechanisms together in shadow mode.
  */
-export function shadowOptimizationControlPlane({ actions = [], stage = {}, branches = [], headroom = {} } = {}) {
+export function shadowOptimizationControlPlane({ actions = [], stage = {}, branches = [], headroom = {}, progressRoutes = [] } = {}) {
   return {
     marginalFrontier: compareMarginalActions(actions),
+    terminalProgressFrontier: compareTerminalProgressRoutes(progressRoutes),
     executionShape: classifyExecutionShape(stage),
     adaptiveHeadroom: assessAdaptiveHeadroom(headroom),
     sharedConstraints: detectSharedConstraints(branches),
