@@ -1,0 +1,38 @@
+name: Flower Origin Continuity Kernel Shadow
+
+on:
+  push:
+    paths:
+      - 'research/methodology/FLOWER_MINIMAL_KERNEL_ORIGIN_STRESS_2026-08-30.md'
+      - 'research/methodology/origin-continuity-kernel.js'
+      - 'tests/origin-continuity-kernel.test.js'
+      - 'docs/FLOWER_ORIGIN_PROVENANCE.md'
+      - '.github/workflows/origin-continuity-kernel-shadow.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  origin-continuity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test origin-continuity stress
+        run: |
+          node --check research/methodology/origin-continuity-kernel.js
+          node --test tests/origin-continuity-kernel.test.js
+      - name: Guard against accidental canonical claim
+        run: |
+          node --input-type=module - <<'NODE'
+          import { SIX_OPERATOR_KERNEL, ORIGIN_STRESSED_KERNEL, assessOriginContinuity } from './research/methodology/origin-continuity-kernel.js';
+          const six = assessOriginContinuity(SIX_OPERATOR_KERNEL);
+          const stressed = assessOriginContinuity(ORIGIN_STRESSED_KERNEL);
+          console.log(JSON.stringify({ six, stressed }, null, 2));
+          if (six.originContinuityStructurallyRepresented) throw new Error('Six-operator kernel should expose the representation-opening gap in this shadow model.');
+          if (!stressed.originContinuityStructurallyRepresented) throw new Error('Origin-stressed kernel should structurally include OPEN.');
+          if (stressed.empiricalValueVerified || stressed.canonicalPromotionAuthorized) throw new Error('Structural origin continuity may not self-promote.');
+          NODE
