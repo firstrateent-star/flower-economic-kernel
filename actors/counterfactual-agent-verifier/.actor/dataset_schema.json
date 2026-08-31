@@ -1,19 +1,44 @@
 {
   "actorSpecification":1,
+  "title":"Counterfactual agent comparison results",
+  "description":"Matched baseline/challenger evidence with terminal and protected regressions kept separate from efficiency changes.",
   "fields":{
-    "caseId":{"type":"string"},
-    "verdict":{"type":"string"},
-    "terminal":{"type":"object"},
-    "quality":{"type":"object"},
-    "protectedMetrics":{"type":"array","items":{"type":"object"}},
-    "protectedRegressionCount":{"type":"integer"},
-    "efficiency":{"type":"object"},
-    "knownEfficiencyMetricCount":{"type":"integer"},
-    "efficiencyImprovementCount":{"type":"integer"},
-    "efficiencyRegressionCount":{"type":"integer"},
-    "materialRegression":{"type":"boolean"},
-    "promotionCandidate":{"type":"boolean"},
-    "authority":{"type":"object"},
-    "schemaVersion":{"type":"integer"}
+    "$schema":"http://json-schema.org/draft-07/schema#",
+    "type":"object",
+    "properties":{
+      "caseId":{"type":"string"},
+      "verdict":{"type":"string"},
+      "terminal":{"type":"object","additionalProperties":true},
+      "quality":{"type":"object","additionalProperties":true},
+      "protectedMetrics":{"type":"array","items":{"type":"object","additionalProperties":true}},
+      "protectedRegressionCount":{"type":"integer"},
+      "efficiency":{"type":"object","additionalProperties":true},
+      "knownEfficiencyMetricCount":{"type":"integer"},
+      "efficiencyImprovementCount":{"type":"integer"},
+      "efficiencyRegressionCount":{"type":"integer"},
+      "materialRegression":{"type":"boolean"},
+      "promotionCandidate":{"type":"boolean"},
+      "authority":{"type":"object","additionalProperties":true},
+      "schemaVersion":{"type":"integer"}
+    },
+    "required":["caseId","verdict","protectedRegressionCount","knownEfficiencyMetricCount","materialRegression","promotionCandidate","authority","schemaVersion"],
+    "additionalProperties":true
+  },
+  "views":{
+    "overview":{
+      "title":"Baseline vs challenger verification",
+      "description":"Compact evidence view showing whether a challenger regressed protected outcomes before efficiency gains are considered.",
+      "transformation":{"fields":["caseId","verdict","materialRegression","protectedRegressionCount","knownEfficiencyMetricCount","efficiencyImprovementCount","efficiencyRegressionCount","promotionCandidate"]},
+      "display":{"component":"table","properties":{
+        "caseId":{"label":"Case","format":"text"},
+        "verdict":{"label":"Verdict","format":"text"},
+        "materialRegression":{"label":"Material regression","format":"boolean"},
+        "protectedRegressionCount":{"label":"Protected regressions","format":"number"},
+        "knownEfficiencyMetricCount":{"label":"Efficiency metrics","format":"number"},
+        "efficiencyImprovementCount":{"label":"Efficiency improvements","format":"number"},
+        "efficiencyRegressionCount":{"label":"Efficiency regressions","format":"number"},
+        "promotionCandidate":{"label":"Candidate improvement","format":"boolean"}
+      }}
+    }
   }
 }
