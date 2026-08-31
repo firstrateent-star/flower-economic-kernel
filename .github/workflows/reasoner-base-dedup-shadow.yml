@@ -1,0 +1,51 @@
+name: Flower Reasoner Base Dedup Shadow
+
+on:
+  push:
+    paths:
+      - 'research/methodology/reasoner-base-dedup-shadow.js'
+      - 'research/methodology/methodology-projection.js'
+      - 'research/methodology/origin-pointer.js'
+      - 'tests/reasoner-base-dedup-shadow.test.js'
+      - 'src/reasoners/openai.js'
+      - '.github/workflows/reasoner-base-dedup-shadow.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reasoner-base-dedup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate base dedup shadow
+        run: |
+          node --check research/methodology/reasoner-base-dedup-shadow.js
+          node --test tests/reasoner-base-dedup-shadow.test.js
+      - name: Report base reduction candidate
+        run: |
+          node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          import { assessReasonerBaseDedup } from './research/methodology/reasoner-base-dedup-shadow.js';
+          const source = fs.readFileSync('src/reasoners/openai.js', 'utf8');
+          const match = source.match(/const instructions = `([\s\S]*?)`;/);
+          if (!match) throw new Error('Current reasoner base instructions not found.');
+          const rows = ['EXPAND','SELECT','FALSIFY','INTEGRATE','TRANSFER','IMPROVE']
+            .map((operation) => assessReasonerBaseDedup({ operation, currentBase: match[1] }));
+          console.log(JSON.stringify(rows.map((x) => ({
+            operation: x.operation,
+            currentBaseBytes: x.currentBaseBytes,
+            candidateBaseBytes: x.candidateBaseBytes,
+            baseBytesSaved: x.baseBytesSaved,
+            baseReductionFraction: x.baseReductionFraction,
+            allRequiredConceptsCovered: x.allRequiredConceptsCovered,
+            originLineageCovered: x.originLineageCovered,
+            runtimeAuthority: x.runtimeAuthority,
+          })), null, 2));
+          if (!rows.every((x) => x.allRequiredConceptsCovered && x.originLineageCovered)) throw new Error('Candidate loses required doctrine or origin lineage.');
+          if (!rows.every((x) => x.runtimeAuthority === false && x.decisionEquivalenceVerified === false)) throw new Error('Shadow candidate may not self-promote.');
+          NODE
