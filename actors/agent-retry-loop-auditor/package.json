@@ -1,0 +1,8 @@
+{
+  "name":"agent-retry-loop-auditor",
+  "version":"0.1.0",
+  "type":"module",
+  "scripts":{"start":"node src/main.js","check":"node --check src/main.js && node --check src/core.js","test":"node --test test/*.test.js"},
+  "dependencies":{"apify":"^3.7.2"},
+  "engines":{"node":">=22"}
+}
