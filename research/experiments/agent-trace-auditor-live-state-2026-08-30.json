@@ -1,0 +1,68 @@
+{
+  "organism": "agent-trace-efficiency-auditor",
+  "actorId": "BKGUeMqIiFcaELH8d",
+  "actorUsername": "firstrate",
+  "capturedAtUtc": "2026-08-31T03:29:12Z",
+  "canonicalMethodology": "2026-08-30.integrated-v5",
+  "canonicalPromotionAuthorized": false,
+  "state": {
+    "codeExists": true,
+    "deterministicCiPassed": true,
+    "actorCreated": true,
+    "apifyBuildPassed": true,
+    "platformSmokeTestPassed": true,
+    "public": true,
+    "storeIndexed": true,
+    "permissionLevel": "LIMITED_PERMISSIONS",
+    "pricingModel": "PAY_PER_EVENT",
+    "chargeEvent": "trace-audited",
+    "eventPriceUsd": 0.01,
+    "apifyMarginPercentage": 0.2,
+    "agenticPaymentChallengeVerified": false,
+    "agenticStoreDiscoveryVerified": false,
+    "publicExternalBenchmarkPassed": true,
+    "independentExternalRunCount": 0,
+    "independentExternalChargedRunCount": 0,
+    "independentExternalChargedEventCount": 0,
+    "creatorRevenueVerifiedUsd": 0,
+    "paypalSettlementVerifiedUsd": 0
+  },
+  "publicBenchmark": {
+    "source": "pagarsky/agent-trace nl2bash_0_6B_20260328T133144Z.jsonl",
+    "license": "Apache-2.0",
+    "traceCount": 200,
+    "modelCallSpans": 516,
+    "toolCallSpans": 465,
+    "observedTokens": 1401442,
+    "tracesWithErrors": 110,
+    "tracesWithRepeatedToolShapes": 51,
+    "tracesWithExactRepeatedTransformations": 28,
+    "noObviousHeadroomTraces": 82,
+    "authorityRegressionCount": 0,
+    "falseSavingsClaimCount": 0
+  },
+  "scarceResourceProfile": {
+    "lovableCreditsConsumedAfterUserStopConstraint": 0,
+    "newCapitalSpentUsd": 0,
+    "llmInferenceRequiredPerCustomerRun": false,
+    "browserRequired": false,
+    "proxyRequired": false,
+    "externalApiRequiredAtRuntime": false,
+    "defaultMemoryMbytes": 128,
+    "recurringSeanFulfillmentRequired": false
+  },
+  "currentFrontier": {
+    "gate": "independent_external_use",
+    "description": "A non-owner user must discover/run the public Actor. For economic fruit, that run must emit at least one charged trace-audited event and creator revenue must subsequently be evidenced.",
+    "doNotConfuseWithFruit": [
+      "public listing",
+      "Store indexing",
+      "self-owned smoke runs",
+      "benchmark success",
+      "theoretical unit-economic headroom",
+      "Store stats that cannot be attributed to a distinct external run"
+    ],
+    "nextInternalBuildRequired": false,
+    "nextActionPrinciple": "Do not feature-bloat while demand is unverified. Preserve the working public paid organism and reopen/modify only when external evidence reveals a decision-changing gap."
+  }
+}
