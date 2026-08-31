@@ -1,0 +1,116 @@
+name: Deploy Agent Retry Loop Auditor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'actors/agent-retry-loop-auditor/**'
+      - '.github/workflows/deploy-agent-retry-loop-auditor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-publish-price-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and test
+        working-directory: actors/agent-retry-loop-auditor
+        run: npm install --ignore-scripts && npm run check && npm test
+      - name: Require Apify token
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          [ -n "$APIFY_TOKEN" ] || { echo 'APIFY_TOKEN missing'; exit 1; }
+      - name: Resolve or create Actor
+        id: actor
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --location 'https://api.apify.com/v2/acts?my=true&limit=1000' -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" > /tmp/actors.json
+          ACTOR_ID=$(node <<'NODE'
+          const x=require('/tmp/actors.json'); const items=x?.data?.items??x?.data??[]; const a=Array.isArray(items)?items.find(v=>v?.name==='agent-retry-loop-auditor'):null; if(a?.id)process.stdout.write(a.id);
+          NODE
+          )
+          if [ -z "$ACTOR_ID" ]; then
+            cat > /tmp/create.json <<'JSON'
+          {"name":"agent-retry-loop-auditor","title":"Agent Retry Loop Auditor","description":"Find AI-agent retry loops, repeated failed tool calls, terminal failures, and recovery patterns in execution traces. Returns bounded replay experiments without inventing savings.","isPublic":false,"seoTitle":"AI Agent Retry Loop & Failure Trace Auditor","seoDescription":"Debug LLM and AI-agent retry loops, repeated tool failures, terminal errors, and recovery patterns from execution traces without an LLM."}
+          JSON
+            curl --fail-with-body --silent --show-error --location --request POST 'https://api.apify.com/v2/acts' -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" --data-binary @/tmp/create.json > /tmp/created.json
+            ACTOR_ID=$(node -e "const x=require('/tmp/created.json');if(!x?.data?.id)process.exit(2);process.stdout.write(x.data.id)")
+          fi
+          echo "actor_id=$ACTOR_ID" >> "$GITHUB_OUTPUT"
+      - name: Set up Apify CLI
+        uses: apify/setup-apify-cli-action@v1
+        with:
+          token: ${{ secrets.APIFY_TOKEN }}
+      - name: Push verified source of truth
+        id: push
+        working-directory: actors/agent-retry-loop-auditor
+        env:
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          apify push "$ACTOR_ID" --force --json --wait-for-finish=999 > /tmp/build.json
+          node <<'NODE'
+          const fs=require('node:fs');const x=JSON.parse(fs.readFileSync('/tmp/build.json','utf8'));const b=x?.build??x;if(b?.status&&b.status!=='SUCCEEDED')process.exit(2);fs.appendFileSync(process.env.GITHUB_OUTPUT,`build_id=${b?.id??''}\nbuild_status=${b?.status??'SUCCEEDED'}\n`);
+          NODE
+      - name: Smoke test before publication
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/input.json <<'JSON'
+          {"traces":[{"traceId":"retry-smoke","spans":[{"name":"tool:search","tool_name":"search","tool_input":{"q":"x"},"statusCode":"ERROR"},{"name":"tool:search","tool_name":"search","tool_input":{"q":"x"},"statusCode":"ERROR"},{"name":"tool:search","tool_name":"search","tool_input":{"q":"y"},"statusCode":"OK"}]}]}
+          JSON
+          curl --fail-with-body --silent --show-error --location --request POST "https://api.apify.com/v2/acts/$ACTOR_ID/runs?waitForFinish=180" -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" --data-binary @/tmp/input.json > /tmp/run.json
+          RUN_ID=$(node -e "const x=require('/tmp/run.json');if(x?.data?.status!=='SUCCEEDED')process.exit(2);process.stdout.write(x.data.id)")
+          curl --fail-with-body --silent --show-error --location "https://api.apify.com/v2/actor-runs/$RUN_ID/dataset/items?clean=true" -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" > /tmp/items.json
+          node <<'NODE'
+          const r=require('/tmp/items.json')?.[0];if(!r)throw new Error('No output');if(r.exactImmediateRetries!==1)throw new Error('Expected one exact retry');if(r.authority?.retryPolicyChangeAuthorized!==false)throw new Error('Authority regression');if(!r.hypotheses?.some(x=>x.id==='identical_retry_after_failure'))throw new Error('Missing retry hypothesis');console.log(JSON.stringify({errors:r.errorEventCount,retries:r.exactImmediateRetries,streak:r.longestErrorStreak}));
+          NODE
+      - name: Publish with limited permissions and PPE
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/public.json <<'JSON'
+          {"isPublic":true,"title":"Agent Retry Loop Auditor","description":"Find AI-agent retry loops, repeated failed tool calls, error streaks, terminal failures, and recovery patterns in execution traces. Generates the smallest replay experiment to test a retry/validation/fallback change without claiming unverified savings.","seoTitle":"AI Agent Retry Loop & Failure Trace Auditor","seoDescription":"Debug LLM and AI-agent retry loops, repeated tool failures, terminal errors, and recovery patterns from traces. Deterministic, PPE, agent-ready.","categories":["AI","DEVELOPER_TOOLS"],"actorPermissionLevel":"LIMITED_PERMISSIONS","defaultRunOptions":{"build":"latest","timeoutSecs":300,"memoryMbytes":128,"restartOnError":false},"pricingInfos":[{"pricingModel":"PAY_PER_EVENT","pricingPerEvent":{"actorChargeEvents":{"retry-audited":{"eventTitle":"Retry trace audited","eventDescription":"One trace audited for repeated failures, identical retries, failure streaks, terminal failures, and recovery evidence.","eventPriceUsd":0.01,"isPrimaryEvent":true,"isOneTimeEvent":false}}},"minimalMaxTotalChargeUsd":0.01}],"exampleRunInput":{"contentType":"application/json; charset=utf-8","body":"{\"traces\":[{\"traceId\":\"example\",\"spans\":[{\"name\":\"tool:search\",\"tool_name\":\"search\",\"tool_input\":{\"q\":\"alpha\"},\"statusCode\":\"ERROR\"},{\"name\":\"tool:search\",\"tool_name\":\"search\",\"tool_input\":{\"q\":\"alpha\"},\"statusCode\":\"ERROR\"}]}]}"}}
+          JSON
+          curl --fail-with-body --silent --show-error --location --request PUT "https://api.apify.com/v2/actors/$ACTOR_ID" -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" --data-binary @/tmp/public.json > /tmp/actor.json
+          node <<'NODE'
+          const a=require('/tmp/actor.json')?.data;if(a?.isPublic!==true||a?.actorPermissionLevel!=='LIMITED_PERMISSIONS')throw new Error('Publication boundary failed');const p=(a.pricingInfos??[]).find(x=>x.pricingModel==='PAY_PER_EVENT');if(Number(p?.pricingPerEvent?.actorChargeEvents?.['retry-audited']?.eventPriceUsd)!==0.01)throw new Error('PPE missing');console.log(JSON.stringify({id:a.id,public:a.isPublic,permission:a.actorPermissionLevel}));
+          NODE
+      - name: PPE compatibility run
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          echo '{"traces":[{"traceId":"ppe","spans":[{"name":"tool:x","tool_name":"x","tool_input":1,"statusCode":"ERROR"},{"name":"tool:x","tool_name":"x","tool_input":1,"statusCode":"ERROR"}]}]}' > /tmp/in.json
+          curl --fail-with-body --silent --show-error --location --request POST "https://api.apify.com/v2/acts/$ACTOR_ID/runs?waitForFinish=180&maxTotalChargeUsd=0.05" -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: Bearer $APIFY_TOKEN" --data-binary @/tmp/in.json > /tmp/ppe.json
+          node -e "const r=require('/tmp/ppe.json')?.data;if(r?.status!=='SUCCEEDED'||r?.pricingInfo?.pricingModel!=='PAY_PER_EVENT')process.exit(2);console.log(JSON.stringify({id:r.id,status:r.status,pricing:r.pricingInfo,usageTotalUsd:r.usageTotalUsd}))"
+      - name: Verify Store and agentic search
+        env:
+          ACTOR_ID: ${{ steps.actor.outputs.actor_id }}
+        run: |
+          set -euo pipefail
+          sleep 10
+          curl --fail-with-body --silent --show-error --location 'https://api.apify.com/v2/store?search=agent%20retry%20loop&limit=50&responseFormat=agent' -H 'Accept: application/json' > /tmp/store.json
+          curl --fail-with-body --silent --show-error --location 'https://api.apify.com/v2/store?search=agent%20retry%20loop&limit=50&allowsAgenticUsers=true&responseFormat=agent' -H 'Accept: application/json' > /tmp/agentic.json
+          ACTOR_ID="$ACTOR_ID" node <<'NODE'
+          const s=require('/tmp/store.json')?.data?.items??[];const a=require('/tmp/agentic.json')?.data?.items??[];const hit=x=>x.findIndex(v=>v?.id===process.env.ACTOR_ID||v?.name==='agent-retry-loop-auditor');console.log(JSON.stringify({storeRank:hit(s)>=0?hit(s)+1:null,agenticRank:hit(a)>=0?hit(a)+1:null}));
+          NODE
+      - name: Report
+        run: |
+          echo "Actor ID: ${{ steps.actor.outputs.actor_id }}"
+          echo "Apify build: ${{ steps.push.outputs.build_id }}"
+          echo "Build status: ${{ steps.push.outputs.build_status }}"
