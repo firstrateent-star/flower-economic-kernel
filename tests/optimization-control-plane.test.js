@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  assessAdaptiveHeadroom,
   classifyExecutionShape,
   detectSharedConstraints,
   shadowOptimizationControlPlane,
@@ -49,6 +50,31 @@ test('missing task-shape evidence does not manufacture an execution recommendati
   assert.ok(result.evidenceCoverage < 1);
 });
 
+test('stable equivalent policy suppresses unnecessary adaptive cognition in shadow mode', () => {
+  const result = assessAdaptiveHeadroom({
+    policyStable: true,
+    decisionEquivalentWitness: true,
+    nonStationarityDetected: false,
+    unresolvedConflict: false,
+    materialUncertainty: false,
+  });
+  assert.equal(result.recommendation, 'preserve_stable_policy');
+  assert.equal(result.runtimeAuthority, false);
+});
+
+test('non-stationarity creates an adaptive cognition challenger without authorizing it', () => {
+  const result = assessAdaptiveHeadroom({
+    policyStable: true,
+    decisionEquivalentWitness: true,
+    nonStationarityDetected: true,
+    expectedAdaptationGain: 20,
+    adaptiveCost: 5,
+  });
+  assert.equal(result.recommendation, 'adaptive_cognition_candidate');
+  assert.equal(result.expectedGainDensity, 4);
+  assert.equal(result.runtimeAuthority, false);
+});
+
 test('shared constraint detector finds overlap but does not claim leverage', () => {
   const result = detectSharedConstraints([
     { id: 'a', constraints: ['distribution access', 'dns executor'] },
@@ -74,6 +100,10 @@ test('control plane keeps action charts separate and remains shadow-only', () =>
       semanticDependency: true,
       deterministicReductionAvailable: true,
     },
+    headroom: {
+      policyStable: true,
+      decisionEquivalentWitness: true,
+    },
     branches: [
       { id: 'a', constraints: ['distribution access'] },
       { id: 'b', constraints: ['distribution access'] },
@@ -82,6 +112,7 @@ test('control plane keeps action charts separate and remains shadow-only', () =>
 
   assert.equal(result.marginalFrontier.bestInformationActionId, 'probe');
   assert.equal(result.marginalFrontier.bestDirectValueActionId, 'act');
+  assert.equal(result.adaptiveHeadroom.recommendation, 'preserve_stable_policy');
   assert.equal(result.authority, 'shadow_only');
   assert.equal(result.externalValueVerified, false);
   assert.equal(result.canonicalPromotionAuthorized, false);
