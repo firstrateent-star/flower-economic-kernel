@@ -29,13 +29,14 @@ function normalizeTool(raw, index) {
 }
 
 function parseTools(input) {
-  if (Array.isArray(input?.tools)) return input.tools;
+  if (Array.isArray(input?.tools) && input.tools.length > 0) return input.tools;
   if (typeof input?.toolsJson === 'string' && input.toolsJson.trim()) {
     const parsed = JSON.parse(input.toolsJson);
     if (Array.isArray(parsed)) return parsed;
     if (Array.isArray(parsed?.tools)) return parsed.tools;
     if (parsed?.name) return [parsed];
   }
+  if (Array.isArray(input?.tools)) return input.tools;
   return [];
 }
 
@@ -45,11 +46,7 @@ function scoreToolForIntent(tool, intent) {
   const coverage = iw.size ? overlap.length / iw.size : 0;
   const exactNameBonus = tool.name.toLowerCase().includes(String(intent).toLowerCase().trim()) ? 0.25 : 0;
   const descriptionBonus = tool.description.length >= 30 ? 0.05 : 0;
-  return {
-    score: Math.min(1, coverage + exactNameBonus + descriptionBonus),
-    matchedTerms: overlap,
-    intentTerms: [...iw],
-  };
+  return { score: Math.min(1, coverage + exactNameBonus + descriptionBonus), matchedTerms: overlap, intentTerms: [...iw] };
 }
 
 function qualityPenalty(tool) {
@@ -87,7 +84,6 @@ export function pruneToolset(input = {}) {
   const maxTools = Math.max(1, Math.min(Number(input.maxTools ?? 12), 50));
   const minIntentScore = Math.max(0, Math.min(Number(input.minIntentScore ?? 0.2), 1));
   const confusionThreshold = Math.max(0.1, Math.min(Number(input.confusionThreshold ?? 0.55), 1));
-
   if (!tools.length) throw new Error('Provide at least one tool in tools or toolsJson.');
 
   const pairs = confusedPairs(tools, confusionThreshold);
@@ -114,7 +110,6 @@ export function pruneToolset(input = {}) {
 
   const selected = new Set();
   const taskCoverage = [];
-
   if (taskIntents.length) {
     for (const intent of taskIntents) {
       const ranked = perTool
@@ -138,7 +133,6 @@ export function pruneToolset(input = {}) {
     if (selected.size >= maxTools) break;
     if (!taskIntents.length || tool.matchedIntentCount > 0) selected.add(tool.name);
   }
-
   if (selected.size > maxTools) {
     const keepRank = new Map(rankedOverall.map((x, i) => [x.name, i]));
     const trimmed = [...selected].sort((a, b) => (keepRank.get(a) ?? 9999) - (keepRank.get(b) ?? 9999)).slice(0, maxTools);
@@ -154,7 +148,6 @@ export function pruneToolset(input = {}) {
       : 'Outside the size cap after deterministic quality/distinctiveness ranking; provide taskIntents for evidence-based pruning.',
     selectionScore: x.selectionScore,
   }));
-
   const uncoveredIntents = taskCoverage.filter((x) => !x.covered).map((x) => x.intent);
   const selectedPairNames = new Set(selectedTools.map((x) => x.name));
   const selectedConfusions = pairs.filter((x) => selectedPairNames.has(x.a) && selectedPairNames.has(x.b));
