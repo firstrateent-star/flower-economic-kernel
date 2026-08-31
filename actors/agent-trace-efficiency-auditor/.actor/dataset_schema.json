@@ -1,47 +1,56 @@
 {
   "actorSpecification": 1,
+  "title": "Agent trace efficiency audits",
+  "description": "One deterministic audit item per supplied trace group.",
   "fields": {
-    "traceId": { "type": "string" },
-    "spanCount": { "type": "integer" },
-    "modelCallSpans": { "type": "integer" },
-    "toolCallSpans": { "type": "integer" },
-    "totalInputTokens": { "type": "integer" },
-    "totalOutputTokens": { "type": "integer" },
-    "totalTokens": { "type": "integer" },
-    "totalObservedDurationMs": { "type": "number" },
-    "modelSwitches": { "type": "integer" },
-    "errorSpans": { "type": "integer" },
-    "humanBoundarySpans": { "type": "integer" },
-    "highInputTokenCalls": { "type": "integer" },
-    "repeatedToolShapes": { "type": "integer" },
-    "exactRepeatedTransformations": { "type": "integer" },
-    "modelsObserved": { "type": "array", "items": { "type": "string" } },
-    "toolsObserved": { "type": "array" },
-    "exactTransformationRepeats": { "type": "array" },
-    "hypotheses": { "type": "array" },
-    "authority": { "type": "object" },
-    "epistemicBoundary": { "type": "string" },
-    "schemaVersion": { "type": "integer" }
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "traceId": { "type": "string", "description": "Trace, session, or run identifier." },
+      "spanCount": { "type": "integer", "minimum": 0, "description": "Total spans observed in this trace group." },
+      "modelCallSpans": { "type": "integer", "minimum": 0, "description": "Spans classified as model calls." },
+      "toolCallSpans": { "type": "integer", "minimum": 0, "description": "Spans classified as tool calls." },
+      "totalInputTokens": { "type": "integer", "minimum": 0, "description": "Input/prompt tokens observed where telemetry supplied them." },
+      "totalOutputTokens": { "type": "integer", "minimum": 0, "description": "Output/completion tokens observed where telemetry supplied them." },
+      "totalTokens": { "type": "integer", "minimum": 0, "description": "Observed input plus output tokens." },
+      "totalObservedDurationMs": { "type": "number", "minimum": 0, "description": "Sum of parseable span durations in milliseconds; not necessarily end-to-end wall time." },
+      "modelSwitches": { "type": "integer", "minimum": 0, "description": "Changes between adjacent observed model-call model identifiers." },
+      "errorSpans": { "type": "integer", "minimum": 0, "description": "Spans carrying an observed error/failure signal." },
+      "humanBoundarySpans": { "type": "integer", "minimum": 0, "description": "Spans whose names/attributes suggest approval, review, handoff, or other human-boundary activity." },
+      "highInputTokenCalls": { "type": "integer", "minimum": 0, "description": "Model calls above the user-configured input-token review threshold." },
+      "repeatedToolShapes": { "type": "integer", "minimum": 0, "description": "Distinct tool names observed more than once; recurrence alone is not transformation equivalence." },
+      "exactRepeatedTransformations": { "type": "integer", "minimum": 0, "description": "Distinct tool plus normalized-input signatures observed more than once." },
+      "modelsObserved": { "type": "array", "description": "Distinct observed model identifiers.", "items": { "type": "string" } },
+      "toolsObserved": { "type": "array", "description": "Tool names and observed call counts.", "items": { "type": "object", "additionalProperties": true } },
+      "exactTransformationRepeats": { "type": "array", "description": "Repeated exact tool/input signatures, with tool inputs represented only by hashes.", "items": { "type": "object", "additionalProperties": true } },
+      "hypotheses": { "type": "array", "description": "Bounded optimization experiments suggested by trace structure; savings remain unverified.", "items": { "type": "object", "additionalProperties": true } },
+      "authority": { "type": "object", "description": "Explicit statement that optimization is not authorized without matched outcome-preserving replay evidence.", "additionalProperties": true },
+      "epistemicBoundary": { "type": "string", "description": "Interpretation boundary for the audit." },
+      "schemaVersion": { "type": "integer", "description": "Output schema version." }
+    },
+    "required": ["traceId", "spanCount", "modelCallSpans", "toolCallSpans", "hypotheses", "authority", "epistemicBoundary", "schemaVersion"],
+    "additionalProperties": true
   },
   "views": {
     "overview": {
       "title": "Trace audits",
+      "description": "Compact view of observed agent-work structure and optimization experiments.",
       "transformation": {
         "fields": ["traceId", "modelCallSpans", "toolCallSpans", "totalTokens", "modelSwitches", "errorSpans", "humanBoundarySpans", "highInputTokenCalls", "exactRepeatedTransformations", "hypotheses"]
       },
       "display": {
         "component": "table",
         "properties": {
-          "traceId": { "label": "Trace" },
-          "modelCallSpans": { "label": "Model calls" },
-          "toolCallSpans": { "label": "Tool calls" },
-          "totalTokens": { "label": "Tokens observed" },
-          "modelSwitches": { "label": "Model switches" },
-          "errorSpans": { "label": "Errors" },
-          "humanBoundarySpans": { "label": "Human boundaries" },
-          "highInputTokenCalls": { "label": "High-input calls" },
-          "exactRepeatedTransformations": { "label": "Exact repeats" },
-          "hypotheses": { "label": "Experiments" }
+          "traceId": { "label": "Trace", "format": "text" },
+          "modelCallSpans": { "label": "Model calls", "format": "number" },
+          "toolCallSpans": { "label": "Tool calls", "format": "number" },
+          "totalTokens": { "label": "Tokens observed", "format": "number" },
+          "modelSwitches": { "label": "Model switches", "format": "number" },
+          "errorSpans": { "label": "Errors", "format": "number" },
+          "humanBoundarySpans": { "label": "Human boundaries", "format": "number" },
+          "highInputTokenCalls": { "label": "High-input calls", "format": "number" },
+          "exactRepeatedTransformations": { "label": "Exact repeats", "format": "number" },
+          "hypotheses": { "label": "Experiments", "format": "array" }
         }
       }
     }
