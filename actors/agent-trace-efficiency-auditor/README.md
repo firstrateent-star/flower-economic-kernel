@@ -2,7 +2,7 @@
 
 Audit AI-agent traces for **wasted-cognition candidates** without pretending that lower token counts or fewer calls automatically mean a better agent.
 
-This Actor accepts generic trace/run JSON or flat OpenTelemetry-style spans and returns one audit row per trace. It is deterministic, uses no LLM, calls no external API, and is designed for CI, agent observability, routing experiments, and optimization-control workflows.
+This Actor accepts generic trace/run JSON, flat OpenTelemetry-style spans, and AgentTrace-style traces with `spans[]` + `llm_steps[]`. It returns one audit row per trace. It is deterministic, uses no LLM, calls no external API, and is designed for CI, agent observability, routing experiments, and optimization-control workflows.
 
 ## What it detects
 
@@ -24,6 +24,20 @@ A structural trace audit cannot prove that a cheaper configuration is better.
 - projected savings are not settled savings.
 
 Every output therefore contains optimization **hypotheses and replay tests**, with optimization authority disabled until a matched workload preserves terminal outcomes and protected boundaries.
+
+## Public-trace evidence
+
+The current parser was replayed against **200 public NL2Bash agent traces** from the Apache-2.0 `pagarsky/agent-trace` dataset. That sample contained 516 model steps, 465 tool calls, and about 1.40M observed tokens.
+
+The auditor produced:
+
+- `failure_retry_overhead` on 110/200 traces with observed failures;
+- `crystallization_candidate` on 28/200 traces with repeated exact tool + normalized-input signatures;
+- `structural_recurrence_only` on 23/200 traces where tool recurrence existed without exact transformation recurrence;
+- `context_projection_headroom` on only 1/200 traces at a 10,000-input-token threshold;
+- `no_obvious_headroom` on 82/200 traces.
+
+There were **0 optimization-authority regressions and 0 unverified-savings promotions**. These measurements show that the auditor can distinguish several trace structures and abstain when its heuristics do not expose a strong signal. They do **not** prove customer demand, realized savings, or generalization to every agent runtime.
 
 ## Input
 
@@ -58,7 +72,7 @@ You can provide grouped traces:
 
 Or flat spans carrying `traceId`, `trace_id`, `sessionId`, or `session_id`.
 
-The parser recognizes common attribute families including `gen_ai.*`, `llm.*`, and several OpenInference-style fields. Unknown fields are ignored rather than guessed.
+The parser recognizes common attribute families including `gen_ai.*`, `llm.*`, several OpenInference-style fields, and AgentTrace-native top-level `tool_name`, `tool_input`, `exit_code`, plus `llm_steps` token telemetry. Unknown fields are ignored rather than guessed.
 
 ## Output
 
@@ -84,9 +98,9 @@ Each trace audit includes:
 5. Preserve terminal success, safety/authority boundaries, and required quality.
 6. Only then call the change an optimization.
 
-## Pricing compatibility
+## Pricing
 
-The Actor supports an optional Apify pay-per-event event named `trace-audited`. If that event is not configured, it runs without custom event charging. If configured, one successfully emitted trace audit can be billed as one event.
+The public Actor uses Apify **pay per event**. One successfully emitted trace-group audit is the `trace-audited` event, currently configured at **$0.01**.
 
 The implementation is intentionally low-compute: 128 MB default memory, no browser, no proxies, no LLM, and no third-party services.
 
