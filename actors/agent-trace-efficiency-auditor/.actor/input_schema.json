@@ -26,6 +26,7 @@
     "maxItems": {
       "title": "Maximum traces to analyze",
       "type": "integer",
+      "description": "Safety cap on the number of trace groups analyzed in one run.",
       "default": 1000,
       "minimum": 1,
       "maximum": 10000
