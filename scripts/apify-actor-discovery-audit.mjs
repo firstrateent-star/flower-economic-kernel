@@ -34,6 +34,17 @@ const portfolio = [
       'agent failure trace',
     ],
   },
+  {
+    id: 'q31WQSvCAJd9rPQ2q',
+    name: 'counterfactual-agent-verifier',
+    intents: [
+      'counterfactual agent evaluation',
+      'AI agent regression test',
+      'agent replay verifier',
+      'baseline challenger agent',
+      'same workload agent benchmark',
+    ],
+  },
 ];
 
 async function query(search, agentic = false) {
