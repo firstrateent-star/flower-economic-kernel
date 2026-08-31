@@ -1,0 +1,86 @@
+{
+  "experiment": "tabula_rasa_abundance_germination",
+  "breath": 1,
+  "canonicalAuthority": false,
+  "verifiedMaterialReturnUsd": 0,
+  "seed": "increase reachable abundance/material resources while preserving truth, agency, legality, fulfillment integrity, human sovereignty, future optionality, and non-extractive value creation",
+  "inhale": {
+    "domainSeeded": false,
+    "mechanismClasses": [
+      {
+        "id": "ai_native_service_or_endpoint",
+        "primitive": "create useful automated transformation and capture per-use/per-task value",
+        "observedRails": ["AWS Marketplace AI agents/tools", "pay-per-use API/x402 markets", "agent marketplaces"],
+        "initialEndowment": ["compute", "deployment surface", "identity/account/payment rail"],
+        "recurringHumanBurdenHypothesis": "low_after_setup_if_fulfillment_is_machine_complete",
+        "status": "living_challenger"
+      },
+      {
+        "id": "scoped_agent_task_work",
+        "primitive": "transform cognition/tool use into bounded paid deliverables",
+        "observedRails": ["agent-readable human/agent task marketplaces"],
+        "initialEndowment": ["account/payment rail", "compute", "task capability"],
+        "recurringHumanBurdenHypothesis": "variable; low only for machine-completable jobs",
+        "status": "living_challenger"
+      },
+      {
+        "id": "digital_goods",
+        "primitive": "crystallize reusable information/capability into zero-marginal-delivery artifact",
+        "observedRails": ["digital goods marketplaces", "owned storefronts"],
+        "initialEndowment": ["artifact creation", "account/payment rail"],
+        "recurringHumanBurdenHypothesis": "low_delivery_but_distribution_uncertain",
+        "status": "living_challenger"
+      },
+      {
+        "id": "lead_or_demand_matching",
+        "primitive": "match disconnected demand and supply and capture attributable matching value",
+        "observedRails": ["pay-per-lead", "performance-based lead generation"],
+        "initialEndowment": ["data/tools or sourcing capability", "sales/capture agreement"],
+        "recurringHumanBurdenHypothesis": "medium; human interaction often remains after interest",
+        "status": "living_challenger"
+      },
+      {
+        "id": "idle_compute_capacity",
+        "primitive": "recover value from underutilized assets",
+        "observedRails": ["GPU capacity reservation/leasing markets"],
+        "initialEndowment": ["controlled compute asset or capital"],
+        "recurringHumanBurdenHypothesis": "low_after_contract",
+        "status": "blocked_without_asset_endowment"
+      }
+    ]
+  },
+  "hold": {
+    "sharedConstraint": "external economic coupling",
+    "definition": "A legitimate rail that can transfer controlled material resources back to the Center-holder or organism after useful transformation.",
+    "minimumCouplingComponents": [
+      "identity or legal/economic account capable of owning/receiving value",
+      "distribution or job/request surface",
+      "truthful machine- or human-fulfillable transformation",
+      "settlement/payment/resource-transfer rail"
+    ],
+    "newLawCandidate": "Cognition can generate option space and capability, but material fruit requires at least one externally coupled resource-transfer edge.",
+    "canonicalPromotionAuthorized": false
+  },
+  "exhale": {
+    "prunedOrBlocked": [
+      {
+        "id": "idle_compute_capacity",
+        "reason": "not tabula-rasa with respect to material endowment; requires ownership/control of scarce compute or capital"
+      }
+    ],
+    "notYetPruned": [
+      "ai_native_service_or_endpoint",
+      "scoped_agent_task_work",
+      "digital_goods",
+      "lead_or_demand_matching"
+    ]
+  },
+  "stillness": {
+    "stage": "reality_contacts_made",
+    "successHierarchyLevel": 2,
+    "nextDecisionQuestion": "Which living mechanism can produce the first independently attributable external value signal with the smallest initial endowment, shortest feedback loop, lowest recurring human burden, and a legitimate capture rail?",
+    "antiLockIn": "No champion selected yet; first observed rail does not become ontology.",
+    "downstreamCheck": "Any winning first-value mechanism must remain fulfillable after success and must not create hidden human support, capital, legal, or delivery obligations.",
+    "epistemicBoundary": "Observed marketplaces verify that resource-transfer rails exist, not that a Flower-created offer will be demanded or paid for. Material fruit remains unverified until settlement/control occurs."
+  }
+}
