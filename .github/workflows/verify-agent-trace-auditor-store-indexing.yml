@@ -1,0 +1,41 @@
+name: Verify Agent Trace Auditor Store Indexing
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-agent-trace-auditor-store-indexing.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify ordinary Store indexing
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --location \
+            'https://api.apify.com/v2/store?search=Agent%20Trace%20Efficiency%20Auditor&limit=50' \
+            -H 'Accept: application/json' > /tmp/store.json
+          node <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync('/tmp/store.json', 'utf8'));
+          const items = body?.data?.items ?? [];
+          const hit = items.find((x) => x?.id === 'BKGUeMqIiFcaELH8d' || x?.name === 'agent-trace-efficiency-auditor');
+          console.log(JSON.stringify({
+            indexed: Boolean(hit),
+            hit: hit ? {
+              id: hit.id,
+              name: hit.name,
+              title: hit.title,
+              username: hit.username,
+              currentPricingInfo: hit.currentPricingInfo ?? hit.pricingInfos?.[0] ?? null,
+              stats: hit.stats ?? null
+            } : null,
+            resultCount: items.length
+          }, null, 2));
+          if (!hit) process.exit(2);
+          NODE
