@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - 'research/methodology/methodology-projection.js'
+      - 'research/methodology/origin-pointer.js'
+      - 'docs/FLOWER_ORIGIN_PROVENANCE.md'
+      - 'methodology/meta-learning/origin-episodes-v1.json'
       - 'tests/methodology-projection.test.js'
       - 'scripts/methodology-projection-observatory.mjs'
       - '.github/workflows/methodology-projection-observatory.yml'
@@ -22,6 +25,7 @@ jobs:
           node-version: 22
       - name: Validate methodology projection
         run: |
+          node --check research/methodology/origin-pointer.js
           node --check research/methodology/methodology-projection.js
           node --check scripts/methodology-projection-observatory.mjs
           node --test tests/methodology-projection.test.js
@@ -33,7 +37,7 @@ jobs:
           const fs = require('fs');
           const report = JSON.parse(fs.readFileSync('reports/methodology-projection-observatory-latest.json', 'utf8'));
           if (!report.claims.structuralPayloadReductionObserved) throw new Error('No structural payload reduction observed.');
-          if (!report.summary.allProtectedSpinesPresent) throw new Error('Protected methodology spine missing.');
+          if (!report.summary.allProtectedSpinesPresent) throw new Error('Protected methodology spine or origin pointer missing.');
           if (report.claims.decisionEquivalenceVerified !== false) throw new Error('Structural reduction may not self-verify decision equivalence.');
           if (report.claims.runtimePromotionAuthorized !== false) throw new Error('Shadow projection may not self-promote.');
           console.log(JSON.stringify(report.summary, null, 2));
