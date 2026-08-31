@@ -1,0 +1,25 @@
+name: Apify External Pickup Observatory
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/apify-external-pickup-observatory.mjs'
+      - '.github/workflows/apify-external-pickup-observatory.yml'
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Observe non-owner public Actor runs
+        run: node scripts/apify-external-pickup-observatory.mjs
