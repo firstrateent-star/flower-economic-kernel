@@ -17,10 +17,17 @@ function bytes(value) {
   return Buffer.byteLength(JSON.stringify(value), 'utf8');
 }
 
+function operatingSafeguards(methodology) {
+  const loop = methodology.operatingLoop ?? [];
+  return loop.filter((step) => /^(ACT|REST|RECURSE):/.test(step));
+}
+
 /**
  * Shadow-only methodology projection. Unknown operations deliberately fall back to full canon.
- * Center + invariants are always retained because they contain the protected orientation and
- * global epistemic/sovereignty boundaries.
+ * Center + invariants + stop conditions are always retained because they contain the protected
+ * orientation, global epistemic/sovereignty boundaries, and the rules preventing endless recursion.
+ * The full operating loop is compressed to ACT/REST/RECURSE safeguards unless an operation later
+ * proves it needs more of the loop.
  */
 export function projectMethodologyForOperation(operation, methodology = FLOWER_METHODOLOGY) {
   const sections = OPERATION_SECTIONS[operation] ?? null;
@@ -39,6 +46,8 @@ export function projectMethodologyForOperation(operation, methodology = FLOWER_M
     version: methodology.version,
     center: clone(methodology.center),
     invariants: clone(methodology.invariants),
+    operatingSafeguards: clone(operatingSafeguards(methodology)),
+    stopConditions: clone(methodology.stopConditions ?? []),
   };
 
   for (const section of sections) {
@@ -72,6 +81,12 @@ export function diagnoseMethodologyProjection(operation, methodology = FLOWER_ME
       projected.projection?.center
       && Array.isArray(projected.projection?.invariants)
       && projected.projection.invariants.length > 0
+      && Array.isArray(projected.projection?.stopConditions)
+      && projected.projection.stopConditions.length > 0
+      && Array.isArray(projected.projection?.operatingSafeguards)
+      && projected.projection.operatingSafeguards.some((step) => step.startsWith('ACT:'))
+      && projected.projection.operatingSafeguards.some((step) => step.startsWith('REST:'))
+      && projected.projection.operatingSafeguards.some((step) => step.startsWith('RECURSE:'))
     ),
     epistemicBoundary:
       'Payload reduction is only a structural efficiency hypothesis. It does not prove decision equivalence. Runtime promotion requires same-workload reasoner comparisons showing equivalent-or-better governed decisions, with full-canon fallback when operation scope is uncertain.',
